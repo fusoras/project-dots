@@ -1,26 +1,11 @@
-[categories.shell]
-description = "Shell environment tools and prompt setup"
-debian_packages = ["zsh", "curl", "git"]
-termux_packages = ["zsh", "curl", "git"]
+[categories.lazyvim-minimal]
+description = "Minimal LazyVim dependencies and editor setup"
+debian_packages = ["git", "curl", "clang", "fd-find", "lazygit"]
+termux_packages = ["neovim", "git", "curl", "clang", "fd", "lazygit"]
 
-[categories.cli-tools]
-description = "Modern command-line utilities"
-debian_packages = ["ripgrep", "fd-find", "fzf", "bat"]
-termux_packages = ["ripgrep", "fd", "fzf", "bat"]
-
-[categories.editors]
-description = "Text editors and terminal multiplexers"
-debian_packages = ["tmux"]
-termux_packages = ["neovim", "tmux"]
-
-[categories.editors.custom.debian]
+[categories.lazyvim-minimal.custom.debian]
 name = "neovim"
 type = "github_release_tarball"
 url = "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
 extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
-
-[categories.dev-tools]
-description = "Basic compilers and development runtimes"
-debian_packages = ["build-essential", "git", "curl"]
-termux_packages = ["build-essential", "git", "curl"]
