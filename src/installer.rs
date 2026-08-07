@@ -7,56 +7,89 @@ use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::process::Command;
 
-/// Lists all categories, descriptions, packages, and their current installation status.
-pub fn list_categories(config: &Config, state: &State, platform: &Platform) {
-    println!("\n=== project-dots: Categories & Package Status ===");
-    println!("Platform Detected: {:?}\n", platform);
+const RESET: &str = "\x1b[0m";
+const DIM_GRAY: &str = "\x1b[90m";
 
+/// Lists all categories and packages.
+/// Default mode: Clean user view with comma-separated packages in dim gray.
+/// Debug mode (`debug == true`): Detailed status for each package and system info.
+pub fn list_categories(config: &Config, state: &State, platform: &Platform, debug: bool) {
     if config.categories.is_empty() {
         println!("No categories found in configuration.");
         return;
     }
 
-    for (cat_name, cat) in &config.categories {
-        println!("Category: {}", cat_name);
-        println!("  Description: {}", cat.description);
+    if debug {
+        println!("\n=== project-dots: Categories & Package Status (DEBUG MODE) ===");
+        println!("Platform Detected: {:?}\n", platform);
 
-        let pkgs = match platform {
-            Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
-            Platform::Termux => cat.termux_packages.as_deref().unwrap_or(&[]),
-            Platform::Unsupported(_) => &[],
-        };
+        for (cat_name, cat) in &config.categories {
+            println!("Category: {}", cat_name);
+            println!("  Description: {}", cat.description);
 
-        if !pkgs.is_empty() {
-            println!("  Packages:");
-            for pkg in pkgs {
-                let status_str = if let Some(tracked) = state.packages.get(pkg) {
-                    if tracked.was_preexisting {
-                        "Pre-existing (system)"
-                    } else {
-                        "Installed by project-dots"
-                    }
-                } else if platform.is_package_installed(pkg) {
-                    "Installed (untracked)"
-                } else {
-                    "Not installed"
-                };
-                println!("    - {} [{}]", pkg, status_str);
-            }
-        }
+            let pkgs = match platform {
+                Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
+                Platform::Termux => cat.termux_packages.as_deref().unwrap_or(&[]),
+                Platform::Unsupported(_) => &[],
+            };
 
-        if let Platform::Debian = platform {
-            if let Some(custom_map) = &cat.custom {
-                if let Some(custom) = custom_map.get("debian") {
-                    let bin_path = expand_home(&custom.bin_symlink);
-                    let custom_status = if Path::new(&bin_path).exists() {
-                        "Installed (Custom binary)"
+            if !pkgs.is_empty() {
+                println!("  Packages:");
+                for pkg in pkgs {
+                    let status_str = if let Some(tracked) = state.packages.get(pkg) {
+                        if tracked.was_preexisting {
+                            "Pre-existing (system)"
+                        } else {
+                            "Installed by project-dots"
+                        }
+                    } else if platform.is_package_installed(pkg) {
+                        "Installed (untracked)"
                     } else {
                         "Not installed"
                     };
-                    println!("  Custom Installer (Debian):");
-                    println!("    - {} ({}) [{}]", custom.name, custom.url, custom_status);
+                    println!("    - {DIM_GRAY}{}{RESET} [{}]", pkg, status_str);
                 }
+            }
+
+            if let Platform::Debian = platform {
+                if let Some(custom_map) = &cat.custom {
+                    if let Some(custom) = custom_map.get("debian") {
+                        let bin_path = expand_home(&custom.bin_symlink);
+                        let custom_status = if Path::new(&bin_path).exists() {
+                            "Installed (Custom binary)"
+                        } else {
+                            "Not installed"
+                        };
+                        println!("  Custom Installer (Debian):");
+                        println!("    - {DIM_GRAY}{}{RESET} ({}) [{}]", custom.name, custom.url, custom_status);
+                    }
+                }
+            }
+            println!();
+        }
+    } else {
+        println!("\n=== Available Categories ===");
+
+        for (cat_name, cat) in &config.categories {
+            println!("\nCategory: {}", cat_name);
+            println!("  Description: {}", cat.description);
+
+            let mut all_pkgs: Vec<String> = match platform {
+                Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
+                Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
+                Platform::Unsupported(_) => Vec::new(),
+            };
+
+            if let Platform::Debian = platform {
+                if let Some(custom_map) = &cat.custom {
+                    if let Some(custom) = custom_map.get("debian") {
+                        all_pkgs.push(format!("{} (custom binary)", custom.name));
+                    }
+                }
+            }
+
+            if !all_pkgs.is_empty() {
+                println!("  Packages: {DIM_GRAY}{}{RESET}", all_pkgs.join(", "));
             }
         }
         println!();
