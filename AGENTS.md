@@ -1,23 +1,34 @@
-# AGENTS.md
+# AGENTS.md — project-dots
 
-Companion tool to the user's dotfiles: its purpose is to **install the packages/programs that complement the dotfiles** (bootstrap a fresh machine). Implementation is early-stage (WIP) — do not assume any conventions or tooling exist yet.
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.1`).
 
-## Facts
-- Binary crate `dots-install`, edition 2024 (`Cargo.toml`). No dependencies.
-- No CI, no tests, no lint/format config. Only entrypoint is `src/main.rs` (currently a WIP shell-command runner).
+## Project Facts
+- Binary crate `project-dots` v0.1.0-beta.1, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
+- Entrypoint: `src/main.rs`.
 - `.gitignore` ignores `/target` and `.codegraph`.
 
 ## Commands
-- Build/run: `cargo build` / `cargo run`
-- Check: `cargo clippy` (warning-only, not enforced)
+- Build / Run: `cargo build` / `cargo run`
+- Code linting: `cargo clippy` (warnings)
+- Type checking: `cargo check`
 
-## CodeGraph (fast file/symbol lookup)
-CodeGraph v1.5.0 is installed globally (`~/.local/bin/codegraph`) and its MCP server is registered in opencode, so `codegraph_*` MCP tools are available. Index lives in `.codegraph/` (gitignored).
+## CodeGraph (Fast file & symbol lookup)
+CodeGraph v1.5.0 is installed globally (`~/.local/bin/codegraph`) with an active MCP server.
 - Find files / symbols: `codegraph files`, `codegraph query <symbol>`
-- Explore an area (source + call paths): `codegraph explore "<topic>"`
-- Single symbol trail: `codegraph node <symbol>`
-- Freshness: `codegraph status`; run `codegraph sync` after edits (the MCP watcher also keeps the index fresh while opencode is running).
+- Explore area: `codegraph explore "<topic>"`
+- Sync index: `codegraph sync`
 
-## Gotchas
-- Before adding features (symlinks, shell profile edits, backup logic), confirm intended behavior with the user — the installer's contract is undefined.
-- If you add dependencies, keep them minimal; the crate is deliberately dependency-free so far.
+## Additional Documentation
+For detailed architecture, roadmap, and platform specifications, consult:
+- Planning and Roadmap: @docs/planning.md
+- Categories and Packages: @docs/categories.md
+- Debian & Termux Support: @docs/platforms.md
+
+## Rules and Conventions
+- Keep the codebase lightweight and modular in Rust.
+- Use concise bullet points for agent rules and documentation.
+- Always validate package names specific to Debian vs Termux.
+- Always respond in Spanish to the user in chat.
+- Confirm intended behavior with the user before adding major features (e.g., symlinks, backups).
+- **Git**: Load the `git-workflow` skill for git commands, aliases, and branch strategy.
