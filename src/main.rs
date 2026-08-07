@@ -3,22 +3,28 @@ mod installer;
 mod platform;
 mod state;
 
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
 use config::Config;
 use installer::{install_category, list_categories, remove_category};
 use platform::Platform;
 use state::State;
 
+const VERSION: &str = "0.1.0-beta.1";
+
 #[derive(Parser)]
 #[command(
     name = "project-dots",
     author = "user",
-    version = "0.1.0-beta.1",
-    about = "Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux"
+    about = "Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux",
+    disable_version_flag = true
 )]
 struct Cli {
+    /// Print version
+    #[arg(short = 'V', long = "version", action = clap::ArgAction::SetTrue)]
+    version: bool,
+
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
@@ -61,6 +67,19 @@ const BOLD_YELLOW: &str = "\x1b[1;33m";
 fn main() {
     let cli = Cli::parse();
 
+    if cli.version {
+        println!("{}", VERSION);
+        return;
+    }
+
+    let command = match cli.command {
+        Some(cmd) => cmd,
+        None => {
+            let _ = Cli::command().print_help();
+            return;
+        }
+    };
+
     let (config, config_source) = match Config::load() {
         Ok((cfg, src)) => (cfg, src),
         Err(e) => {
@@ -72,7 +91,7 @@ fn main() {
     let mut state = State::load();
     let platform = Platform::detect();
 
-    match cli.command {
+    match command {
         Commands::List { debug } => {
             println!("Loaded configuration from: {}", config_source);
             list_categories(&config, &state, &platform, debug);
