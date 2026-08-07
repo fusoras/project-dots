@@ -14,6 +14,7 @@ Companion tool for system provisioning and dotfiles package management by catego
 - Local Installation: `cargo install --path .` (installs `project-dots` executable to `~/.cargo/bin` or `$PATH`)
 - Code linting: `cargo clippy` (warnings)
 - Type checking: `cargo check`
+- Unit Testing: `cargo test -- --nocapture`
 
 ## CodeGraph (Fast file & symbol lookup)
 CodeGraph v1.5.0 is installed globally (`~/.local/bin/codegraph`) with an active MCP server.
@@ -22,10 +23,12 @@ CodeGraph v1.5.0 is installed globally (`~/.local/bin/codegraph`) with an active
 - Sync index: `codegraph sync`
 
 ## Additional Documentation
-For detailed architecture, roadmap, and platform specifications, consult:
+For detailed architecture, roadmap, CLI reference, and unit testing specifications, consult:
 - Planning and Roadmap: @docs/planning.md
 - Categories and Packages: @docs/categories.md
 - Debian & Termux Support: @docs/platforms.md
+- CLI Reference & Commands: @docs/commands.md
+- Unit Testing Guide: @docs/testing.md
 
 ## Rules and Conventions
 - Keep the codebase lightweight and modular in Rust.
@@ -34,4 +37,7 @@ For detailed architecture, roadmap, and platform specifications, consult:
 - Always validate package names specific to Debian vs Termux.
 - Always respond in Spanish to the user in chat.
 - Confirm intended behavior with the user before adding major features (e.g., symlinks, backups).
-- **Git**: Load the `git-workflow` skill for git commands, aliases, and branch strategy.
+- **Git Strategy & Modern Commands**:
+  - Never use `git checkout`. Use modern git commands (`git switch`, `git restore`).
+  - User Git Aliases: `git s` -> `git switch`, `git b` -> `git branch`.
+  - All development edits must be conducted on a development branch (`develop` or feature branches). Only merge into `main` once code is fully tested and verified to work cleanly.
