@@ -29,14 +29,10 @@ impl State {
     /// Loads the persistent state file, returning a default empty state if the file does not exist.
     pub fn load() -> Self {
         let path = Self::get_state_path();
-        if path.exists() {
-            if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(state) = toml::from_str(&content) {
-                    return state;
-                }
-            }
-        }
-        State::default()
+        let loaded = fs::read_to_string(path)
+            .ok()
+            .and_then(|content| toml::from_str(&content).ok());
+        loaded.unwrap_or_default()
     }
 
     /// Saves the persistent state file atomically by writing to a .tmp file and renaming it.
@@ -86,4 +82,30 @@ fn chrono_now_string() -> String {
     let start = SystemTime::now();
     let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap_or_default();
     format!("Timestamp({})", since_the_epoch.as_secs())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_track_package_logic() {
+        println!("\n🔍 [TEST] Safety Engine & Package State Tracking");
+        println!("   Explanation: Verifies that pre-existing system packages are flagged as protected to prevent accidental removal.");
+
+        let mut state = State::default();
+        state.track_package("git", "lazyvim-minimal", true);
+
+        let tracked = state.packages.get("git").expect("Package 'git' should be present in state tracking");
+        println!("   ✓ Package 'git' tracked successfully.");
+        println!("   ✓ State 'was_preexisting': {} (Protected against uninstallation)", tracked.was_preexisting);
+
+        assert!(tracked.was_preexisting);
+        assert!(!tracked.installed_by_dots);
+        assert_eq!(tracked.category, "lazyvim-minimal");
+
+        state.remove_package("git");
+        assert!(!state.packages.contains_key("git"));
+        println!("   ✓ Package removed from state tracking registry cleanly.\n");
+    }
 }

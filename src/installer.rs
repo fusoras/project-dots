@@ -51,19 +51,17 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform, debu
                 }
             }
 
-            if let Platform::Debian = platform {
-                if let Some(custom_map) = &cat.custom {
-                    if let Some(custom) = custom_map.get("debian") {
-                        let bin_path = expand_home(&custom.bin_symlink);
-                        let custom_status = if Path::new(&bin_path).exists() {
-                            "Installed (Custom binary)"
-                        } else {
-                            "Not installed"
-                        };
-                        println!("  Custom Installer (Debian):");
-                        println!("    - {DIM_GRAY}{}{RESET} ({}) [{}]", custom.name, custom.url, custom_status);
-                    }
-                }
+            if matches!(platform, Platform::Debian)
+                && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+            {
+                let bin_path = expand_home(&custom.bin_symlink);
+                let custom_status = if Path::new(&bin_path).exists() {
+                    "Installed (Custom binary)"
+                } else {
+                    "Not installed"
+                };
+                println!("  Custom Installer (Debian):");
+                println!("    - {DIM_GRAY}{}{RESET} ({}) [{}]", custom.name, custom.url, custom_status);
             }
             println!();
         }
@@ -80,12 +78,10 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform, debu
                 Platform::Unsupported(_) => Vec::new(),
             };
 
-            if let Platform::Debian = platform {
-                if let Some(custom_map) = &cat.custom {
-                    if let Some(custom) = custom_map.get("debian") {
-                        all_pkgs.push(format!("{} (custom binary)", custom.name));
-                    }
-                }
+            if matches!(platform, Platform::Debian)
+                && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+            {
+                all_pkgs.push(format!("{} (custom binary)", custom.name));
             }
 
             if !all_pkgs.is_empty() {
@@ -186,12 +182,10 @@ pub fn install_category(
             }
         }
 
-        if let Platform::Debian = platform {
-            if let Some(custom_map) = &cat.custom {
-                if let Some(custom) = custom_map.get("debian") {
-                    install_custom_debian(custom, cat_name, state, dry_run)?;
-                }
-            }
+        if matches!(platform, Platform::Debian)
+            && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+        {
+            install_custom_debian(custom, cat_name, state, dry_run)?;
         }
     }
 
@@ -384,29 +378,25 @@ pub fn remove_category(
             }
         }
 
-        if let Platform::Debian = platform {
-            if let Some(custom_map) = &cat.custom {
-                if let Some(custom) = custom_map.get("debian") {
-                    if let Some(tracked) = state.packages.get(&custom.name) {
-                        if !tracked.was_preexisting {
-                            let bin_path = expand_home(&custom.bin_symlink);
-                            if dry_run {
-                                println!("  [Dry-Run] Would remove symlink: {}", bin_path);
-                                println!("  [Dry-Run] Would execute: sudo rm -rf {}", custom.extract_dir);
-                            } else {
-                                println!("  [Removing] Removing custom binary '{}'...", custom.name);
-                                let _ = fs::remove_file(&bin_path);
-                                let _ = Command::new("sudo")
-                                    .arg("rm")
-                                    .arg("-rf")
-                                    .arg(&custom.extract_dir)
-                                    .status();
-                                state.remove_package(&custom.name);
-                                state.save_atomic()?;
-                            }
-                        }
-                    }
-                }
+        if matches!(platform, Platform::Debian)
+            && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+            && let Some(tracked) = state.packages.get(&custom.name)
+            && !tracked.was_preexisting
+        {
+            let bin_path = expand_home(&custom.bin_symlink);
+            if dry_run {
+                println!("  [Dry-Run] Would remove symlink: {}", bin_path);
+                println!("  [Dry-Run] Would execute: sudo rm -rf {}", custom.extract_dir);
+            } else {
+                println!("  [Removing] Removing custom binary '{}'...", custom.name);
+                let _ = fs::remove_file(&bin_path);
+                let _ = Command::new("sudo")
+                    .arg("rm")
+                    .arg("-rf")
+                    .arg(&custom.extract_dir)
+                    .status();
+                state.remove_package(&custom.name);
+                state.save_atomic()?;
             }
         }
     }
@@ -416,12 +406,11 @@ pub fn remove_category(
 
 /// Helper function to expand ~ to user's HOME directory in paths.
 pub fn expand_home(path: &str) -> String {
-    if path.starts_with("~/") {
-        if let Ok(home) = env::var("HOME") {
-            return format!("{}{}", home, &path[1..]);
-        }
+    if let (Some(stripped), Ok(home)) = (path.strip_prefix("~/"), env::var("HOME")) {
+        format!("{}/{}", home, stripped)
+    } else {
+        path.to_string()
     }
-    path.to_string()
 }
 
 /// Helper to check if a directory is in $PATH and print setup recommendations if missing.
@@ -435,5 +424,21 @@ fn check_path_and_recommend(dir: &Path) {
             println!("    - zsh:  echo 'export PATH=\"{}:$PATH\"' >> ~/.zshrc", dir_str);
             println!("    - fish: fish_add_path {}\n", dir_str);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_expand_home_utility() {
+        let path_with_tilde = "~/.local/bin/nvim";
+        let expanded = expand_home(path_with_tilde);
+        assert!(!expanded.starts_with("~/"), "Tilde should be expanded to full path");
+        assert!(expanded.ends_with(".local/bin/nvim"));
+
+        let absolute_path = "/opt/nvim/bin/nvim";
+        assert_eq!(expand_home(absolute_path), absolute_path);
     }
 }

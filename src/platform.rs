@@ -64,11 +64,14 @@ pub fn command_exists(cmd: &str) -> bool {
 pub fn check_apt_lock() -> Result<(), String> {
     let lock_file = Path::new("/var/lib/dpkg/lock-frontend");
     if lock_file.exists() {
-        // Attempting a non-blocking test via fuser or dpkg if available
-        if let Ok(output) = Command::new("fuser").arg("/var/lib/dpkg/lock-frontend").output() {
-            if output.status.success() && !output.stdout.is_empty() {
-                return Err("apt package manager is locked by another process (e.g. background update).".to_string());
-            }
+        let is_locked = Command::new("fuser")
+            .arg("/var/lib/dpkg/lock-frontend")
+            .output()
+            .map(|output| output.status.success() && !output.stdout.is_empty())
+            .unwrap_or(false);
+
+        if is_locked {
+            return Err("apt package manager is locked by another process (e.g. background update).".to_string());
         }
     }
     Ok(())
