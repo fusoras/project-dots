@@ -63,3 +63,23 @@ impl Config {
 pub fn dirs_home_dir() -> Option<PathBuf> {
     std::env::var_os("HOME").map(PathBuf::from)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_embedded_config_parsing() {
+        println!("\n🔍 [TEST] Embedded Default TOML Configuration Parsing");
+        println!("   Explanation: Verifies that the category catalog parses successfully and contains 'lazyvim-minimal'.");
+
+        let config: Result<Config, _> = toml::from_str(EMBEDDED_CONFIG);
+        assert!(config.is_ok(), "Embedded TOML should parse without errors");
+
+        let cfg = config.unwrap();
+        println!("   ✓ Valid TOML structure. Total categories loaded: {}", cfg.categories.len());
+
+        assert!(cfg.categories.contains_key("lazyvim-minimal"), "Must include 'lazyvim-minimal' category");
+        println!("   ✓ Category 'lazyvim-minimal' verified in catalog.\n");
+    }
+}
