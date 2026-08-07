@@ -9,7 +9,9 @@ Companion tool for system provisioning and dotfiles package management by catego
 - `.gitignore` ignores `/target` and `.codegraph`.
 
 ## Commands
-- Build / Run: `cargo build` / `cargo run`
+- Build / Run (Dev): `cargo build` / `cargo run`
+- Release Build: `cargo build --release` (binary at `./target/release/project-dots`)
+- Local Installation: `cargo install --path .` (installs `project-dots` executable to `~/.cargo/bin` or `$PATH`)
 - Code linting: `cargo clippy` (warnings)
 - Type checking: `cargo check`
 
@@ -28,6 +30,7 @@ For detailed architecture, roadmap, and platform specifications, consult:
 ## Rules and Conventions
 - Keep the codebase lightweight and modular in Rust.
 - Use concise bullet points for agent rules and documentation.
+- Present user-facing commands using the compiled binary (`project-dots <command>`) rather than `cargo run --`.
 - Always validate package names specific to Debian vs Termux.
 - Always respond in Spanish to the user in chat.
 - Confirm intended behavior with the user before adding major features (e.g., symlinks, backups).
