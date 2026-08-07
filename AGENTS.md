@@ -41,3 +41,4 @@ For detailed architecture, roadmap, CLI reference, and unit testing specificatio
   - Never use `git checkout`. Use modern git commands (`git switch`, `git restore`).
   - User Git Aliases: `git s` -> `git switch`, `git b` -> `git branch`.
   - All development edits must be conducted on a development branch (`develop` or feature branches). Only merge into `main` once code is fully tested and verified to work cleanly.
+  - **Explicit Merge Restriction**: Never execute a branch merge (`git merge`) unless the user explicitly instructs to merge in their message.
