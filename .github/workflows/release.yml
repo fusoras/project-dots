@@ -12,6 +12,9 @@ jobs:
   build-release:
     name: Build Release Binary (${{ matrix.target }})
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     strategy:
       matrix:
         include:
@@ -27,6 +30,7 @@ jobs:
       - name: Install aarch64 cross-linker & musl tools
         if: matrix.target == 'aarch64-unknown-linux-musl'
         run: |
+          set -Eeuo pipefail
           sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
 
       - name: Install Rust toolchain
@@ -38,10 +42,12 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-gnu-gcc
         run: |
+          set -Eeuo pipefail
           cargo build --release --target ${{ matrix.target }}
 
       - name: Package binary into tarball
         run: |
+          set -Eeuo pipefail
           tar -czf ${{ matrix.asset_name }} -C target/${{ matrix.target }}/release project-dots
 
       - name: Upload asset to GitHub Release

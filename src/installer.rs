@@ -1,18 +1,13 @@
+use crate::colors::*;
 use crate::config::{Config, CustomInstaller};
 use crate::platform::{check_apt_lock, command_exists, Platform};
 use crate::state::State;
+use anyhow::Context;
 use std::env;
 use std::fs;
 use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::process::Command;
-
-const BOLD_GREEN: &str = "\x1b[1;32m";
-const BOLD_BLUE: &str = "\x1b[1;34m";
-const BOLD_YELLOW: &str = "\x1b[1;33m";
-const WHITE: &str = "\x1b[37m";
-const RESET: &str = "\x1b[0m";
-const DIM_GRAY: &str = "\x1b[90m";
 
 /// Simplified list of all categories and contained packages on a single line per category.
 /// Format: <bold-green-category-name> (aliases) / pkg1, pkg2, pkg3 [apply]
@@ -23,15 +18,13 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform) {
     }
 
     for (cat_name, cat) in &config.categories {
-        let alias_part = if let Some(aliases) = &cat.aliases {
-            if !aliases.is_empty() {
-                format!(" ({})", aliases.join(", "))
-            } else {
+        let alias_part = cat.aliases.as_ref().map_or_else(String::new, |aliases| {
+            if aliases.is_empty() {
                 String::new()
+            } else {
+                format!(" ({})", aliases.join(", "))
             }
-        } else {
-            String::new()
-        };
+        });
 
         let mut pkgs: Vec<String> = match platform {
             Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
@@ -57,7 +50,7 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform) {
             String::new()
         };
 
-        println!("{BOLD_GREEN}{}{RESET}{} / {DIM_GRAY}{}{RESET}{}", cat_name, alias_part, pkgs_str, apply_suffix);
+        println!("{BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{pkgs_str}{RESET}{apply_suffix}");
     }
 }
 
@@ -94,10 +87,10 @@ pub fn show_category(
     config: &Config,
     state: &State,
     platform: &Platform,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     let canonical_key = config
         .resolve_category_key(category_query)
-        .ok_or_else(|| format!("Category or alias '{}' not found in configuration.", category_query))?;
+        .ok_or_else(|| anyhow::anyhow!("Category or alias '{category_query}' not found in configuration."))?;
 
     let cat = config.categories.get(canonical_key).unwrap();
 
@@ -107,9 +100,9 @@ pub fn show_category(
         .map(|a| a.join(", "))
         .unwrap_or_else(|| "none".to_string());
 
-    println!("\n{BOLD_GREEN}Category:{RESET} {}", canonical_key);
+    println!("\n{BOLD_GREEN}Category:{RESET} {canonical_key}");
     println!("{BOLD_BLUE}Description:{RESET} {}", cat.description);
-    println!("{BOLD_BLUE}Aliases:{RESET} {}", aliases_str);
+    println!("{BOLD_BLUE}Aliases:{RESET} {aliases_str}");
 
     let pkgs = match platform {
         Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
@@ -117,7 +110,7 @@ pub fn show_category(
         Platform::Unsupported(_) => &[],
     };
 
-    println!("\n{BOLD_BLUE}Packages ({:?}):{RESET}", platform);
+    println!("\n{BOLD_BLUE}Packages ({platform:?}):{RESET}");
     if pkgs.is_empty() {
         println!("  (No OS packages declared for this platform)");
     } else {
@@ -133,7 +126,7 @@ pub fn show_category(
             } else {
                 "Not installed"
             };
-            println!("  - {DIM_GRAY}{}{RESET} [{}]", pkg, status_str);
+            println!("  - {DIM_GRAY}{pkg}{RESET} [{status_str}]");
         }
     }
 
@@ -147,8 +140,8 @@ pub fn show_category(
             "Not installed"
         };
         println!("\n{BOLD_BLUE}Custom Binary Installer (Debian):{RESET}");
-        println!("  - {DIM_GRAY}{}{RESET} ({}) [{}]", custom.name, custom.url, custom_status);
-        println!("    Symlink: {} -> {}/bin/{}", bin_path, custom.extract_dir, custom.name);
+        println!("  - {DIM_GRAY}{}{RESET} ({}) [{custom_status}]", custom.name, custom.url);
+        println!("    Symlink: {bin_path} -> {}/bin/{}", custom.extract_dir, custom.name);
     }
 
     if let Some(copy_files) = &cat.copy_files {
@@ -157,14 +150,14 @@ pub fn show_category(
             let platform_info = action
                 .platform
                 .as_ref()
-                .map(|p| format!(" (Platform: {})", p))
+                .map(|p| format!(" (Platform: {p})"))
                 .unwrap_or_default();
             let only_if_info = if action.only_if_not_exists.unwrap_or(false) {
                 " [skip if exists]"
             } else {
                 ""
             };
-            println!("  - {} -> {}{}{}", action.src, action.dest, platform_info, only_if_info);
+            println!("  - {} -> {}{platform_info}{only_if_info}", action.src, action.dest);
         }
     }
 
@@ -174,14 +167,14 @@ pub fn show_category(
             let platform_info = cmd
                 .platform
                 .as_ref()
-                .map(|p| format!(" (Platform: {})", p))
+                .map(|p| format!(" (Platform: {p})"))
                 .unwrap_or_default();
-            println!("  - {}{}", cmd.command, platform_info);
+            println!("  - {}{platform_info}", cmd.command);
         }
     }
 
     if let Some(msg) = &cat.final_message {
-        println!("\n{BOLD_BLUE}Final Message:{RESET} {}", msg);
+        println!("\n{BOLD_BLUE}Final Message:{RESET} {msg}");
     }
 
     println!();
@@ -195,9 +188,9 @@ pub fn install_category(
     state: &mut State,
     platform: &Platform,
     dry_run: bool,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     if let Platform::Unsupported(reason) = platform {
-        return Err(format!("Unsupported platform: {}", reason));
+        anyhow::bail!("Unsupported platform: {reason}");
     }
 
     if let Platform::Debian = platform {
@@ -211,13 +204,13 @@ pub fn install_category(
                 let category_def = config.categories.get(canonical_key).unwrap();
                 vec![(canonical_key, category_def)]
             } else {
-                return Err(format!("Category or alias '{}' not found in configuration.", cat));
+                anyhow::bail!("Category or alias '{cat}' not found in configuration.");
             }
         }
     };
 
     for (cat_name, cat) in target_categories {
-        println!("\n--> Processing Category: {}", cat_name);
+        println!("\n--> Processing Category: {cat_name}");
 
         let pkgs = match platform {
             Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
@@ -227,7 +220,7 @@ pub fn install_category(
 
         for pkg in pkgs {
             if platform.is_package_installed(pkg) {
-                println!("  [SKIP] Package '{}' is already installed on OS.", pkg);
+                println!("  [SKIP] Package '{pkg}' is already installed on OS.");
                 state.track_package(pkg, cat_name, true);
                 state.save_atomic()?;
                 continue;
@@ -235,41 +228,41 @@ pub fn install_category(
 
             match platform {
                 Platform::Debian => {
-                    let cmd_str = format!("sudo apt install -y {}", pkg);
+                    let cmd_str = format!("sudo apt install -y {pkg}");
                     if dry_run {
-                        println!("  [Dry-Run] Would execute: {}", cmd_str);
+                        println!("  [Dry-Run] Would execute: {cmd_str}");
                     } else {
-                        println!("  [Installing] Executing: {}", cmd_str);
+                        println!("  [Installing] Executing: {cmd_str}");
                         let status = Command::new("sudo")
                             .arg("apt")
                             .arg("install")
                             .arg("-y")
                             .arg(pkg)
                             .status()
-                            .map_err(|e| format!("Failed to run apt install: {}", e))?;
+                            .context("Failed to run apt install")?;
 
                         if !status.success() {
-                            return Err(format!("apt install failed for package '{}'", pkg));
+                            anyhow::bail!("apt install failed for package '{pkg}'");
                         }
                         state.track_package(pkg, cat_name, false);
                         state.save_atomic()?;
                     }
                 }
                 Platform::Termux => {
-                    let cmd_str = format!("pkg install -y {}", pkg);
+                    let cmd_str = format!("pkg install -y {pkg}");
                     if dry_run {
-                        println!("  [Dry-Run] Would execute: {}", cmd_str);
+                        println!("  [Dry-Run] Would execute: {cmd_str}");
                     } else {
-                        println!("  [Installing] Executing: {}", cmd_str);
+                        println!("  [Installing] Executing: {cmd_str}");
                         let status = Command::new("pkg")
                             .arg("install")
                             .arg("-y")
                             .arg(pkg)
                             .status()
-                            .map_err(|e| format!("Failed to run pkg install: {}", e))?;
+                            .context("Failed to run pkg install")?;
 
                         if !status.success() {
-                            return Err(format!("pkg install failed for package '{}'", pkg));
+                            anyhow::bail!("pkg install failed for package '{pkg}'");
                         }
                         state.track_package(pkg, cat_name, false);
                         state.save_atomic()?;
@@ -295,9 +288,9 @@ pub fn install_category(
 
         if let Some(msg) = &cat.final_message {
             if dry_run {
-                println!("  [Dry-Run] Would show final message: {}", msg);
+                println!("  [Dry-Run] Would show final message: {msg}");
             } else {
-                println!("\n  {BOLD_YELLOW}>>> {}{RESET}", msg);
+                println!("\n  {BOLD_YELLOW}>>> {msg}{RESET}");
             }
         }
     }
@@ -309,7 +302,7 @@ fn process_copy_files(
     copy_files: &[crate::config::CopyFileAction],
     platform: &Platform,
     dry_run: bool,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     for action in copy_files {
         if let Some(target_platform) = &action.platform {
             let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
@@ -322,37 +315,37 @@ fn process_copy_files(
         let dest_path = Path::new(&dest_path_str);
 
         if action.only_if_not_exists.unwrap_or(false) && dest_path.exists() {
-            println!("  [SKIP] Destination file '{}' already exists.", dest_path_str);
+            println!("  [SKIP] Destination file '{dest_path_str}' already exists.");
             continue;
         }
 
         if dry_run {
-            println!("  [Dry-Run] Would copy configuration file '{}' -> '{}'", action.src, dest_path_str);
+            println!("  [Dry-Run] Would copy configuration file '{}' -> '{dest_path_str}'", action.src);
             continue;
         }
 
-        println!("  [Copying] Configuration file '{}' -> '{}'", action.src, dest_path_str);
+        println!("  [Copying] Configuration file '{}' -> '{dest_path_str}'", action.src);
 
         let content_bytes: Vec<u8> = if Path::new(&action.src).exists() {
             fs::read(&action.src)
-                .map_err(|e| format!("Failed to read source file {}: {}", action.src, e))?
+                .map_err(|e| anyhow::anyhow!("Failed to read source file {}: {e}", action.src))?
         } else if action.src == "config/shell-tokyonight/starship.toml" {
             crate::config::EMBEDDED_STARSHIP.as_bytes().to_vec()
         } else if action.src == "config/shell-tokyonight/font.ttf" {
             crate::config::EMBEDDED_FONT.to_vec()
         } else {
-            return Err(format!("Source file '{}' not found.", action.src));
+            anyhow::bail!("Source file '{}' not found.", action.src);
         };
 
         if let Some(parent) = dest_path.parent() {
             fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create directory {}: {}", parent.display(), e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to create directory {}: {e}", parent.display()))?;
         }
 
         fs::write(dest_path, content_bytes)
-            .map_err(|e| format!("Failed to write configuration to {}: {}", dest_path_str, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to write configuration to {dest_path_str}: {e}"))?;
 
-        println!("  [Success] Configuration file placed cleanly at '{}'", dest_path_str);
+        println!("  [Success] Configuration file placed cleanly at '{dest_path_str}'");
     }
     Ok(())
 }
@@ -361,7 +354,7 @@ fn process_post_install_commands(
     commands: &[crate::config::PostInstallCommand],
     platform: &Platform,
     dry_run: bool,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     for cmd in commands {
         if let Some(target_platform) = &cmd.platform {
             let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
@@ -373,12 +366,40 @@ fn process_post_install_commands(
         if cmd.command.contains("chsh") {
             let current_shell = env::var("SHELL").unwrap_or_default();
             if current_shell.ends_with("/zsh") {
-                println!("  [SKIP] Default shell is already Zsh ('{}').", current_shell);
+                println!("  [SKIP] Default shell is already Zsh ('{current_shell}').");
                 continue;
             }
         }
 
-        if dry_run {
+        let is_confirm_required = cmd.confirm.unwrap_or(false) || cmd.prompt.is_some();
+        if is_confirm_required {
+            let prompt_text = cmd
+                .prompt
+                .as_deref()
+                .unwrap_or("Do you want to run this post-install step?");
+
+            if dry_run {
+                println!("  [Dry-Run] Prompt: {prompt_text} [y/N]");
+                println!("  [Dry-Run] Would execute post-install command: {}", cmd.command);
+                continue;
+            }
+
+            use std::io::{self, Write};
+            print!("  {BOLD_YELLOW}? {prompt_text} [y/N]: {RESET}");
+            let _ = io::stdout().flush();
+            let mut input = String::new();
+            let confirmed = if io::stdin().read_line(&mut input).is_ok() {
+                let trimmed = input.trim().to_lowercase();
+                trimmed == "y" || trimmed == "yes"
+            } else {
+                false
+            };
+
+            if !confirmed {
+                println!("  [SKIP] Skipped by user choice.");
+                continue;
+            }
+        } else if dry_run {
             println!("  [Dry-Run] Would execute post-install command: {}", cmd.command);
             continue;
         }
@@ -388,10 +409,10 @@ fn process_post_install_commands(
             .arg("-c")
             .arg(&cmd.command)
             .status()
-            .map_err(|e| format!("Failed to execute post-install command '{}': {}", cmd.command, e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to execute post-install command '{}': {e}", cmd.command))?;
 
         if !status.success() {
-            println!("  [WARNING] Post-install command '{}' exited with status {}", cmd.command, status);
+            println!("  [WARNING] Post-install command '{}' exited with status {status}", cmd.command);
         } else {
             println!("  [Success] Post-install command completed: {}", cmd.command);
         }
@@ -405,11 +426,11 @@ fn install_custom_debian(
     cat_name: &str,
     state: &mut State,
     dry_run: bool,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     println!("  --> Custom Binary Installer: {}", custom.name);
 
     if !command_exists("curl") || !command_exists("tar") {
-        return Err("Prerequisite binaries 'curl' and 'tar' are required for custom downloads. Please install them first.".to_string());
+        anyhow::bail!("Prerequisite binaries 'curl' and 'tar' are required for custom downloads. Please install them first.");
     }
 
     let bin_path_buf = Path::new(&expand_home(&custom.bin_symlink)).to_path_buf();
@@ -429,18 +450,22 @@ fn install_custom_debian(
         return Ok(());
     }
 
-    let tmp_tarball = format!("/tmp/{}.tar.gz", custom.name);
+    let tmp_dir = env::temp_dir().join(format!("{}_install", custom.name));
+    fs::create_dir_all(&tmp_dir).context("Failed to create temp directory")?;
+    let tmp_tarball = tmp_dir.join(format!("{}.tar.gz", custom.name));
+
     println!("  [Downloading] Fetching latest tarball from {}...", custom.url);
     let curl_status = Command::new("curl")
-        .arg("-sSL")
+        .arg("-fsSL")
         .arg("-o")
         .arg(&tmp_tarball)
         .arg(&custom.url)
         .status()
-        .map_err(|e| format!("Failed to run curl: {}", e))?;
+        .context("Failed to run curl")?;
 
     if !curl_status.success() {
-        return Err(format!("Failed to download tarball from {}", custom.url));
+        let _ = fs::remove_dir_all(&tmp_dir);
+        anyhow::bail!("Failed to download tarball from {}", custom.url);
     }
 
     println!("  [Extracting] Moving to {}...", custom.extract_dir);
@@ -449,10 +474,11 @@ fn install_custom_debian(
         .arg("-p")
         .arg(&custom.extract_dir)
         .status()
-        .map_err(|e| format!("Failed to create extract directory: {}", e))?;
+        .context("Failed to create extract directory")?;
 
     if !mkdir_status.success() {
-        return Err(format!("Failed to create directory {}", custom.extract_dir));
+        let _ = fs::remove_dir_all(&tmp_dir);
+        anyhow::bail!("Failed to create directory {}", custom.extract_dir);
     }
 
     let tar_status = Command::new("sudo")
@@ -463,17 +489,17 @@ fn install_custom_debian(
         .arg(&custom.extract_dir)
         .arg("--strip-components=1")
         .status()
-        .map_err(|e| format!("Failed to extract tarball: {}", e))?;
+        .context("Failed to extract tarball")?;
 
-    let _ = fs::remove_file(&tmp_tarball);
+    let _ = fs::remove_dir_all(&tmp_dir);
 
     if !tar_status.success() {
-        return Err(format!("Failed to extract tarball to {}", custom.extract_dir));
+        anyhow::bail!("Failed to extract tarball to {}", custom.extract_dir);
     }
 
     let symlink_dir = bin_path_buf.parent().unwrap();
     fs::create_dir_all(symlink_dir)
-        .map_err(|e| format!("Failed to create symlink parent directory {}: {}", symlink_dir.display(), e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to create symlink parent directory {}: {e}", symlink_dir.display()))?;
 
     if bin_path_buf.exists() || bin_path_buf.is_symlink() {
         let _ = fs::remove_file(&bin_path_buf);
@@ -481,7 +507,7 @@ fn install_custom_debian(
 
     let target_bin = format!("{}/bin/{}", custom.extract_dir, custom.name);
     symlink(&target_bin, &bin_path_buf)
-        .map_err(|e| format!("Failed to create symlink at {}: {}", bin_path_buf.display(), e))?;
+        .map_err(|e| anyhow::anyhow!("Failed to create symlink at {}: {e}", bin_path_buf.display()))?;
 
     println!("  [Success] Installed {} to {} with symlink at {}", custom.name, custom.extract_dir, bin_path_buf.display());
     state.track_package(&custom.name, cat_name, false);
@@ -499,9 +525,9 @@ pub fn remove_category(
     state: &mut State,
     platform: &Platform,
     dry_run: bool,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     if let Platform::Unsupported(reason) = platform {
-        return Err(format!("Unsupported platform: {}", reason));
+        anyhow::bail!("Unsupported platform: {reason}");
     }
 
     if let Platform::Debian = platform {
@@ -515,13 +541,13 @@ pub fn remove_category(
                 let category_def = config.categories.get(canonical_key).unwrap();
                 vec![(canonical_key, category_def)]
             } else {
-                return Err(format!("Category or alias '{}' not found in configuration.", cat));
+                anyhow::bail!("Category or alias '{cat}' not found in configuration.");
             }
         }
     };
 
     for (cat_name, cat) in target_categories {
-        println!("\n--> Processing Removal for Category: {}", cat_name);
+        println!("\n--> Processing Removal for Category: {cat_name}");
 
         let pkgs = match platform {
             Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
@@ -532,51 +558,51 @@ pub fn remove_category(
         for pkg in pkgs {
             if let Some(tracked) = state.packages.get(pkg) {
                 if tracked.was_preexisting {
-                    println!("  [SKIP] Package '{}' was pre-existing on system before project-dots. Skipping removal.", pkg);
+                    println!("  [SKIP] Package '{pkg}' was pre-existing on system before project-dots. Skipping removal.");
                     continue;
                 }
             } else {
-                println!("  [SKIP] Package '{}' was not installed by project-dots. Skipping removal.", pkg);
+                println!("  [SKIP] Package '{pkg}' was not installed by project-dots. Skipping removal.");
                 continue;
             }
 
             match platform {
                 Platform::Debian => {
-                    let cmd_str = format!("sudo apt remove -y {}", pkg);
+                    let cmd_str = format!("sudo apt remove -y {pkg}");
                     if dry_run {
-                        println!("  [Dry-Run] Would execute: {}", cmd_str);
+                        println!("  [Dry-Run] Would execute: {cmd_str}");
                     } else {
-                        println!("  [Removing] Executing: {}", cmd_str);
+                        println!("  [Removing] Executing: {cmd_str}");
                         let status = Command::new("sudo")
                             .arg("apt")
                             .arg("remove")
                             .arg("-y")
                             .arg(pkg)
                             .status()
-                            .map_err(|e| format!("Failed to run apt remove: {}", e))?;
+                            .context("Failed to run apt remove")?;
 
                         if !status.success() {
-                            return Err(format!("apt remove failed for package '{}'", pkg));
+                            anyhow::bail!("apt remove failed for package '{pkg}'");
                         }
                         state.remove_package(pkg);
                         state.save_atomic()?;
                     }
                 }
                 Platform::Termux => {
-                    let cmd_str = format!("pkg remove -y {}", pkg);
+                    let cmd_str = format!("pkg remove -y {pkg}");
                     if dry_run {
-                        println!("  [Dry-Run] Would execute: {}", cmd_str);
+                        println!("  [Dry-Run] Would execute: {cmd_str}");
                     } else {
-                        println!("  [Removing] Executing: {}", cmd_str);
+                        println!("  [Removing] Executing: {cmd_str}");
                         let status = Command::new("pkg")
                             .arg("remove")
                             .arg("-y")
                             .arg(pkg)
                             .status()
-                            .map_err(|e| format!("Failed to run pkg remove: {}", e))?;
+                            .context("Failed to run pkg remove")?;
 
                         if !status.success() {
-                            return Err(format!("pkg remove failed for package '{}'", pkg));
+                            anyhow::bail!("pkg remove failed for package '{pkg}'");
                         }
                         state.remove_package(pkg);
                         state.save_atomic()?;
@@ -593,16 +619,22 @@ pub fn remove_category(
         {
             let bin_path = expand_home(&custom.bin_symlink);
             if dry_run {
-                println!("  [Dry-Run] Would remove symlink: {}", bin_path);
+                println!("  [Dry-Run] Would remove symlink: {bin_path}");
                 println!("  [Dry-Run] Would execute: sudo rm -rf {}", custom.extract_dir);
             } else {
                 println!("  [Removing] Removing custom binary '{}'...", custom.name);
-                let _ = fs::remove_file(&bin_path);
-                let _ = Command::new("sudo")
-                    .arg("rm")
-                    .arg("-rf")
-                    .arg(&custom.extract_dir)
-                    .status();
+                if let Err(e) = fs::remove_file(&bin_path) {
+                    eprintln!("  [WARN] Failed to remove symlink {bin_path}: {e}");
+                }
+                match Command::new("sudo").args(["rm", "-rf", &custom.extract_dir]).status() {
+                    Ok(s) if !s.success() => {
+                        eprintln!("  [WARN] sudo rm -rf {} exited with {s}", custom.extract_dir);
+                    }
+                    Err(e) => {
+                        eprintln!("  [WARN] Failed to run sudo rm: {e}");
+                    }
+                    _ => {}
+                }
                 state.remove_package(&custom.name);
                 state.save_atomic()?;
             }
@@ -615,7 +647,7 @@ pub fn remove_category(
 /// Helper function to expand ~ to user's HOME directory in paths.
 pub fn expand_home(path: &str) -> String {
     if let (Some(stripped), Ok(home)) = (path.strip_prefix("~/"), env::var("HOME")) {
-        format!("{}/{}", home, stripped)
+        format!("{home}/{stripped}")
     } else {
         path.to_string()
     }
@@ -626,11 +658,11 @@ fn check_path_and_recommend(dir: &Path) {
     if let Ok(path_var) = env::var("PATH") {
         let dir_str = dir.to_string_lossy();
         if !path_var.split(':').any(|p| p == dir_str) {
-            println!("\n  [TIP] '{}' is NOT in your current $PATH environment variable!", dir_str);
+            println!("\n  [TIP] '{dir_str}' is NOT in your current $PATH environment variable!");
             println!("  To access binaries directly from anywhere, add it to your shell configuration:");
-            println!("    - bash: echo 'export PATH=\"{}:$PATH\"' >> ~/.bashrc", dir_str);
-            println!("    - zsh:  echo 'export PATH=\"{}:$PATH\"' >> ~/.zshrc", dir_str);
-            println!("    - fish: fish_add_path {}\n", dir_str);
+            println!("    - bash: echo 'export PATH=\"{dir_str}:$PATH\"' >> ~/.bashrc");
+            println!("    - zsh:  echo 'export PATH=\"{dir_str}:$PATH\"' >> ~/.zshrc");
+            println!("    - fish: fish_add_path {dir_str}\n");
         }
     }
 }
@@ -640,7 +672,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_expand_home_utility() {
+    fn expand_home_should_replace_tilde_with_home_dir() {
         let path_with_tilde = "~/.local/bin/nvim";
         let expanded = expand_home(path_with_tilde);
         assert!(!expanded.starts_with("~/"), "Tilde should be expanded to full path");
@@ -651,7 +683,7 @@ mod tests {
     }
 
     #[test]
-    fn test_process_copy_files_dry_run() {
+    fn copy_files_should_succeed_in_dry_run_mode() {
         let copy_actions = vec![crate::config::CopyFileAction {
             src: "config/shell-tokyonight/starship.toml".to_string(),
             dest: "~/.config/starship.toml".to_string(),
@@ -663,7 +695,7 @@ mod tests {
     }
 
     #[test]
-    fn test_process_copy_files_termux_font_dry_run() {
+    fn copy_files_should_filter_by_platform_in_dry_run() {
         let copy_actions = vec![crate::config::CopyFileAction {
             src: "config/shell-tokyonight/font.ttf".to_string(),
             dest: "~/.termux/font.ttf".to_string(),
@@ -678,29 +710,37 @@ mod tests {
     }
 
     #[test]
-    fn test_process_post_install_commands_dry_run() {
+    fn post_install_should_preview_commands_in_dry_run() {
         let commands = vec![crate::config::PostInstallCommand {
             command: "chsh -s $(which zsh)".to_string(),
             platform: Some("debian".to_string()),
+            prompt: None,
+            confirm: None,
         }];
         let res = process_post_install_commands(&commands, &Platform::Debian, true);
         assert!(res.is_ok(), "Post install commands dry-run should succeed");
     }
 
     #[test]
-    fn test_process_post_install_commands_platform_filter() {
+    fn post_install_should_filter_commands_by_platform() {
         let commands = vec![
             crate::config::PostInstallCommand {
                 command: "chsh -s $(which zsh)".to_string(),
                 platform: Some("debian".to_string()),
+                prompt: None,
+                confirm: None,
             },
             crate::config::PostInstallCommand {
                 command: "chsh -s zsh".to_string(),
                 platform: Some("termux".to_string()),
+                prompt: None,
+                confirm: None,
             },
             crate::config::PostInstallCommand {
                 command: "echo common".to_string(),
                 platform: None,
+                prompt: None,
+                confirm: None,
             },
         ];
         let res_debian = process_post_install_commands(&commands, &Platform::Debian, true);
@@ -710,14 +750,14 @@ mod tests {
     }
 
     #[test]
-    fn test_list_categories_output() {
+    fn list_categories_should_include_all_configured_categories() {
         let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
         let state = State::load();
         list_categories(&config, &state, &Platform::Debian);
     }
 
     #[test]
-    fn test_show_category_resolution() {
+    fn show_category_should_resolve_canonical_name_and_alias() {
         let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
         let state = State::load();
         let platform = Platform::Debian;
@@ -727,3 +767,4 @@ mod tests {
         assert!(show_category("nonexistent", &config, &state, &platform).is_err());
     }
 }
+

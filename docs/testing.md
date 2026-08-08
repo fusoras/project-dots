@@ -19,6 +19,7 @@ cargo test -- --nocapture
 | `test_embedded_config_parsing` | `src/config.rs` | Verifies TOML configuration deserialization, embedded fallback loader (`include_str!`), and presence of default categories. |
 | `test_category_alias_resolution` | `src/config.rs` | Verifies resolution of category aliases (e.g., `lzv-min` -> `lazyvim-minimal`). |
 | `test_embedded_final_message` | `src/config.rs` | Verifies the embedded `shell-tokyonight` category declares a `final_message` hinting to restart the terminal. |
+| `test_category_uniqueness` | `src/config.rs` | Verifies that category names and aliases are strictly unique with no duplicate names or collisions. |
 | `test_track_package_logic` | `src/state.rs` | Verifies package state registration, pre-existence flagging (`was_preexisting = true`), protection against accidental removal, and clean state removal. |
 | `test_expand_home_utility` | `src/installer.rs` | Verifies path expansion from tilde paths (`~/.local/bin/nvim`) to absolute user paths (`/home/user/.local/bin/nvim`). |
 | `test_process_copy_files_dry_run` | `src/installer.rs` | Verifies dry-run preview execution for `copy_files` actions without modifying filesystem. |
@@ -32,6 +33,7 @@ cargo test -- --nocapture
 | `test_platform_asset_resolution` | `src/update.rs` | Verifies target release asset resolution for Debian (`x86_64`) vs Termux (`aarch64-musl`). |
 | `test_self_uninstall_dry_run` | `src/update.rs` | Verifies dry-run preview for `self-uninstall` executable and state/config removal. |
 | `test_add_subcommand` | `src/main.rs` | Verifies parsing of the `add` subcommand. |
+| `test_add_subcommand_multiple_categories` | `src/main.rs` | Verifies capturing of trailing category arguments when attempting to add multiple categories at once. |
 
 ---
 

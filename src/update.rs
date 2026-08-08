@@ -1,106 +1,116 @@
+use crate::colors::*;
 use crate::platform::{command_exists, Platform};
+use anyhow::Context;
 use std::env;
 use std::fs;
 use std::process::Command;
+
+/// Resolves the release asset name for a given platform.
+pub fn resolve_asset_name(platform: &Platform) -> anyhow::Result<&'static str> {
+    match platform {
+        Platform::Debian => Ok("project-dots-x86_64-unknown-linux-gnu.tar.gz"),
+        Platform::Termux => Ok("project-dots-aarch64-unknown-linux-musl.tar.gz"),
+        Platform::Unsupported(reason) => anyhow::bail!("Unsupported platform for self-update: {reason}"),
+    }
+}
 
 /// Checks for updates via GitHub Releases API and performs self-update or dry-run simulation.
 pub fn check_and_perform_update(
     current_version: &str,
     platform: &Platform,
     dry_run: bool,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     println!("Checking GitHub Releases for updates...");
-    println!("Current version: v{}", current_version);
+    println!("Current version: v{current_version}");
 
     if !command_exists("curl") {
-        return Err("Prerequisite binary 'curl' is required for self-update checks.".to_string());
+        anyhow::bail!("Prerequisite binary 'curl' is required for self-update checks.");
     }
 
     // Default GitHub repository path (overridable via PROJECT_DOTS_REPO env var for testing)
     let repo = env::var("PROJECT_DOTS_REPO").unwrap_or_else(|_| "fusoras/project-dots".to_string());
-    let api_url = format!("https://api.github.com/repos/{}/releases/latest", repo);
+    let api_url = format!("https://api.github.com/repos/{repo}/releases/latest");
 
     // Fetch latest release payload or construct tag query
-    let latest_tag = fetch_latest_release_tag(&api_url).unwrap_or_else(|_| format!("v{}", current_version));
-    println!("Latest release tag: {}", latest_tag);
+    let latest_tag = fetch_latest_release_tag(&api_url).unwrap_or_else(|_| format!("v{current_version}"));
+    println!("Latest release tag: {latest_tag}");
 
     if !is_newer_version(&latest_tag, current_version) {
-        println!("\n[Up-to-Date] project-dots is already running the latest version (v{}).", current_version);
-        return Ok(());
+        println!("\n[Up-to-Date] project-dots is already running the latest version (v{current_version}).");
+        Ok(())
+    } else {
+        let asset_name = resolve_asset_name(platform)?;
+        let download_url = format!("https://github.com/{repo}/releases/download/{latest_tag}/{asset_name}");
+
+        let current_exe = env::current_exe().context("Failed to locate current executable path")?;
+
+        if dry_run {
+            println!("\n[Dry-Run] Would download pre-compiled release binary asset: {asset_name}");
+            println!("  URL: {download_url}");
+            println!("  [Dry-Run] Would extract and replace executable at: {}", current_exe.display());
+            Ok(())
+        } else {
+            println!("\n[Downloading] Fetching release binary from {download_url}...");
+            let tmp_dir = env::temp_dir().join("project_dots_update");
+            fs::create_dir_all(&tmp_dir).context("Failed to create temp directory")?;
+            let tmp_tarball = tmp_dir.join("update.tar.gz");
+
+            let curl_status = Command::new("curl")
+                .arg("-fsSL")
+                .arg("-o")
+                .arg(&tmp_tarball)
+                .arg(&download_url)
+                .status()
+                .context("Failed to execute curl")?;
+
+            if !curl_status.success() {
+                anyhow::bail!("Failed to download update binary from {download_url}");
+            }
+
+            let extract_status = Command::new("tar")
+                .arg("-xzf")
+                .arg(&tmp_tarball)
+                .arg("-C")
+                .arg(&tmp_dir)
+                .status()
+                .context("Failed to extract update tarball")?;
+
+            if !extract_status.success() {
+                anyhow::bail!("Failed to extract update tarball payload.");
+            }
+
+            let new_binary = tmp_dir.join("project-dots");
+            if !new_binary.exists() {
+                anyhow::bail!("Extracted tarball did not contain expected 'project-dots' binary.");
+            }
+
+            // Atomic binary replacement
+            let backup_exe = current_exe.with_extension("old");
+            if let Err(e) = fs::rename(&current_exe, &backup_exe) {
+                eprintln!("[WARN] Failed to backup current binary: {e}");
+            }
+
+            fs::copy(&new_binary, &current_exe)
+                .map_err(|e| anyhow::anyhow!("Failed to replace executable at {}: {e}", current_exe.display()))?;
+
+            if let Err(e) = fs::remove_file(&backup_exe) {
+                eprintln!("[WARN] Failed to remove backup file: {e}");
+            }
+            if let Err(e) = fs::remove_dir_all(&tmp_dir) {
+                eprintln!("[WARN] Failed to clean up temp dir: {e}");
+            }
+
+            println!("\n{BOLD_GREEN}Self-update completed successfully!{RESET}");
+            println!("Updated binary placed at: {}", current_exe.display());
+
+            Ok(())
+        }
     }
-
-    let asset_name = match platform {
-        Platform::Debian => "project-dots-x86_64-unknown-linux-gnu.tar.gz",
-        Platform::Termux => "project-dots-aarch64-unknown-linux-musl.tar.gz",
-        Platform::Unsupported(reason) => return Err(format!("Unsupported platform for self-update: {}", reason)),
-    };
-
-    let download_url = format!(
-        "https://github.com/{}/releases/download/{}/{}",
-        repo, latest_tag, asset_name
-    );
-
-    let current_exe = env::current_exe().map_err(|e| format!("Failed to locate current executable path: {}", e))?;
-
-    if dry_run {
-        println!("\n[Dry-Run] Would download pre-compiled release binary asset: {}", asset_name);
-        println!("  URL: {}", download_url);
-        println!("  [Dry-Run] Would extract and replace executable at: {}", current_exe.display());
-        return Ok(());
-    }
-
-    println!("\n[Downloading] Fetching release binary from {}...", download_url);
-    let tmp_dir = env::temp_dir().join("project_dots_update");
-    let _ = fs::create_dir_all(&tmp_dir);
-    let tmp_tarball = tmp_dir.join("update.tar.gz");
-
-    let curl_status = Command::new("curl")
-        .arg("-sSL")
-        .arg("-o")
-        .arg(&tmp_tarball)
-        .arg(&download_url)
-        .status()
-        .map_err(|e| format!("Failed to execute curl: {}", e))?;
-
-    if !curl_status.success() {
-        return Err(format!("Failed to download update binary from {}", download_url));
-    }
-
-    let extract_status = Command::new("tar")
-        .arg("-xzf")
-        .arg(&tmp_tarball)
-        .arg("-C")
-        .arg(&tmp_dir)
-        .status()
-        .map_err(|e| format!("Failed to extract update tarball: {}", e))?;
-
-    if !extract_status.success() {
-        return Err("Failed to extract update tarball payload.".to_string());
-    }
-
-    let new_binary = tmp_dir.join("project-dots");
-    if !new_binary.exists() {
-        return Err("Extracted tarball did not contain expected 'project-dots' binary.".to_string());
-    }
-
-    // Atomic binary replacement
-    let backup_exe = current_exe.with_extension("old");
-    let _ = fs::rename(&current_exe, &backup_exe);
-    fs::copy(&new_binary, &current_exe)
-        .map_err(|e| format!("Failed to replace executable at {}: {}", current_exe.display(), e))?;
-    let _ = fs::remove_file(&backup_exe);
-    let _ = fs::remove_dir_all(&tmp_dir);
-
-    println!("\n\x1b[1;32mSelf-update completed successfully!\x1b[0m");
-    println!("Updated binary placed at: {}", current_exe.display());
-
-    Ok(())
 }
 
 /// Safely removes project-dots binary executable and state/config directories.
-pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> Result<(), String> {
-    let current_exe = env::current_exe()
-        .map_err(|e| format!("Failed to resolve current binary path: {}", e))?;
+pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> anyhow::Result<()> {
+    let current_exe = env::current_exe().context("Failed to resolve current binary path")?;
 
     let state_path = crate::state::State::get_state_path();
     let state_dir = state_path.parent().unwrap_or(&state_path);
@@ -143,7 +153,7 @@ pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> Result<(), S
     // 1. Remove binary executable
     if current_exe.exists() {
         fs::remove_file(&current_exe)
-            .map_err(|e| format!("Failed to remove binary at {}: {}", current_exe.display(), e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to remove binary at {}: {e}", current_exe.display()))?;
         println!("✓ Executable removed: {}", current_exe.display());
     }
 
@@ -151,37 +161,37 @@ pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> Result<(), S
     if remove_config {
         if state_dir.exists() {
             fs::remove_dir_all(state_dir)
-                .map_err(|e| format!("Failed to remove state directory at {}: {}", state_dir.display(), e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to remove state directory at {}: {e}", state_dir.display()))?;
             println!("✓ State directory removed: {}", state_dir.display());
         }
         if config_dir.as_ref().is_some_and(|d| d.exists()) {
             let cfg_dir = config_dir.as_ref().unwrap();
             fs::remove_dir_all(cfg_dir)
-                .map_err(|e| format!("Failed to remove config directory at {}: {}", cfg_dir.display(), e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to remove config directory at {}: {e}", cfg_dir.display()))?;
             println!("✓ Config directory removed: {}", cfg_dir.display());
         }
     } else {
         println!("[Preserved] Configuration and state directories kept intact.");
     }
 
-    println!("\n\x1b[1;32mproject-dots uninstalled successfully!\x1b[0m");
+    println!("\n{BOLD_GREEN}project-dots uninstalled successfully!{RESET}");
     println!("Tip: Remember to remove PATH entries from ~/.zshrc or ~/.bashrc if no longer needed.");
 
     Ok(())
 }
 
 /// Fetches the tag_name from GitHub Releases API response using curl.
-fn fetch_latest_release_tag(url: &str) -> Result<String, String> {
+fn fetch_latest_release_tag(url: &str) -> anyhow::Result<String> {
     let output = Command::new("curl")
-        .arg("-sSL")
+        .arg("-fsSL")
         .arg("-H")
         .arg("User-Agent: project-dots-cli")
         .arg(url)
         .output()
-        .map_err(|e| format!("curl failed: {}", e))?;
+        .context("curl failed")?;
 
     if !output.status.success() {
-        return Err("curl failed to fetch releases".to_string());
+        anyhow::bail!("curl failed to fetch releases");
     }
 
     let body = String::from_utf8_lossy(&output.stdout);
@@ -192,7 +202,7 @@ fn fetch_latest_release_tag(url: &str) -> Result<String, String> {
         return Ok(remainder[start..end].to_string());
     }
 
-    Err("tag_name not found in release response".to_string())
+    anyhow::bail!("tag_name not found in release response")
 }
 
 /// Helper function to compare release tags against the current semver version string.
@@ -203,7 +213,6 @@ pub fn is_newer_version(latest_tag: &str, current_version: &str) -> bool {
 
 /// Basic semver string comparison logic.
 fn semver_greater(v1: &str, v2: &str) -> bool {
-    // Simple component comparison for v0.1.0-beta.2 vs v0.1.0-beta.1
     let parse_parts = |v: &str| {
         let main_part = v.split('-').next().unwrap_or(v);
         let nums: Vec<u32> = main_part.split('.').filter_map(|s| s.parse().ok()).collect();
@@ -229,48 +238,49 @@ fn semver_greater(v1: &str, v2: &str) -> bool {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_is_newer_version_logic() {
-        println!("\n🔍 [TEST] SemVer Version Comparison for Self-Update");
-        println!("   Explanation: Verifies that release tag versions (e.g. v0.1.0-beta.2) are correctly identified as newer than v0.1.0-beta.1.");
+    mod version_comparison {
+        use super::*;
 
-        assert!(is_newer_version("v0.1.0-beta.2", "0.1.0-beta.1"), "v0.1.0-beta.2 should be newer than 0.1.0-beta.1");
-        println!("   ✓ v0.1.0-beta.2 recognized as newer than 0.1.0-beta.1");
+        #[test]
+        fn newer_version_should_return_true_for_higher_beta() {
+            assert!(is_newer_version("v0.1.0-beta.2", "0.1.0-beta.1"));
+        }
 
-        assert!(!is_newer_version("v0.1.0-beta.1", "0.1.0-beta.1"), "Same version should not be newer");
-        println!("   ✓ Same version v0.1.0-beta.1 recognized as equal (not newer)");
+        #[test]
+        fn newer_version_should_return_false_for_same_version() {
+            assert!(!is_newer_version("v0.1.0-beta.1", "0.1.0-beta.1"));
+        }
 
-        assert!(!is_newer_version("v0.0.9", "0.1.0-beta.1"), "Older version should not be newer");
-        println!("   ✓ Older version v0.0.9 recognized as not newer.\n");
+        #[test]
+        fn newer_version_should_return_false_for_older_version() {
+            assert!(!is_newer_version("v0.0.9", "0.1.0-beta.1"));
+        }
     }
 
-    #[test]
-    fn test_platform_asset_resolution() {
-        println!("\n🔍 [TEST] Platform Release Asset Resolution");
-        println!("   Explanation: Verifies that Debian resolves to the x86_64 tarball asset and Termux to aarch64.");
+    mod asset_resolution {
+        use super::*;
 
-        let debian_asset = match Platform::Debian {
-            Platform::Debian => "project-dots-x86_64-unknown-linux-gnu.tar.gz",
-            _ => "unknown",
-        };
-        assert_eq!(debian_asset, "project-dots-x86_64-unknown-linux-gnu.tar.gz");
-        println!("   ✓ Debian target asset resolved correctly: {}", debian_asset);
+        #[test]
+        fn asset_name_should_match_debian_x86_64_triple() {
+            let asset = resolve_asset_name(&Platform::Debian).unwrap();
+            assert_eq!(asset, "project-dots-x86_64-unknown-linux-gnu.tar.gz");
+        }
 
-        let termux_asset = match Platform::Termux {
-            Platform::Termux => "project-dots-aarch64-unknown-linux-musl.tar.gz",
-            _ => "unknown",
-        };
-        assert_eq!(termux_asset, "project-dots-aarch64-unknown-linux-musl.tar.gz");
-        println!("   ✓ Termux target asset resolved correctly: {}\n", termux_asset);
+        #[test]
+        fn asset_name_should_match_termux_aarch64_triple() {
+            let asset = resolve_asset_name(&Platform::Termux).unwrap();
+            assert_eq!(asset, "project-dots-aarch64-unknown-linux-musl.tar.gz");
+        }
     }
 
-    #[test]
-    fn test_self_uninstall_dry_run() {
-        println!("\n🔍 [TEST] Self-Uninstall Engine (Dry-Run Simulation)");
-        println!("   Explanation: Verifies that perform_self_uninstall(true) previews executable and state directory removal cleanly without altering disk state.");
+    mod self_uninstall {
+        use super::*;
 
-        let result = perform_self_uninstall(true, false);
-        assert!(result.is_ok(), "Self-uninstall dry-run should complete cleanly");
-        println!("   ✓ Self-uninstall dry-run completed successfully.\n");
+        #[test]
+        fn self_uninstall_should_preview_without_deleting_in_dry_run() {
+            let result = perform_self_uninstall(true, false);
+            assert!(result.is_ok(), "Self-uninstall dry-run should complete cleanly");
+        }
     }
 }
+

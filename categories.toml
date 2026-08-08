@@ -11,6 +11,12 @@ url = "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_
 extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
 
+[[categories.lazyvim-minimal.post_install_commands]]
+prompt = "Do you want to clone LazyVim starter configuration to ~/.config/nvim (backups will be created if existing config found)?"
+confirm = true
+command = "if [ ! -d \"$HOME/.config/nvim/.git\" ]; then [ -d \"$HOME/.config/nvim\" ] && mv \"$HOME/.config/nvim\" \"$HOME/.config/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.local/share/nvim\" ] && mv \"$HOME/.local/share/nvim\" \"$HOME/.local/share/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.local/state/nvim\" ] && mv \"$HOME/.local/state/nvim\" \"$HOME/.local/state/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.cache/nvim\" ] && mv \"$HOME/.cache/nvim\" \"$HOME/.cache/nvim.bak.$(date +%Y%m%d%H%M%S)\"; git clone https://github.com/LazyVim/starter \"$HOME/.config/nvim\" && rm -rf \"$HOME/.config/nvim/.git\"; fi"
+
+
 [categories.shell-tokyonight]
 aliases = ["shell-tn"]
 description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git"
@@ -28,6 +34,18 @@ platform = "termux"
 
 [[categories.shell-tokyonight.post_install_commands]]
 command = "grep -qF 'eval \"$(starship init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'eval \"$(starship init zsh)\"' >> \"$HOME/.zshrc\""
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' >> \"$HOME/.zshrc\""
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-highlighting ~/.config/zsh/plugins/fast-syntax-highlighting 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/fast-syntax-highlighting/.git"
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/starship.toml"

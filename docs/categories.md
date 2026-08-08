@@ -54,6 +54,18 @@ platform = "termux"
 
 [[categories.shell-tokyonight.post_install_commands]]
 command = "grep -qF 'eval \"$(starship init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'eval \"$(starship init zsh)\"' >> \"$HOME/.zshrc\""
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' >> \"$HOME/.zshrc\""
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-highlighting ~/.config/zsh/plugins/fast-syntax-highlighting 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/fast-syntax-highlighting/.git"
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' >> \"$HOME/.zshrc\""
 ```
 
 ## Category Aliases

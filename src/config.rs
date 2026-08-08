@@ -37,6 +37,8 @@ pub struct CopyFileAction {
 pub struct PostInstallCommand {
     pub command: String,
     pub platform: Option<String>,
+    pub prompt: Option<String>,
+    pub confirm: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,13 +54,13 @@ pub struct CustomInstaller {
 impl Config {
     /// Loads configuration from local ./categories.toml, ~/.config/project-dots/categories.toml,
     /// or falls back to the embedded default configuration compiled into the binary.
-    pub fn load() -> Result<(Self, String), String> {
+    pub fn load() -> anyhow::Result<(Self, String)> {
         let local_path = Path::new("categories.toml");
         if local_path.exists() {
             let content = fs::read_to_string(local_path)
-                .map_err(|e| format!("Failed to read local categories.toml: {}", e))?;
-            let config: Config = toml::from_str(&content)
-                .map_err(|e| format!("Failed to parse local categories.toml: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to read local categories.toml: {e}"))?;
+            let config: Self = toml::from_str(&content)
+                .map_err(|e| anyhow::anyhow!("Failed to parse local categories.toml: {e}"))?;
             return Ok((config, "./categories.toml".to_string()));
         }
 
@@ -66,15 +68,15 @@ impl Config {
             let xdg_path = home.join(".config/project-dots/categories.toml");
             if xdg_path.exists() {
                 let content = fs::read_to_string(&xdg_path)
-                    .map_err(|e| format!("Failed to read {}: {}", xdg_path.display(), e))?;
-                let config: Config = toml::from_str(&content)
-                    .map_err(|e| format!("Failed to parse {}: {}", xdg_path.display(), e))?;
+                    .map_err(|e| anyhow::anyhow!("Failed to read {}: {e}", xdg_path.display()))?;
+                let config: Self = toml::from_str(&content)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse {}: {e}", xdg_path.display()))?;
                 return Ok((config, xdg_path.to_string_lossy().to_string()));
             }
         }
 
-        let config: Config = toml::from_str(EMBEDDED_CONFIG)
-            .map_err(|e| format!("Failed to parse embedded default categories.toml: {}", e))?;
+        let config: Self = toml::from_str(EMBEDDED_CONFIG)
+            .map_err(|e| anyhow::anyhow!("Failed to parse embedded default categories.toml: {e}"))?;
         Ok((config, "Embedded default configuration".to_string()))
     }
 
@@ -109,7 +111,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_embedded_config_parsing() {
+    fn embedded_config_should_parse_and_contain_default_categories() {
         println!("\n🔍 [TEST] Embedded Default TOML Configuration Parsing");
         println!("   Explanation: Verifies that the category catalog parses successfully and contains 'lazyvim-minimal'.");
 
@@ -124,7 +126,7 @@ mod tests {
     }
 
     #[test]
-    fn test_category_alias_resolution() {
+    fn alias_resolution_should_match_canonical_and_alias_keys() {
         let config: Config = toml::from_str(EMBEDDED_CONFIG).expect("Should parse embedded config");
 
         // Direct canonical name match
@@ -138,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn test_embedded_final_message() {
+    fn shell_tokyonight_should_declare_terminal_restart_message() {
         let config: Config = toml::from_str(EMBEDDED_CONFIG).expect("Should parse embedded config");
 
         let cat = config
@@ -151,4 +153,29 @@ mod tests {
             .expect("shell-tokyonight should declare a final_message");
         assert!(msg.to_lowercase().contains("terminal"), "Final message should hint to restart the terminal");
     }
+
+    #[test]
+    fn category_names_and_aliases_should_not_have_exact_duplicates() {
+        use std::collections::HashSet;
+
+        let config: Config = toml::from_str(EMBEDDED_CONFIG).expect("Should parse embedded config");
+        let mut seen_keys = HashSet::new();
+
+        for (key, category) in &config.categories {
+            assert!(
+                seen_keys.insert(key.to_lowercase()),
+                "Duplicate category name found: '{key}'"
+            );
+
+            if let Some(aliases) = &category.aliases {
+                for alias in aliases {
+                    assert!(
+                        seen_keys.insert(alias.to_lowercase()),
+                        "Duplicate category alias or collision with category name found: '{alias}'"
+                    );
+                }
+            }
+        }
+    }
 }
+

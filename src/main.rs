@@ -1,9 +1,11 @@
+mod colors;
 mod config;
 mod installer;
 mod platform;
 mod state;
 mod update;
 
+use crate::colors::*;
 use clap::{CommandFactory, Parser, Subcommand};
 use config::Config;
 use installer::{install_category, list_categories, remove_category, show_category};
@@ -11,7 +13,8 @@ use platform::Platform;
 use state::State;
 use update::check_and_perform_update;
 
-const VERSION: &str = "0.1.0-beta.10";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 const DIM_GRAY: &str = "\x1b[90m";
 
 #[derive(Parser)]
@@ -46,6 +49,10 @@ enum Commands {
         /// Category name to add (e.g. 'shell-tokyonight', 'lazyvim-minimal'), or 'all'
         #[arg(default_value = "all")]
         category: String,
+
+        /// Additional categories specified after the primary category argument
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        trailing_categories: Vec<String>,
 
         /// Preview actions without running system package commands
         #[arg(short = 'n', long = "dry-run")]
@@ -93,11 +100,6 @@ enum Commands {
     },
 }
 
-const RESET: &str = "\x1b[0m";
-const BOLD_GREEN: &str = "\x1b[1;32m";
-const BOLD_RED: &str = "\x1b[1;31m";
-const BOLD_YELLOW: &str = "\x1b[1;33m";
-
 fn main() {
     let cli = Cli::parse();
 
@@ -136,17 +138,25 @@ fn main() {
         }
         Commands::Show { category } => {
             if let Err(e) = show_category(&category, &config, &state, &platform) {
-                eprintln!("{BOLD_RED}Error:{RESET} {}", e);
+                eprintln!("{BOLD_RED}Error:{RESET} {:?}", e);
                 std::process::exit(1);
             }
         }
-        Commands::Add { category, dry_run } => {
+        Commands::Add { category, trailing_categories, dry_run } => {
+            if !trailing_categories.is_empty() {
+                eprintln!(
+                    "{BOLD_RED}Error:{RESET} Cannot add multiple categories at the same time ('{}' and '{}'). Please run 'project-dots add <category>' for one category at a time, or use 'project-dots add all'.",
+                    category,
+                    trailing_categories.join(" ")
+                );
+                std::process::exit(1);
+            }
             if dry_run {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No system changes will be made ==={RESET}");
             }
             let cat_arg = if category == "all" { None } else { Some(category.as_str()) };
             if let Err(e) = install_category(cat_arg, &config, &mut state, &platform, dry_run) {
-                eprintln!("\n{BOLD_RED}Addition error:{RESET} {}", e);
+                eprintln!("\n{BOLD_RED}Addition error:{RESET} {:?}", e);
                 std::process::exit(1);
             }
             println!("\n{BOLD_GREEN}Addition processing completed successfully.{RESET}");
@@ -174,7 +184,7 @@ fn main() {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No system changes will be made ==={RESET}");
             }
             if let Err(e) = remove_category(cat_target, &config, &mut state, &platform, dry_run) {
-                eprintln!("\n{BOLD_RED}Removal error:{RESET} {}", e);
+                eprintln!("\n{BOLD_RED}Removal error:{RESET} {:?}", e);
                 std::process::exit(1);
             }
             println!("\n{BOLD_GREEN}Removal processing completed successfully.{RESET}");
@@ -184,7 +194,7 @@ fn main() {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No binary changes will be made ==={RESET}");
             }
             if let Err(e) = check_and_perform_update(VERSION, &platform, dry_run) {
-                eprintln!("\n{BOLD_RED}Self-update error:{RESET} {}", e);
+                eprintln!("\n{BOLD_RED}Self-update error:{RESET} {:?}", e);
                 std::process::exit(1);
             }
             println!("\n{BOLD_GREEN}Self-update processing completed successfully.{RESET}");
@@ -194,27 +204,40 @@ fn main() {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No files will be deleted ==={RESET}");
             }
             if let Err(e) = update::perform_self_uninstall(dry_run, yes) {
-                eprintln!("\n{BOLD_RED}Self-uninstall error:{RESET} {}", e);
+                eprintln!("\n{BOLD_RED}Self-uninstall error:{RESET} {:?}", e);
                 std::process::exit(1);
             }
         }
     }
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_add_subcommand() {
+    fn add_subcommand_should_parse_as_add_command() {
         let cli = Cli::try_parse_from(["project-dots", "add", "shell-tokyonight"]).expect("failed to parse add");
         assert!(matches!(cli.command, Some(Commands::Add { .. })));
     }
 
     #[test]
-    fn test_deprecated_install_subcommand_hint() {
+    fn add_subcommand_with_multiple_categories_should_capture_trailing() {
+        let cli = Cli::try_parse_from(["project-dots", "add", "shell-tokyonight", "lazyvim-minimal"]).expect("failed to parse multiple add");
+        if let Some(Commands::Add { category, trailing_categories, .. }) = cli.command {
+            assert_eq!(category, "shell-tokyonight");
+            assert_eq!(trailing_categories, vec!["lazyvim-minimal".to_string()]);
+        } else {
+            panic!("Expected Commands::Add");
+        }
+    }
+
+    #[test]
+    fn install_subcommand_should_parse_as_deprecated_hint() {
         let cli = Cli::try_parse_from(["project-dots", "install", "shell-tokyonight"]).expect("failed to parse install");
         assert!(matches!(cli.command, Some(Commands::Install { .. })));
     }
 }
+
 

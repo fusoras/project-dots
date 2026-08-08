@@ -25,27 +25,10 @@ Format: `v<MAJOR>.<MINOR>.<PATCH>-<PRERELEASE>` (e.g. `v0.1.0-beta.3`)
 
 When preparing a new release, update the version string across all 4 authoritative files:
 
-1. **`Cargo.toml`**:
-   ```toml
-   [package]
-   name = "project-dots"
-   version = "0.1.0-beta.3"
-   ```
-
-2. **`src/main.rs`**:
-   ```rust
-   const VERSION: &str = "0.1.0-beta.3";
-   ```
-
-3. **`install.sh`**:
-   ```sh
-   # project-dots (v0.1.0-beta.3) System Installer Script
-   ```
-
-4. **`AGENTS.md`**:
-   ```markdown
-   Companion tool for system provisioning... (version: `0.1.0-beta.3`).
-   ```
+## Version Locations
+The version number appears in **`Cargo.toml`** (`version = "0.1.0-beta.11"`).
+`src/main.rs` uses `env!("CARGO_PKG_VERSION")` to prevent version drift at compile time.
+`install.sh` and `AGENTS.md` should also be updated during version bumps.
 
 ---
 

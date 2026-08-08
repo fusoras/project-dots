@@ -70,7 +70,7 @@ pub fn command_exists(cmd: &str) -> bool {
 }
 
 /// Checks if apt lock frontend is locked on Debian systems.
-pub fn check_apt_lock() -> Result<(), String> {
+pub fn check_apt_lock() -> anyhow::Result<()> {
     let lock_file = Path::new("/var/lib/dpkg/lock-frontend");
     if lock_file.exists() {
         let is_locked = Command::new("fuser")
@@ -80,7 +80,7 @@ pub fn check_apt_lock() -> Result<(), String> {
             .unwrap_or(false);
 
         if is_locked {
-            return Err("apt package manager is locked by another process (e.g. background update).".to_string());
+            anyhow::bail!("apt package manager is locked by another process (e.g. background update).");
         }
     }
     Ok(())
@@ -91,7 +91,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_command_exists_utility() {
+    fn command_exists_should_find_cargo_in_path() {
         println!("\n🔍 [TEST] System Command Presence Check (PATH Inspection)");
         println!("   Explanation: Verifies that command_exists checks PATH directories directly without relying on external 'which'.");
 
@@ -102,3 +102,4 @@ mod tests {
         println!("   ✓ Non-existent command correctly identified as missing.\n");
     }
 }
+

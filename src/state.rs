@@ -26,32 +26,45 @@ impl State {
         home.join(".local/state/project-dots/state.toml")
     }
 
-    /// Loads the persistent state file, returning a default empty state if the file does not exist.
+    /// Loads the persistent state file, returning a default empty state if the file does not exist or is corrupt.
     pub fn load() -> Self {
         let path = Self::get_state_path();
-        let loaded = fs::read_to_string(path)
-            .ok()
-            .and_then(|content| toml::from_str(&content).ok());
-        loaded.unwrap_or_default()
+        if path.exists() {
+            match fs::read_to_string(&path) {
+                Ok(content) => match toml::from_str(&content) {
+                    Ok(state) => state,
+                    Err(e) => {
+                        eprintln!("[WARN] Failed to parse state TOML at {}: {e}", path.display());
+                        Self::default()
+                    }
+                },
+                Err(e) => {
+                    eprintln!("[WARN] Failed to read state file at {}: {e}", path.display());
+                    Self::default()
+                }
+            }
+        } else {
+            Self::default()
+        }
     }
 
     /// Saves the persistent state file atomically by writing to a .tmp file and renaming it.
-    pub fn save_atomic(&self) -> Result<(), String> {
+    pub fn save_atomic(&self) -> anyhow::Result<()> {
         let path = Self::get_state_path();
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create state directory {}: {}", parent.display(), e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to create state directory {}: {e}", parent.display()))?;
         }
 
         let tmp_path = path.with_extension("toml.tmp");
         let content = toml::to_string_pretty(self)
-            .map_err(|e| format!("Failed to serialize state TOML: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to serialize state TOML: {e}"))?;
 
         fs::write(&tmp_path, content)
-            .map_err(|e| format!("Failed to write temporary state file: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to write temporary state file: {e}"))?;
 
         fs::rename(&tmp_path, &path)
-            .map_err(|e| format!("Failed to atomically rename state file: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to atomically rename state file: {e}"))?;
 
         Ok(())
     }
@@ -89,7 +102,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_track_package_logic() {
+    fn track_package_should_flag_preexisting_as_protected() {
         println!("\n🔍 [TEST] Safety Engine & Package State Tracking");
         println!("   Explanation: Verifies that pre-existing system packages are flagged as protected to prevent accidental removal.");
 
@@ -109,3 +122,4 @@ mod tests {
         println!("   ✓ Package removed from state tracking registry cleanly.\n");
     }
 }
+
