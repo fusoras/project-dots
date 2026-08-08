@@ -22,7 +22,7 @@ const VERSION: &str = "0.1.0-beta.2";
 )]
 struct Cli {
     /// Print version
-    #[arg(short = 'V', long = "version", action = clap::ArgAction::SetTrue)]
+    #[arg(short = 'v', long = "version", action = clap::ArgAction::SetTrue)]
     version: bool,
 
     #[command(subcommand)]
