@@ -119,10 +119,8 @@ pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> Result<(), S
         if state_dir.exists() {
             println!("[Dry-Run] Would remove state directory: {}", state_dir.display());
         }
-        if let Some(ref cfg_dir) = config_dir {
-            if cfg_dir.exists() {
-                println!("[Dry-Run] Would remove config directory: {}", cfg_dir.display());
-            }
+        if config_dir.as_ref().is_some_and(|d| d.exists()) {
+            println!("[Dry-Run] Would remove config directory: {}", config_dir.as_ref().unwrap().display());
         }
         return Ok(());
     }
@@ -156,12 +154,11 @@ pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> Result<(), S
                 .map_err(|e| format!("Failed to remove state directory at {}: {}", state_dir.display(), e))?;
             println!("✓ State directory removed: {}", state_dir.display());
         }
-        if let Some(ref cfg_dir) = config_dir {
-            if cfg_dir.exists() {
-                fs::remove_dir_all(cfg_dir)
-                    .map_err(|e| format!("Failed to remove config directory at {}: {}", cfg_dir.display(), e))?;
-                println!("✓ Config directory removed: {}", cfg_dir.display());
-            }
+        if config_dir.as_ref().is_some_and(|d| d.exists()) {
+            let cfg_dir = config_dir.as_ref().unwrap();
+            fs::remove_dir_all(cfg_dir)
+                .map_err(|e| format!("Failed to remove config directory at {}: {}", cfg_dir.display(), e))?;
+            println!("✓ Config directory removed: {}", cfg_dir.display());
         }
     } else {
         println!("[Preserved] Configuration and state directories kept intact.");

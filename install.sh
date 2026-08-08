@@ -45,7 +45,7 @@ echo "Querying latest release from $RELEASE_API..."
 TAG_NAME=$(curl -sSL -H "User-Agent: project-dots-installer" "$RELEASE_API" | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' || true)
 
 if [ -z "$TAG_NAME" ]; then
-    TAG_NAME="v0.1.0-beta.1"
+    TAG_NAME="v0.1.0-beta.4"
 fi
 echo "Installing release version: $TAG_NAME"
 
