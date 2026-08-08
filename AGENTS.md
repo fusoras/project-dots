@@ -48,3 +48,6 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
   - All development edits must be conducted on a development branch (`develop` or feature branches). Only merge into `main` once code is fully tested and verified to work cleanly.
   - **Explicit Merge Restriction**: Never execute a branch merge (`git merge`) unless the user explicitly instructs to merge in their message.
   - **Explicit Push Restriction**: Never execute a remote push command (`git push`) unless the user explicitly instructs to push in their message. Before pushing, clearly explain what commits, branches, or tags will be pushed and request confirmation.
+- **Version Bumping Policy**:
+  - Any code addition (`feat`), feature enhancement, or bug fix (`fix`) MUST increment/bump the application version number.
+  - Documentation updates, additions, or Markdown edits (`docs`, `style`) NEVER trigger or alter the program version number.

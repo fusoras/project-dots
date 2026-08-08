@@ -15,6 +15,10 @@ Format: `v<MAJOR>.<MINOR>.<PATCH>-<PRERELEASE>` (e.g. `v0.1.0-beta.3`)
 - **PATCH**: Backward-compatible bug fixes and internal refactoring (e.g. `0.1.1`).
 - **PRERELEASE**: Pre-release testing phase indicator (e.g. `-beta.1`, `-beta.2`).
 
+### Version Bumping Rules
+- **Code Changes Trigger Version Bumps**: Any code addition (`feat`), feature enhancement, or bug fix (`fix`) MUST increment/bump the application version number.
+- **Documentation Exemption**: Documentation updates, additions, or Markdown edits (`docs`, `style`) **NEVER** trigger or alter the program version number.
+
 ---
 
 ## 2. Version Bump Checklist (Files to Update)
