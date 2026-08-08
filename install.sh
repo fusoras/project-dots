@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# project-dots (v0.1.0-beta.4) System Installer Script
+# project-dots (v0.1.0-beta.5) System Installer Script
 # Usage: curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
 
 REPO="${PROJECT_DOTS_REPO:-fusoras/project-dots}"
@@ -45,7 +45,7 @@ echo "Querying latest release from $RELEASE_API..."
 TAG_NAME=$(curl -sSL -H "User-Agent: project-dots-installer" "$RELEASE_API" | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' || true)
 
 if [ -z "$TAG_NAME" ]; then
-    TAG_NAME="v0.1.0-beta.4"
+    TAG_NAME="v0.1.0-beta.5"
 fi
 echo "Installing release version: $TAG_NAME"
 

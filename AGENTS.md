@@ -1,9 +1,9 @@
 # AGENTS.md — project-dots
 
-Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.4`).
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.5`).
 
 ## Project Facts
-- Binary crate `project-dots` v0.1.0-beta.4, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Binary crate `project-dots` v0.1.0-beta.5, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
 - Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
 - Entrypoint: `src/main.rs`.
 - `.gitignore` ignores `/target` and `.codegraph`.
@@ -35,9 +35,13 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
 - Keep the codebase lightweight and modular in Rust.
 - Use concise bullet points for agent rules and documentation.
 - Present user-facing commands using the compiled binary (`project-dots <command>`) rather than `cargo run --`.
-- Always validate package names specific to Debian vs Termux.
-- Always respond in Spanish to the user in chat.
-- Confirm intended behavior with the user before adding major features (e.g., symlinks, backups).
+- **Category & Configuration Naming Convention**:
+  - Category names and configuration subdirectories under `config/` must NEVER be generic (e.g., avoid `shell`, `editor`, `config`).
+  - Names must be simple but distinctive, combining the component/tool type with its specific variant, theme, or style (e.g., `shell-tokyonight`, `lazyvim-minimal`).
+  - This prevents naming collisions when multiple distinct configurations exist for the same tool or component.
+- **Explicit Alias Governance**:
+  - Aliases for categories or commands must ONLY be created when explicitly defined by the user.
+  - Never generate, infer, or automatically append unrequested aliases. Always consult or ask the user before defining aliases.
 - **Git Strategy & Modern Commands**:
   - Never use `git checkout`. Use modern git commands (`git switch`, `git restore`).
   - User Git Aliases: `git s` -> `git switch`, `git b` -> `git branch`.
