@@ -11,7 +11,7 @@ use platform::Platform;
 use state::State;
 use update::check_and_perform_update;
 
-const VERSION: &str = "0.1.0-beta.6";
+const VERSION: &str = "0.1.0-beta.7";
 
 #[derive(Parser)]
 #[command(
