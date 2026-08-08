@@ -6,7 +6,8 @@
 
 | Command | Purpose | Options |
 | ------- | ------- | ------- |
-| `project-dots list` | Displays available categories and package lists in a clean format | `--debug` / `-d` for detailed system package status |
+| `project-dots list` | Displays available categories and contained packages in a concise single-line format | None |
+| `project-dots show <category>` | Displays full detailed description, package tracking status, config files, and post-install commands | Accepts category name or alias (e.g. `shell-tokyonight`, `shell-tn`) |
 | `project-dots install [category]` / `project-dots -i` | Installs packages for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `project-dots remove <category>` | Safely uninstalls packages for a specific category or all categories | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
 | `project-dots self-update` | Checks GitHub Releases and updates the application binary in-place | `--dry-run` / `-n` to preview version update without downloading |
@@ -18,20 +19,46 @@
 
 ## Command Specifications & Exact Terminal Outputs
 
-### 1. List Categories (Default User View)
+### 1. List Categories (Simplified Single-Line View)
 **Command**:
 ```bash
 project-dots list
 ```
+**Exact Output**:
+```text
+lazyvim-minimal (lzv-min) / git, curl, clang, fd-find, lazygit, neovim (custom binary) [apply]
+shell-tokyonight (shell-tn) / zsh, git, eza, zoxide, bat, starship [apply]
+```
 
 ---
 
-### 2. Install Category (Dry-Run & Live)
+### 2. Show Category Details (`show`)
 **Command**:
 ```bash
-project-dots install lazyvim-minimal --dry-run
-# Or using short flag/alias:
-project-dots -i lazyvim-minimal --dry-run
+project-dots show shell-tokyonight
+# Or using an explicit alias:
+project-dots show shell-tn
+```
+**Exact Output**:
+```text
+Category: shell-tokyonight
+Description: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git
+Aliases: shell-tn
+
+Packages (Debian):
+  - zsh [Pre-existing (system)]
+  - git [Pre-existing (system)]
+  - eza [Pre-existing (system)]
+  - zoxide [Pre-existing (system)]
+  - bat [Pre-existing (system)]
+  - starship [Pre-existing (system)]
+
+Config File Actions:
+  - config/shell-tokyonight/starship.toml -> ~/.config/starship.toml
+  - config/shell-tokyonight/font.ttf -> ~/.termux/font.ttf (Platform: termux) [skip if exists]
+
+Post-Install Commands:
+  - chsh -s $(which zsh)
 ```
 
 ---

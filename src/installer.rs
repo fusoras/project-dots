@@ -7,101 +7,175 @@ use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::process::Command;
 
+const BOLD_GREEN: &str = "\x1b[1;32m";
+const BOLD_BLUE: &str = "\x1b[1;34m";
+const WHITE: &str = "\x1b[37m";
 const RESET: &str = "\x1b[0m";
 const DIM_GRAY: &str = "\x1b[90m";
 
-/// Lists all categories and packages.
-/// Default mode: Clean user view with comma-separated packages in dim gray.
-/// Debug mode (`debug == true`): Detailed status for each package and system info.
-pub fn list_categories(config: &Config, state: &State, platform: &Platform, debug: bool) {
+/// Simplified list of all categories and contained packages on a single line per category.
+/// Format: <bold-green-category-name> (aliases) / pkg1, pkg2, pkg3 [apply]
+pub fn list_categories(config: &Config, state: &State, platform: &Platform) {
     if config.categories.is_empty() {
         println!("No categories found in configuration.");
         return;
     }
 
-    if debug {
-        println!("\n=== project-dots: Categories & Package Status (DEBUG MODE) ===");
-        println!("Platform Detected: {:?}\n", platform);
-
-        for (cat_name, cat) in &config.categories {
-            let alias_str = cat
-                .aliases
-                .as_ref()
-                .map(|a| format!(" (Aliases: {})", a.join(", ")))
-                .unwrap_or_default();
-
-            println!("Category: {}{}", cat_name, alias_str);
-            println!("  Description: {}", cat.description);
-
-            let pkgs = match platform {
-                Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
-                Platform::Termux => cat.termux_packages.as_deref().unwrap_or(&[]),
-                Platform::Unsupported(_) => &[],
-            };
-
-            if !pkgs.is_empty() {
-                println!("  Packages:");
-                for pkg in pkgs {
-                    let status_str = if let Some(tracked) = state.packages.get(pkg) {
-                        if tracked.was_preexisting {
-                            "Pre-existing (system)"
-                        } else {
-                            "Installed by project-dots"
-                        }
-                    } else if platform.is_package_installed(pkg) {
-                        "Installed (untracked)"
-                    } else {
-                        "Not installed"
-                    };
-                    println!("    - {DIM_GRAY}{}{RESET} [{}]", pkg, status_str);
-                }
+    for (cat_name, cat) in &config.categories {
+        let alias_part = if let Some(aliases) = &cat.aliases {
+            if !aliases.is_empty() {
+                format!(" ({})", aliases.join(", "))
+            } else {
+                String::new()
             }
+        } else {
+            String::new()
+        };
 
-            if matches!(platform, Platform::Debian)
-                && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
-            {
-                let bin_path = expand_home(&custom.bin_symlink);
-                let custom_status = if Path::new(&bin_path).exists() {
-                    "Installed (Custom binary)"
-                } else {
-                    "Not installed"
-                };
-                println!("  Custom Installer (Debian):");
-                println!("    - {DIM_GRAY}{}{RESET} ({}) [{}]", custom.name, custom.url, custom_status);
-            }
-            println!();
+        let mut pkgs: Vec<String> = match platform {
+            Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
+            Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
+            Platform::Unsupported(_) => Vec::new(),
+        };
+
+        if matches!(platform, Platform::Debian)
+            && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+        {
+            pkgs.push(format!("{} (custom binary)", custom.name));
         }
-    } else {
-        println!("\n=== Available Categories ===");
 
-        for (cat_name, cat) in &config.categories {
-            let alias_str = cat
-                .aliases
-                .as_ref()
-                .map(|a| format!(" (Aliases: {})", a.join(", ")))
-                .unwrap_or_default();
+        let pkgs_str = if pkgs.is_empty() {
+            "none".to_string()
+        } else {
+            pkgs.join(", ")
+        };
 
-            println!("\nCategory: {}{}", cat_name, alias_str);
-            println!("  Description: {}", cat.description);
+        let apply_suffix = if is_category_applied(cat_name, cat, state, platform) {
+            format!(" {WHITE}[apply]{RESET}")
+        } else {
+            String::new()
+        };
 
-            let mut all_pkgs: Vec<String> = match platform {
-                Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
-                Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
-                Platform::Unsupported(_) => Vec::new(),
-            };
-
-            if matches!(platform, Platform::Debian)
-                && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
-            {
-                all_pkgs.push(format!("{} (custom binary)", custom.name));
-            }
-
-            if !all_pkgs.is_empty() {
-                println!("  Packages: {DIM_GRAY}{}{RESET}", all_pkgs.join(", "));
-            }
-        }
-        println!();
+        println!("{BOLD_GREEN}{}{RESET}{} / {DIM_GRAY}{}{RESET}{}", cat_name, alias_part, pkgs_str, apply_suffix);
     }
+}
+
+fn is_category_applied(cat_name: &str, cat: &crate::config::Category, state: &State, platform: &Platform) -> bool {
+    if state.packages.values().any(|p| p.category == cat_name) {
+        return true;
+    }
+
+    let pkgs = match platform {
+        Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
+        Platform::Termux => cat.termux_packages.as_deref().unwrap_or(&[]),
+        Platform::Unsupported(_) => &[],
+    };
+
+    if !pkgs.is_empty() && pkgs.iter().all(|pkg| platform.is_package_installed(pkg)) {
+        return true;
+    }
+
+    if matches!(platform, Platform::Debian)
+        && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+    {
+        let bin_path = expand_home(&custom.bin_symlink);
+        if Path::new(&bin_path).exists() {
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Shows complete detailed information, description, packages, dotfiles, and installation status for a specific category.
+pub fn show_category(
+    category_query: &str,
+    config: &Config,
+    state: &State,
+    platform: &Platform,
+) -> Result<(), String> {
+    let canonical_key = config
+        .resolve_category_key(category_query)
+        .ok_or_else(|| format!("Category or alias '{}' not found in configuration.", category_query))?;
+
+    let cat = config.categories.get(canonical_key).unwrap();
+
+    let aliases_str = cat
+        .aliases
+        .as_ref()
+        .map(|a| a.join(", "))
+        .unwrap_or_else(|| "none".to_string());
+
+    println!("\n{BOLD_GREEN}Category:{RESET} {}", canonical_key);
+    println!("{BOLD_BLUE}Description:{RESET} {}", cat.description);
+    println!("{BOLD_BLUE}Aliases:{RESET} {}", aliases_str);
+
+    let pkgs = match platform {
+        Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
+        Platform::Termux => cat.termux_packages.as_deref().unwrap_or(&[]),
+        Platform::Unsupported(_) => &[],
+    };
+
+    println!("\n{BOLD_BLUE}Packages ({:?}):{RESET}", platform);
+    if pkgs.is_empty() {
+        println!("  (No OS packages declared for this platform)");
+    } else {
+        for pkg in pkgs {
+            let status_str = if let Some(tracked) = state.packages.get(pkg) {
+                if tracked.was_preexisting {
+                    "Pre-existing (system)"
+                } else {
+                    "Installed by project-dots"
+                }
+            } else if platform.is_package_installed(pkg) {
+                "Installed (untracked)"
+            } else {
+                "Not installed"
+            };
+            println!("  - {DIM_GRAY}{}{RESET} [{}]", pkg, status_str);
+        }
+    }
+
+    if matches!(platform, Platform::Debian)
+        && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+    {
+        let bin_path = expand_home(&custom.bin_symlink);
+        let custom_status = if Path::new(&bin_path).exists() {
+            "Installed (Custom binary)"
+        } else {
+            "Not installed"
+        };
+        println!("\n{BOLD_BLUE}Custom Binary Installer (Debian):{RESET}");
+        println!("  - {DIM_GRAY}{}{RESET} ({}) [{}]", custom.name, custom.url, custom_status);
+        println!("    Symlink: {} -> {}/bin/{}", bin_path, custom.extract_dir, custom.name);
+    }
+
+    if let Some(copy_files) = &cat.copy_files {
+        println!("\n{BOLD_BLUE}Config File Actions:{RESET}");
+        for action in copy_files {
+            let platform_info = action
+                .platform
+                .as_ref()
+                .map(|p| format!(" (Platform: {})", p))
+                .unwrap_or_default();
+            let only_if_info = if action.only_if_not_exists.unwrap_or(false) {
+                " [skip if exists]"
+            } else {
+                ""
+            };
+            println!("  - {} -> {}{}{}", action.src, action.dest, platform_info, only_if_info);
+        }
+    }
+
+    if let Some(post_cmds) = &cat.post_install_commands {
+        println!("\n{BOLD_BLUE}Post-Install Commands:{RESET}");
+        for cmd in post_cmds {
+            println!("  - {}", cmd);
+        }
+    }
+
+    println!();
+    Ok(())
 }
 
 /// Installs all packages or a specific category safely.
@@ -579,5 +653,23 @@ mod tests {
         let commands = vec!["chsh -s $(which zsh)".to_string()];
         let res = process_post_install_commands(&commands, true);
         assert!(res.is_ok(), "Post install commands dry-run should succeed");
+    }
+
+    #[test]
+    fn test_list_categories_output() {
+        let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+        let state = State::load();
+        list_categories(&config, &state, &Platform::Debian);
+    }
+
+    #[test]
+    fn test_show_category_resolution() {
+        let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+        let state = State::load();
+        let platform = Platform::Debian;
+
+        assert!(show_category("shell-tokyonight", &config, &state, &platform).is_ok());
+        assert!(show_category("shell-tn", &config, &state, &platform).is_ok());
+        assert!(show_category("nonexistent", &config, &state, &platform).is_err());
     }
 }

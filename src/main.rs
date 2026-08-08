@@ -6,12 +6,12 @@ mod update;
 
 use clap::{CommandFactory, Parser, Subcommand};
 use config::Config;
-use installer::{install_category, list_categories, remove_category};
+use installer::{install_category, list_categories, remove_category, show_category};
 use platform::Platform;
 use state::State;
 use update::check_and_perform_update;
 
-const VERSION: &str = "0.1.0-beta.5";
+const VERSION: &str = "0.1.0-beta.6";
 
 #[derive(Parser)]
 #[command(
@@ -31,11 +31,13 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Lists all categories and packages (use --debug for detailed package status)
-    List {
-        /// Show detailed package status and debug information
-        #[arg(short = 'd', long = "debug")]
-        debug: bool,
+    /// Lists all categories and contained packages on a single line
+    List,
+
+    /// Shows detailed description, packages, config files, and installation status for a specific category
+    Show {
+        /// Category name or alias to inspect (e.g. 'shell-tokyonight', 'shell-tn', 'lazyvim-minimal')
+        category: String,
     },
 
     /// Installs packages for a specific category or all categories
@@ -104,7 +106,7 @@ fn main() {
         }
     };
 
-    let (config, config_source) = match Config::load() {
+    let (config, _config_source) = match Config::load() {
         Ok((cfg, src)) => (cfg, src),
         Err(e) => {
             eprintln!("{BOLD_RED}Error loading configuration:{RESET} {}", e);
@@ -116,9 +118,14 @@ fn main() {
     let platform = Platform::detect();
 
     match command {
-        Commands::List { debug } => {
-            println!("Loaded configuration from: {}", config_source);
-            list_categories(&config, &state, &platform, debug);
+        Commands::List => {
+            list_categories(&config, &state, &platform);
+        }
+        Commands::Show { category } => {
+            if let Err(e) = show_category(&category, &config, &state, &platform) {
+                eprintln!("{BOLD_RED}Error:{RESET} {}", e);
+                std::process::exit(1);
+            }
         }
         Commands::Install { category, dry_run } => {
             if dry_run {

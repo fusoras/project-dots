@@ -12,7 +12,7 @@ extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
 
 [categories.shell-tokyonight]
-aliases = ["tokyonight-shell", "zsh-tokyonight", "shell-tokyo", "terminal", "shell", "zsh"]
+aliases = ["shell-tn"]
 description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git"
 debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
 termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
