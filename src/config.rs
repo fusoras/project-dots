@@ -22,6 +22,7 @@ pub struct Category {
     pub custom: Option<BTreeMap<String, CustomInstaller>>,
     pub copy_files: Option<Vec<CopyFileAction>>,
     pub post_install_commands: Option<Vec<PostInstallCommand>>,
+    pub final_message: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -134,5 +135,20 @@ mod tests {
 
         // Non-matching query
         assert_eq!(config.resolve_category_key("nonexistent"), None);
+    }
+
+    #[test]
+    fn test_embedded_final_message() {
+        let config: Config = toml::from_str(EMBEDDED_CONFIG).expect("Should parse embedded config");
+
+        let cat = config
+            .categories
+            .get("shell-tokyonight")
+            .expect("shell-tokyonight category should exist");
+        let msg = cat
+            .final_message
+            .as_deref()
+            .expect("shell-tokyonight should declare a final_message");
+        assert!(msg.to_lowercase().contains("terminal"), "Final message should hint to restart the terminal");
     }
 }

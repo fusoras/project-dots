@@ -32,6 +32,7 @@ description = "Zsh terminal setup with TokyoNight Starship prompt and JetBrains 
 aliases = ["shell", "zsh", "terminal", "tokyonight-shell"]
 debian_packages = ["zsh", "git", "bat", "zoxide"]
 termux_packages = ["zsh", "git", "bat", "zoxide", "starship", "eza"]
+final_message = "Close and reopen your terminal so Zsh and the Starship prompt take effect."
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/starship.toml"
@@ -76,5 +77,6 @@ Each category can declare optional short aliases via the `aliases` array propert
   - Debian: `chsh -s $(which zsh)` (sets Zsh as default shell)
   - Termux: `chsh -s zsh` (sets Zsh as default shell)
   - All: ensures `~/.zshrc` exists and adds `eval "$(starship init zsh)"` so Starship starts with Zsh
+- **Final Message**: Close and reopen the terminal so Zsh and the Starship prompt take effect.
 
 

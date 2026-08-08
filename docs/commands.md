@@ -61,6 +61,8 @@ Post-Install Commands:
   - chsh -s $(which zsh) (Platform: debian)
   - chsh -s zsh (Platform: termux)
   - grep -qF 'eval "$(starship init zsh)"' "$HOME/.zshrc" 2>/dev/null || echo 'eval "$(starship init zsh)"' >> "$HOME/.zshrc"
+
+Final Message: Close and reopen your terminal so Zsh and the Starship prompt take effect.
 ```
 
 ---

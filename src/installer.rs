@@ -179,6 +179,10 @@ pub fn show_category(
         }
     }
 
+    if let Some(msg) = &cat.final_message {
+        println!("\n{BOLD_BLUE}Final Message:{RESET} {}", msg);
+    }
+
     println!();
     Ok(())
 }
@@ -286,6 +290,14 @@ pub fn install_category(
 
         if let Some(post_cmds) = &cat.post_install_commands {
             process_post_install_commands(post_cmds, platform, dry_run)?;
+        }
+
+        if let Some(msg) = &cat.final_message {
+            if dry_run {
+                println!("  [Dry-Run] Would show final message: {}", msg);
+            } else {
+                println!("\n  {BOLD_BLUE}>>> {}{RESET}", msg);
+            }
         }
     }
 

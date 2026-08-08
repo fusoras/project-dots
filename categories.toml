@@ -16,6 +16,7 @@ aliases = ["shell-tn"]
 description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git"
 debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
 termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
+final_message = "Close and reopen your terminal so Zsh and the Starship prompt take effect."
 
 [[categories.shell-tokyonight.post_install_commands]]
 command = "chsh -s $(which zsh)"
