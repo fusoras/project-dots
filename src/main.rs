@@ -2,12 +2,14 @@ mod config;
 mod installer;
 mod platform;
 mod state;
+mod update;
 
 use clap::{CommandFactory, Parser, Subcommand};
 use config::Config;
 use installer::{install_category, list_categories, remove_category};
 use platform::Platform;
 use state::State;
+use update::check_and_perform_update;
 
 const VERSION: &str = "0.1.0-beta.1";
 
@@ -54,6 +56,13 @@ enum Commands {
         category: String,
 
         /// Preview removal actions without running system package commands
+        #[arg(short = 'n', long = "dry-run")]
+        dry_run: bool,
+    },
+
+    /// Checks GitHub Releases and updates project-dots binary in-place
+    SelfUpdate {
+        /// Preview update check without replacing binary
         #[arg(short = 'n', long = "dry-run")]
         dry_run: bool,
     },
@@ -117,6 +126,16 @@ fn main() {
                 std::process::exit(1);
             }
             println!("\n{BOLD_GREEN}Removal processing completed successfully.{RESET}");
+        }
+        Commands::SelfUpdate { dry_run } => {
+            if dry_run {
+                println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No binary changes will be made ==={RESET}");
+            }
+            if let Err(e) = check_and_perform_update(VERSION, &platform, dry_run) {
+                eprintln!("\n{BOLD_RED}Self-update error:{RESET} {}", e);
+                std::process::exit(1);
+            }
+            println!("\n{BOLD_GREEN}Self-update processing completed successfully.{RESET}");
         }
     }
 }
