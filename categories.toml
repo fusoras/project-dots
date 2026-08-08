@@ -1,5 +1,5 @@
 [categories.lazyvim-minimal]
-aliases = ["lazyvim", "lzv-min", "lzv"]
+aliases = ["lzv-min"]
 description = "Minimal LazyVim dependencies and editor setup"
 debian_packages = ["git", "curl", "clang", "fd-find", "lazygit"]
 termux_packages = ["neovim", "git", "curl", "clang", "fd", "lazygit"]
