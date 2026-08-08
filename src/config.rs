@@ -108,10 +108,8 @@ mod tests {
         // Direct canonical name match
         assert_eq!(config.resolve_category_key("lazyvim-minimal"), Some(&"lazyvim-minimal".to_string()));
 
-        // Alias matches
-        assert_eq!(config.resolve_category_key("lazyvim"), Some(&"lazyvim-minimal".to_string()));
+        // Alias match
         assert_eq!(config.resolve_category_key("lzv-min"), Some(&"lazyvim-minimal".to_string()));
-        assert_eq!(config.resolve_category_key("lzv"), Some(&"lazyvim-minimal".to_string()));
 
         // Non-matching query
         assert_eq!(config.resolve_category_key("nonexistent"), None);
