@@ -42,3 +42,4 @@ For detailed architecture, roadmap, CLI reference, and unit testing specificatio
   - User Git Aliases: `git s` -> `git switch`, `git b` -> `git branch`.
   - All development edits must be conducted on a development branch (`develop` or feature branches). Only merge into `main` once code is fully tested and verified to work cleanly.
   - **Explicit Merge Restriction**: Never execute a branch merge (`git merge`) unless the user explicitly instructs to merge in their message.
+  - **Explicit Push Restriction**: Never execute a remote push command (`git push`) unless the user explicitly instructs to push in their message. Before pushing, clearly explain what commits, branches, or tags will be pushed and request confirmation.
