@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# project-dots (v0.1.0-beta.3) System Installer Script
+# project-dots (v0.1.0-beta.4) System Installer Script
 # Usage: curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
 
 REPO="${PROJECT_DOTS_REPO:-fusoras/project-dots}"
