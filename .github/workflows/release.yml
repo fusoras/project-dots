@@ -14,32 +14,28 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             asset_name: project-dots-x86_64-unknown-linux-gnu.tar.gz
-            use_cross: false
           - target: aarch64-unknown-linux-gnu
             asset_name: project-dots-aarch64-linux-android.tar.gz
-            use_cross: true
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Install aarch64 cross-linker
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
-      - name: Install cross tool for cross-compilation
-        if: matrix.use_cross
-        run: |
-          cargo install cross --git https://github.com/cross-rs/cross
-
       - name: Build release binary
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: |
-          if [ "${{ matrix.use_cross }}" = "true" ]; then
-            cross build --release --target ${{ matrix.target }}
-          else
-            cargo build --release --target ${{ matrix.target }}
-          fi
+          cargo build --release --target ${{ matrix.target }}
 
       - name: Package binary into tarball
         run: |
