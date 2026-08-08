@@ -116,3 +116,9 @@ curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install
 ```
 **Purpose**:
 Installs `project-dots` on a fresh machine (Debian or Termux) in one command without requiring Rust or Cargo.
+
+---
+
+## Environment Variables & Token Security
+
+`project-dots` respects environment variables such as `PROJECT_DOTS_REPO` and `GITHUB_TOKEN`. For full specification and token security guidelines, see [`docs/environment.md`](file:///home/uruka1/1v/Work/dots-install/docs/environment.md).

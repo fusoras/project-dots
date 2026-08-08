@@ -1,9 +1,9 @@
 # AGENTS.md — project-dots
 
-Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.5`).
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.6`).
 
 ## Project Facts
-- Binary crate `project-dots` v0.1.0-beta.5, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Binary crate `project-dots` v0.1.0-beta.6, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
 - Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
 - Entrypoint: `src/main.rs`.
 - `.gitignore` ignores `/target` and `.codegraph`.
@@ -30,11 +30,17 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
 - CLI Reference & Commands: @docs/commands.md
 - Unit Testing Guide: @docs/testing.md
 - Versioning & Release Guide: @docs/versioning.md
+- Environment Variables & Token Security: @docs/environment.md
 
 ## Rules and Conventions
 - Keep the codebase lightweight and modular in Rust.
 - Use concise bullet points for agent rules and documentation.
 - Present user-facing commands using the compiled binary (`project-dots <command>`) rather than `cargo run --`.
+- **Security Governance & Secret Leak Prevention**:
+  - NEVER commit API keys, private keys (`id_*`), certificates (`*.key`, `*.pem`), or `.env` files within `config/<category>/` or project directories.
+  - Template files in `config/` are embedded directly into the compiled executable release binary (`include_str!`/`include_bytes!`). Any committed secret will be permanently exposed in public release binaries.
+  - Never log runtime tokens (e.g. `GITHUB_TOKEN`) in stdout, stderr, or `state.toml`.
+  - Print a clear `[WARNING]` alert when loading external `./categories.toml` configurations before running post-install commands or custom installers.
 - **Category & Configuration Naming Convention**:
   - Category names and configuration subdirectories under `config/` must NEVER be generic (e.g., avoid `shell`, `editor`, `config`).
   - Names must be simple but distinctive, combining the component/tool type with its specific variant, theme, or style (e.g., `shell-tokyonight`, `lazyvim-minimal`).

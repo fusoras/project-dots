@@ -3,21 +3,65 @@
 **/*.rs.bk
 *.rs.bk
 
-# IDEs & Editors
-.idea/
-.vscode/
+# Secrets & Credentials (applies also within config/)
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+id_rsa*
+id_ed25519*
+id_dsa*
+.netrc
+.npmrc
+.envrc
+credentials
+credentials.json
+service-account*.json
+secrets/
+.env
+.env.*
+.env.local
+.env.production
+config/**/.env*
+config/**/.*_history
+config/**/id_*
+config/**/*.key
+
+# Backups & Temp files
+*.old
+*.orig
+*.rej
+*.tmp
+*.backup
+*~
 *.swp
 *.swo
-*~
 *.bak
 
-# Local tools & indexing
+# Logs & Diagnostics
+*.log
+*.log.*
+
+# IDEs, Editors & Indexing
+.idea/
+.vscode/
+.fleet/
 .codegraph/
 
 # Operating System files
 .DS_Store
 Thumbs.db
 
-# Logs & Environment
-*.log
-.env
+# Tooling & Environments
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+dist/
+build/
+
+# Accidental archive downloads in project root
+*.tar.gz
+*.zip
