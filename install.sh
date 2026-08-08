@@ -67,17 +67,12 @@ tar -xzf "$TMP_DIR/project-dots.tar.gz" -C "$TMP_DIR"
 mv "$TMP_DIR/project-dots" "$INSTALL_DIR/project-dots"
 chmod +x "$INSTALL_DIR/project-dots"
 
-echo "\n\033[1;32mInstallation completed successfully!\033[0m"
+echo ""
+printf "\033[1;32mInstallation completed successfully!\033[0m\n"
 echo "Binary installed to: $INSTALL_DIR/project-dots"
-
-# 4. PATH Environment Check
-case ":$PATH:" in
-    *":$INSTALL_DIR:"*) ;;
-    *)
-        echo "\n\033[1;33m[TIP] '$INSTALL_DIR' is not currently in your $PATH environment variable!\033[0m"
-        echo "To use 'project-dots' from anywhere, add it to your shell config:"
-        echo "  - bash: echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
-        echo "  - zsh:  echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc"
-        echo "  - fish: fish_add_path \$HOME/.local/bin"
-        ;;
-esac
+echo ""
+printf "\033[1;33m[SHELL CONFIGURATION TIP]\033[0m\n"
+echo "To ensure 'project-dots' is accessible from any terminal session, add it to your shell configuration:"
+echo "  - bash: echo 'export PATH=\"$INSTALL_DIR:\$PATH\"' >> ~/.bashrc"
+echo "  - zsh:  echo 'export PATH=\"$INSTALL_DIR:\$PATH\"' >> ~/.zshrc"
+echo "  - fish: fish_add_path $INSTALL_DIR"
