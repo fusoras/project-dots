@@ -106,7 +106,7 @@ fn main() {
         }
     };
 
-    let (config, _config_source) = match Config::load() {
+    let (config, config_source) = match Config::load() {
         Ok((cfg, src)) => (cfg, src),
         Err(e) => {
             eprintln!("{BOLD_RED}Error loading configuration:{RESET} {}", e);
