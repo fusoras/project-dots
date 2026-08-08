@@ -10,3 +10,22 @@ type = "github_release_tarball"
 url = "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
 extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
+
+[categories.shell-tokyonight]
+aliases = ["tokyonight-shell", "zsh-tokyonight", "shell-tokyo", "terminal", "shell", "zsh"]
+description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git"
+debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
+termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
+post_install_commands = ["chsh -s $(which zsh)"]
+
+[[categories.shell-tokyonight.copy_files]]
+src = "config/shell-tokyonight/starship.toml"
+dest = "~/.config/starship.toml"
+
+[[categories.shell-tokyonight.copy_files]]
+src = "config/shell-tokyonight/font.ttf"
+dest = "~/.termux/font.ttf"
+platform = "termux"
+only_if_not_exists = true
+
+

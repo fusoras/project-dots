@@ -200,8 +200,99 @@ pub fn install_category(
         {
             install_custom_debian(custom, cat_name, state, dry_run)?;
         }
+
+        if let Some(copy_files) = &cat.copy_files {
+            process_copy_files(copy_files, platform, dry_run)?;
+        }
+
+        if let Some(post_cmds) = &cat.post_install_commands {
+            process_post_install_commands(post_cmds, dry_run)?;
+        }
     }
 
+    Ok(())
+}
+
+fn process_copy_files(
+    copy_files: &[crate::config::CopyFileAction],
+    platform: &Platform,
+    dry_run: bool,
+) -> Result<(), String> {
+    for action in copy_files {
+        if let Some(target_platform) = &action.platform {
+            let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
+            if !matches_platform {
+                continue;
+            }
+        }
+
+        let dest_path_str = expand_home(&action.dest);
+        let dest_path = Path::new(&dest_path_str);
+
+        if action.only_if_not_exists.unwrap_or(false) && dest_path.exists() {
+            println!("  [SKIP] Destination file '{}' already exists.", dest_path_str);
+            continue;
+        }
+
+        if dry_run {
+            println!("  [Dry-Run] Would copy configuration file '{}' -> '{}'", action.src, dest_path_str);
+            continue;
+        }
+
+        println!("  [Copying] Configuration file '{}' -> '{}'", action.src, dest_path_str);
+
+        let content_bytes: Vec<u8> = if Path::new(&action.src).exists() {
+            fs::read(&action.src)
+                .map_err(|e| format!("Failed to read source file {}: {}", action.src, e))?
+        } else if action.src == "config/shell-tokyonight/starship.toml" {
+            crate::config::EMBEDDED_STARSHIP.as_bytes().to_vec()
+        } else if action.src == "config/shell-tokyonight/font.ttf" {
+            crate::config::EMBEDDED_FONT.to_vec()
+        } else {
+            return Err(format!("Source file '{}' not found.", action.src));
+        };
+
+        if let Some(parent) = dest_path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create directory {}: {}", parent.display(), e))?;
+        }
+
+        fs::write(dest_path, content_bytes)
+            .map_err(|e| format!("Failed to write configuration to {}: {}", dest_path_str, e))?;
+
+        println!("  [Success] Configuration file placed cleanly at '{}'", dest_path_str);
+    }
+    Ok(())
+}
+
+fn process_post_install_commands(commands: &[String], dry_run: bool) -> Result<(), String> {
+    for cmd in commands {
+        if cmd.contains("chsh") {
+            let current_shell = env::var("SHELL").unwrap_or_default();
+            if current_shell.ends_with("/zsh") {
+                println!("  [SKIP] Default shell is already Zsh ('{}').", current_shell);
+                continue;
+            }
+        }
+
+        if dry_run {
+            println!("  [Dry-Run] Would execute post-install command: {}", cmd);
+            continue;
+        }
+
+        println!("  [Executing] Post-install command: {}", cmd);
+        let status = Command::new("sh")
+            .arg("-c")
+            .arg(cmd)
+            .status()
+            .map_err(|e| format!("Failed to execute post-install command '{}': {}", cmd, e))?;
+
+        if !status.success() {
+            println!("  [WARNING] Post-install command '{}' exited with status {}", cmd, status);
+        } else {
+            println!("  [Success] Post-install command completed: {}", cmd);
+        }
+    }
     Ok(())
 }
 
@@ -454,5 +545,39 @@ mod tests {
 
         let absolute_path = "/opt/nvim/bin/nvim";
         assert_eq!(expand_home(absolute_path), absolute_path);
+    }
+
+    #[test]
+    fn test_process_copy_files_dry_run() {
+        let copy_actions = vec![crate::config::CopyFileAction {
+            src: "config/shell-tokyonight/starship.toml".to_string(),
+            dest: "~/.config/starship.toml".to_string(),
+            platform: None,
+            only_if_not_exists: None,
+        }];
+        let res = process_copy_files(&copy_actions, &Platform::Debian, true);
+        assert!(res.is_ok(), "Copy files dry-run should succeed");
+    }
+
+    #[test]
+    fn test_process_copy_files_termux_font_dry_run() {
+        let copy_actions = vec![crate::config::CopyFileAction {
+            src: "config/shell-tokyonight/font.ttf".to_string(),
+            dest: "~/.termux/font.ttf".to_string(),
+            platform: Some("termux".to_string()),
+            only_if_not_exists: Some(true),
+        }];
+        let res_debian = process_copy_files(&copy_actions, &Platform::Debian, true);
+        assert!(res_debian.is_ok());
+
+        let res_termux = process_copy_files(&copy_actions, &Platform::Termux, true);
+        assert!(res_termux.is_ok());
+    }
+
+    #[test]
+    fn test_process_post_install_commands_dry_run() {
+        let commands = vec!["chsh -s $(which zsh)".to_string()];
+        let res = process_post_install_commands(&commands, true);
+        assert!(res.is_ok(), "Post install commands dry-run should succeed");
     }
 }

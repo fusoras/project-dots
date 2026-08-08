@@ -4,6 +4,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub const EMBEDDED_CONFIG: &str = include_str!("../categories.toml");
+pub const EMBEDDED_STARSHIP: &str = include_str!("../config/shell-tokyonight/starship.toml");
+pub const EMBEDDED_FONT: &[u8] = include_bytes!("../config/shell-tokyonight/font.ttf");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -18,6 +20,16 @@ pub struct Category {
     pub debian_packages: Option<Vec<String>>,
     pub termux_packages: Option<Vec<String>>,
     pub custom: Option<BTreeMap<String, CustomInstaller>>,
+    pub copy_files: Option<Vec<CopyFileAction>>,
+    pub post_install_commands: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CopyFileAction {
+    pub src: String,
+    pub dest: String,
+    pub platform: Option<String>,
+    pub only_if_not_exists: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
