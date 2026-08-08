@@ -5,17 +5,19 @@
 ## Core Features & Commands
 - **`project-dots list [--debug / -d]`**: Displays available categories, descriptions, and package listings.
 - **`project-dots install [category] [--dry-run / -n]` / `-i`**: Installs packages for a specific category (or all categories) with dry-run preview.
-- **`project-dots remove [category] [--dry-run / -n]`**: Safely removes packages installed by `project-dots`.
+- **`project-dots remove <category> [--all / -a] [--dry-run / -n]`**: Safely removes packages installed by `project-dots`.
 - **`project-dots self-update [--dry-run / -n]`**: Checks GitHub Releases for new versions and updates the binary in-place.
+- **`project-dots self-uninstall [--yes / -y] [--dry-run / -n]`**: Safely removes binary executable and state/config directories.
 
 ## System Installation & Self-Update Architecture
 1. **One-Line Bootstrap Script (`install.sh`)**:
    - POSIX shell script: `curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh`
    - Detects architecture (Debian x86_64 vs Termux aarch64), fetches pre-compiled GitHub Release binary asset, places it in `~/.local/bin` (or `$PREFIX/bin` on Termux), and displays shell `$PATH` tips.
-2. **Self-Update Engine (`src/update.rs`)**:
+2. **Self-Update & Self-Uninstall Engine (`src/update.rs`)**:
    - Queries GitHub Releases API for `latest`.
    - Compares release tag with current binary crate version.
    - Replaces current executable atomically (`std::env::current_exe()`).
+   - Self-uninstalls binary and prompts interactively to purge `~/.config/project-dots` and `~/.local/state/project-dots`.
 
 ## Completed & Roadmap Tasks
 
@@ -32,3 +34,6 @@
 - [x] **Task 10: CLI `self-update` Subcommand Integration (`src/main.rs`)**
 - [x] **Task 11: Bootstrap Installation Script (`install.sh`)**
 - [x] **Task 12: GitHub Actions Release CI Pipeline (`.github/workflows/release.yml`)**
+- [x] **Task 13: Self-Uninstall Engine & `--yes` Interactive Confirmation (`src/update.rs`)**
+- [x] **Task 14: Category Config Copy (`copy_files`) & Post-Install Commands Engine (`src/installer.rs`)**
+- [x] **Task 15: `shell-tokyonight` Category & Embedded Assets (`starship.toml`, `font.ttf`)**

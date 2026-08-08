@@ -27,18 +27,23 @@ installed_at = "2026-08-07T17:48:05Z"
 ## Category Schema (`categories.toml`)
 
 ```toml
-[categories.lazyvim-minimal]
-description = "Minimal LazyVim dependencies and editor setup"
-aliases = ["lzv-min", "lazy-min"]
-debian_packages = ["git", "curl", "clang", "fd-find", "lazygit"]
-termux_packages = ["neovim", "git", "curl", "clang", "fd", "lazygit"]
+[categories.shell-tokyonight]
+description = "Zsh terminal setup with TokyoNight Starship prompt and JetBrains Mono font"
+aliases = ["shell", "zsh", "terminal", "tokyonight-shell"]
+debian_packages = ["zsh", "git", "bat", "zoxide"]
+termux_packages = ["zsh", "git", "bat", "zoxide", "starship", "eza"]
 
-[categories.lazyvim-minimal.custom.debian]
-name = "neovim"
-type = "github_release_tarball"
-url = "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
-extract_dir = "/opt/nvim"
-bin_symlink = "~/.local/bin/nvim"
+[[categories.shell-tokyonight.copy_files]]
+src = "config/shell-tokyonight/starship.toml"
+dest = "~/.config/starship.toml"
+
+[[categories.shell-tokyonight.copy_files]]
+src = "config/shell-tokyonight/font.ttf"
+dest = "~/.termux/font.ttf"
+platform = "termux"
+only_if_not_exists = true
+
+post_install_commands = ["chsh -s $(which zsh)"]
 ```
 
 ## Category Aliases
@@ -50,3 +55,14 @@ Each category can declare optional short aliases via the `aliases` array propert
 - **Description**: Minimal required dependencies to run LazyVim.
 - **Termux Packages**: `neovim`, `git`, `curl`, `clang`, `fd`, `lazygit`
 - **Debian Packages**: `git`, `curl`, `clang`, `fd-find`, `lazygit` + Neovim custom binary tarball (`/opt/nvim` + `~/.local/bin/nvim`).
+
+### 2. `shell-tokyonight` (Zsh & TokyoNight Starship Setup)
+- **Description**: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git.
+- **Aliases**: `tokyonight-shell`, `zsh-tokyonight`, `shell-tokyo`, `terminal`, `shell`, `zsh`
+- **Packages**: `zsh`, `git`, `eza`, `zoxide`, `bat`, `starship`
+- **Config Copies**:
+  - `config/shell-tokyonight/starship.toml` -> `~/.config/starship.toml`
+  - `config/shell-tokyonight/font.ttf` -> `~/.termux/font.ttf` (Termux only, skipped if `font.ttf` already exists)
+- **Post-Install**: `chsh -s $(which zsh)` (sets Zsh as default shell)
+
+

@@ -10,7 +10,7 @@
 | `project-dots install [category]` / `project-dots -i` | Installs packages for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `project-dots remove <category>` | Safely uninstalls packages for a specific category or all categories | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
 | `project-dots self-update` | Checks GitHub Releases and updates the application binary in-place | `--dry-run` / `-n` to preview version update without downloading |
-| `project-dots self-uninstall` | Safely removes project-dots binary executable and state directory from system | `--dry-run` / `-n` to preview file deletion without making changes |
+| `project-dots self-uninstall` | Safely removes project-dots binary executable and state/config directories | `--yes` / `-y` to confirm deletion, `--dry-run` / `-n` to preview |
 | `project-dots --version` | Displays the current application version | `-v` |
 | `project-dots --help` | Displays the command-line help summary | `-h` |
 
@@ -36,7 +36,27 @@ project-dots -i lazyvim-minimal --dry-run
 
 ---
 
-### 3. Self-Update Engine
+### 3. Remove Packages (`remove`)
+**Command**:
+```bash
+project-dots remove lazyvim-minimal --dry-run
+# Or remove all installed categories:
+project-dots remove --all --dry-run
+```
+
+**Exact Terminal Output (Dry-Run Preview)**:
+```text
+=== DRY-RUN MODE ACTIVE: No system changes will be made ===
+[Category: lazyvim-minimal]
+  [Dry-Run] Would uninstall package: lazygit via apt
+  [Dry-Run] Would remove custom binary symlink: /home/user/.local/bin/nvim
+
+Removal processing completed successfully.
+```
+
+---
+
+### 4. Self-Update Engine
 **Command**:
 ```bash
 project-dots self-update --dry-run
@@ -66,7 +86,30 @@ Latest release tag: v<newer-version>
 
 ---
 
-### 4. System Bootstrap Installation Script
+### 5. Self-Uninstall Engine
+**Command**:
+```bash
+project-dots self-uninstall --dry-run
+# Or non-interactive confirmation:
+project-dots self-uninstall --yes
+```
+
+**Exact Terminal Output (Dry-Run Preview)**:
+```text
+=== DRY-RUN MODE ACTIVE: No files will be deleted ===
+=== project-dots Self-Uninstall Engine ===
+Target Binary Path: /home/user/.local/bin/project-dots
+Target State Directory: /home/user/.local/state/project-dots
+Target Config Directory: /home/user/.config/project-dots
+
+=== DRY-RUN MODE ACTIVE: No files will be deleted ===
+[Dry-Run] Would remove executable: /home/user/.local/bin/project-dots
+[Dry-Run] Would remove state directory: /home/user/.local/state/project-dots
+```
+
+---
+
+### 6. System Bootstrap Installation Script
 **Command**:
 ```bash
 curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
