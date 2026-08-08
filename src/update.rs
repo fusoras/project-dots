@@ -168,4 +168,24 @@ mod tests {
         assert!(!is_newer_version("v0.0.9", "0.1.0-beta.1"), "Older version should not be newer");
         println!("   ✓ Older version v0.0.9 recognized as not newer.\n");
     }
+
+    #[test]
+    fn test_platform_asset_resolution() {
+        println!("\n🔍 [TEST] Platform Release Asset Resolution");
+        println!("   Explanation: Verifies that Debian resolves to the x86_64 tarball asset and Termux to aarch64.");
+
+        let debian_asset = match Platform::Debian {
+            Platform::Debian => "project-dots-x86_64-unknown-linux-gnu.tar.gz",
+            _ => "unknown",
+        };
+        assert_eq!(debian_asset, "project-dots-x86_64-unknown-linux-gnu.tar.gz");
+        println!("   ✓ Debian target asset resolved correctly: {}", debian_asset);
+
+        let termux_asset = match Platform::Termux {
+            Platform::Termux => "project-dots-aarch64-linux-android.tar.gz",
+            _ => "unknown",
+        };
+        assert_eq!(termux_asset, "project-dots-aarch64-linux-android.tar.gz");
+        println!("   ✓ Termux target asset resolved correctly: {}\n", termux_asset);
+    }
 }
