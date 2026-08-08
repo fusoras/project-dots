@@ -24,7 +24,13 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform, debu
         println!("Platform Detected: {:?}\n", platform);
 
         for (cat_name, cat) in &config.categories {
-            println!("Category: {}", cat_name);
+            let alias_str = cat
+                .aliases
+                .as_ref()
+                .map(|a| format!(" (Aliases: {})", a.join(", ")))
+                .unwrap_or_default();
+
+            println!("Category: {}{}", cat_name, alias_str);
             println!("  Description: {}", cat.description);
 
             let pkgs = match platform {
@@ -69,7 +75,13 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform, debu
         println!("\n=== Available Categories ===");
 
         for (cat_name, cat) in &config.categories {
-            println!("\nCategory: {}", cat_name);
+            let alias_str = cat
+                .aliases
+                .as_ref()
+                .map(|a| format!(" (Aliases: {})", a.join(", ")))
+                .unwrap_or_default();
+
+            println!("\nCategory: {}{}", cat_name, alias_str);
             println!("  Description: {}", cat.description);
 
             let mut all_pkgs: Vec<String> = match platform {
@@ -111,10 +123,11 @@ pub fn install_category(
     let target_categories: Vec<(&String, &crate::config::Category)> = match category_filter {
         Some("all") | None => config.categories.iter().collect(),
         Some(cat) => {
-            if let Some(c) = config.categories.get(cat) {
-                vec![(config.categories.get_key_value(cat).unwrap().0, c)]
+            if let Some(canonical_key) = config.resolve_category_key(cat) {
+                let category_def = config.categories.get(canonical_key).unwrap();
+                vec![(canonical_key, category_def)]
             } else {
-                return Err(format!("Category '{}' not found in configuration.", cat));
+                return Err(format!("Category or alias '{}' not found in configuration.", cat));
             }
         }
     };
@@ -304,10 +317,11 @@ pub fn remove_category(
     let target_categories: Vec<(&String, &crate::config::Category)> = match category_filter {
         Some("all") | None => config.categories.iter().collect(),
         Some(cat) => {
-            if let Some(c) = config.categories.get(cat) {
-                vec![(config.categories.get_key_value(cat).unwrap().0, c)]
+            if let Some(canonical_key) = config.resolve_category_key(cat) {
+                let category_def = config.categories.get(canonical_key).unwrap();
+                vec![(canonical_key, category_def)]
             } else {
-                return Err(format!("Category '{}' not found in configuration.", cat));
+                return Err(format!("Category or alias '{}' not found in configuration.", cat));
             }
         }
     };

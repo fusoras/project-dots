@@ -14,6 +14,7 @@ pub struct Config {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Category {
     pub description: String,
+    pub aliases: Option<Vec<String>>,
     pub debian_packages: Option<Vec<String>>,
     pub termux_packages: Option<Vec<String>>,
     pub custom: Option<BTreeMap<String, CustomInstaller>>,
@@ -57,6 +58,23 @@ impl Config {
             .map_err(|e| format!("Failed to parse embedded default categories.toml: {}", e))?;
         Ok((config, "Embedded default configuration".to_string()))
     }
+
+    /// Resolves an input query (canonical category ID or any defined alias) to the canonical category key.
+    pub fn resolve_category_key<'a>(&'a self, query: &'a str) -> Option<&'a String> {
+        if self.categories.contains_key(query) {
+            return self.categories.get_key_value(query).map(|(k, _)| k);
+        }
+
+        for (key, category) in &self.categories {
+            if let Some(aliases) = &category.aliases {
+                if aliases.iter().any(|alias| alias.eq_ignore_ascii_case(query)) {
+                    return Some(key);
+                }
+            }
+        }
+
+        None
+    }
 }
 
 /// Helper to resolve the user's home directory from environment.
@@ -81,5 +99,21 @@ mod tests {
 
         assert!(cfg.categories.contains_key("lazyvim-minimal"), "Must include 'lazyvim-minimal' category");
         println!("   ✓ Category 'lazyvim-minimal' verified in catalog.\n");
+    }
+
+    #[test]
+    fn test_category_alias_resolution() {
+        let config: Config = toml::from_str(EMBEDDED_CONFIG).expect("Should parse embedded config");
+
+        // Direct canonical name match
+        assert_eq!(config.resolve_category_key("lazyvim-minimal"), Some(&"lazyvim-minimal".to_string()));
+
+        // Alias matches
+        assert_eq!(config.resolve_category_key("lazyvim"), Some(&"lazyvim-minimal".to_string()));
+        assert_eq!(config.resolve_category_key("lzv-min"), Some(&"lazyvim-minimal".to_string()));
+        assert_eq!(config.resolve_category_key("lzv"), Some(&"lazyvim-minimal".to_string()));
+
+        // Non-matching query
+        assert_eq!(config.resolve_category_key("nonexistent"), None);
     }
 }
