@@ -9,6 +9,7 @@
 | `project-dots list` | Displays available categories and package lists in a clean format | `--debug` / `-d` for detailed system package status |
 | `project-dots install [category]` | Installs packages for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `project-dots remove [category]` | Safely uninstalls packages installed by `project-dots` | `--dry-run` / `-n` to preview removal without making changes |
+| `project-dots self-update` | Checks GitHub Releases and updates the application binary in-place | `--dry-run` / `-n` to preview version update without downloading |
 | `project-dots --version` | Displays the current application version (`0.1.0-beta.1`) | `-V` |
 | `project-dots --help` | Displays the command-line help summary | `-h` |
 
@@ -19,130 +20,53 @@
 ### 1. List Categories (Default User View)
 **Command**:
 ```bash
-cargo run -- list
-# or using compiled binary:
 project-dots list
 ```
-**Purpose**:
-Provides a clean, human-readable summary of available categories and their associated packages formatted on a single line in dim gray.
 
-**Exact Terminal Output**:
-```text
-Loaded configuration from: ./categories.toml
+---
 
-=== Available Categories ===
-
-Category: lazyvim-minimal
-  Description: Minimal LazyVim dependencies and editor setup
-  Packages: git, curl, clang, fd-find, lazygit, neovim (custom binary)
+### 2. Install Category (Dry-Run & Live)
+**Command**:
+```bash
+project-dots install lazyvim-minimal --dry-run
 ```
 
 ---
 
-### 2. List Categories (Detailed Debug Mode)
+### 3. Self-Update Engine
 **Command**:
 ```bash
-cargo run -- list --debug
-# or:
-project-dots list -d
+project-dots self-update --dry-run
 ```
 **Purpose**:
-Provides developers and advanced users with exact system package tracking information (`Pre-existing (system)`, `Installed by project-dots`, `Not installed`) and custom installer metadata.
+Queries the GitHub Releases API for `project-dots`, compares the current version (`0.1.0-beta.1`) against the latest release tag, and previews or performs binary replacement.
 
-**Exact Terminal Output**:
+**Exact Terminal Output (Up-to-Date)**:
 ```text
-Loaded configuration from: ./categories.toml
+Checking GitHub Releases for updates...
+Current version: 0.1.0-beta.1
+Latest release tag: v0.1.0-beta.1
 
-=== project-dots: Categories & Package Status (DEBUG MODE) ===
-Platform Detected: Debian
+[Up-to-Date] project-dots is already running the latest version.
+```
 
-Category: lazyvim-minimal
-  Description: Minimal LazyVim dependencies and editor setup
-  Packages:
-    - git [Pre-existing (system)]
-    - curl [Pre-existing (system)]
-    - clang [Not installed]
-    - fd-find [Pre-existing (system)]
-    - lazygit [Installed (untracked)]
-  Custom Installer (Debian):
-    - neovim (https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz) [Not installed]
+**Exact Terminal Output (Update Available - Dry Run)**:
+```text
+Checking GitHub Releases for updates...
+Current version: 0.1.0-beta.1
+Latest release tag: v0.1.0-beta.2
+
+=== DRY-RUN MODE ACTIVE: No binary changes will be made ===
+[Dry-Run] Would download pre-compiled release binary asset: project-dots-x86_64-unknown-linux-gnu.tar.gz
+[Dry-Run] Would extract and replace executable at: /home/user/.local/bin/project-dots
 ```
 
 ---
 
-### 3. Install Category (Dry-Run Simulation)
+### 4. System Bootstrap Installation Script
 **Command**:
 ```bash
-cargo run -- install lazyvim-minimal --dry-run
-# or:
-project-dots install lazyvim-minimal -n
+curl -sSL https://raw.githubusercontent.com/<user>/project-dots/main/install.sh | sh
 ```
 **Purpose**:
-Previews system package manager commands (`apt install -y` / `pkg install -y`), tarball extractions, and symlink creation without modifying the operating system.
-
-**Exact Terminal Output**:
-```text
-=== DRY-RUN MODE ACTIVE: No system changes will be made ===
-
---> Processing Category: lazyvim-minimal
-  [SKIP] Package 'git' is already installed on OS.
-  [SKIP] Package 'curl' is already installed on OS.
-  [Dry-Run] Would execute: sudo apt install -y clang
-  [SKIP] Package 'fd-find' is already installed on OS.
-  [SKIP] Package 'lazygit' is already installed on OS.
-  --> Custom Binary Installer: neovim
-  [Dry-Run] Would download release tarball from https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz
-  [Dry-Run] Would extract to /opt/nvim
-  [Dry-Run] Would create symlink: /home/user/.local/bin/nvim -> /opt/nvim/bin/neovim
-
-Installation processing completed successfully.
-```
-
----
-
-### 4. Install Category (Live Execution)
-**Command**:
-```bash
-cargo run -- install lazyvim-minimal
-# or:
-project-dots install all
-```
-**Purpose**:
-Executes real package manager installation commands, downloads custom binary tarballs to `/opt/nvim`, creates symlinks to `~/.local/bin/nvim`, updates state tracking (`~/.local/state/project-dots/state.toml`), and displays `$PATH` helper recommendations if `~/.local/bin` is not in `$PATH`.
-
----
-
-### 5. Remove Category (Safe Removal with Dry-Run)
-**Command**:
-```bash
-cargo run -- remove lazyvim-minimal --dry-run
-```
-**Purpose**:
-Simulates package removal while enforcing safety rules: packages that existed on the system prior to `project-dots` (`was_preexisting = true`) are automatically protected and skipped.
-
-**Exact Terminal Output**:
-```text
-=== DRY-RUN MODE ACTIVE: No system changes will be made ===
-
---> Processing Removal for Category: lazyvim-minimal
-  [SKIP] Package 'git' was pre-existing on system before project-dots. Skipping removal.
-  [SKIP] Package 'curl' was pre-existing on system before project-dots. Skipping removal.
-  [SKIP] Package 'clang' was not installed by project-dots. Skipping removal.
-  [SKIP] Package 'fd-find' was pre-existing on system before project-dots. Skipping removal.
-  [SKIP] Package 'lazygit' was pre-existing on system before project-dots. Skipping removal.
-
-Removal processing completed successfully.
-```
-
----
-
-### 6. Display Version & Help
-**Command**:
-```bash
-project-dots --version
-project-dots --help
-```
-**Output**:
-```text
-0.1.0-beta.1
-```
+Installs `project-dots` on a fresh machine (Debian or Termux) in one command without requiring Rust or Cargo.
