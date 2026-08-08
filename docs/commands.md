@@ -1,6 +1,6 @@
 # CLI Command Reference & Manual — project-dots
 
-`project-dots` (v0.1.0-beta.1) provides a simple, safety-first command-line interface to manage system packages and dotfile dependencies across **Debian** (`apt`) and **Termux** (`pkg`).
+`project-dots` provides a simple, safety-first command-line interface to manage system packages and dotfile dependencies across **Debian** (`apt`) and **Termux** (`pkg`).
 
 ## Overview of Commands
 
@@ -10,7 +10,7 @@
 | `project-dots install [category]` | Installs packages for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `project-dots remove [category]` | Safely uninstalls packages installed by `project-dots` | `--dry-run` / `-n` to preview removal without making changes |
 | `project-dots self-update` | Checks GitHub Releases and updates the application binary in-place | `--dry-run` / `-n` to preview version update without downloading |
-| `project-dots --version` | Displays the current application version (`0.1.0-beta.1`) | `-v` |
+| `project-dots --version` | Displays the current application version | `-V` |
 | `project-dots --help` | Displays the command-line help summary | `-h` |
 
 ---
@@ -39,13 +39,13 @@ project-dots install lazyvim-minimal --dry-run
 project-dots self-update --dry-run
 ```
 **Purpose**:
-Queries the GitHub Releases API for `project-dots`, compares the current version (`0.1.0-beta.1`) against the latest release tag, and previews or performs binary replacement.
+Queries the GitHub Releases API for `project-dots`, compares the current version against the latest release tag, and previews or performs binary replacement.
 
 **Exact Terminal Output (Up-to-Date)**:
 ```text
 Checking GitHub Releases for updates...
-Current version: 0.1.0-beta.1
-Latest release tag: v0.1.0-beta.1
+Current version: <current-version>
+Latest release tag: v<current-version>
 
 [Up-to-Date] project-dots is already running the latest version.
 ```
@@ -53,8 +53,8 @@ Latest release tag: v0.1.0-beta.1
 **Exact Terminal Output (Update Available - Dry Run)**:
 ```text
 Checking GitHub Releases for updates...
-Current version: 0.1.0-beta.1
-Latest release tag: v0.1.0-beta.2
+Current version: <current-version>
+Latest release tag: v<newer-version>
 
 === DRY-RUN MODE ACTIVE: No binary changes will be made ===
 [Dry-Run] Would download pre-compiled release binary asset: project-dots-x86_64-unknown-linux-gnu.tar.gz

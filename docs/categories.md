@@ -29,6 +29,7 @@ installed_at = "2026-08-07T17:48:05Z"
 ```toml
 [categories.lazyvim-minimal]
 description = "Minimal LazyVim dependencies and editor setup"
+aliases = ["lzv-min", "lazy-min"]
 debian_packages = ["git", "curl", "clang", "fd-find", "lazygit"]
 termux_packages = ["neovim", "git", "curl", "clang", "fd", "lazygit"]
 
@@ -39,6 +40,9 @@ url = "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_
 extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
 ```
+
+## Category Aliases
+Each category can declare optional short aliases via the `aliases` array property in `categories.toml`. Users can invoke `project-dots install <alias>` or `project-dots remove <alias>` interchangeably with the canonical category name.
 
 ## Active Production Categories
 
