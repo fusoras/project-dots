@@ -43,7 +43,16 @@ dest = "~/.termux/font.ttf"
 platform = "termux"
 only_if_not_exists = true
 
-post_install_commands = ["chsh -s $(which zsh)"]
+[[categories.shell-tokyonight.post_install_commands]]
+command = "chsh -s $(which zsh)"
+platform = "debian"
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "chsh -s zsh"
+platform = "termux"
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF 'eval \"$(starship init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'eval \"$(starship init zsh)\"' >> \"$HOME/.zshrc\""
 ```
 
 ## Category Aliases
@@ -63,6 +72,9 @@ Each category can declare optional short aliases via the `aliases` array propert
 - **Config Copies**:
   - `config/shell-tokyonight/starship.toml` -> `~/.config/starship.toml`
   - `config/shell-tokyonight/font.ttf` -> `~/.termux/font.ttf` (Termux only, skipped if `font.ttf` already exists)
-- **Post-Install**: `chsh -s $(which zsh)` (sets Zsh as default shell)
+- **Post-Install**:
+  - Debian: `chsh -s $(which zsh)` (sets Zsh as default shell)
+  - Termux: `chsh -s zsh` (sets Zsh as default shell)
+  - All: ensures `~/.zshrc` exists and adds `eval "$(starship init zsh)"` so Starship starts with Zsh
 
 

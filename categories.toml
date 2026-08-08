@@ -16,7 +16,17 @@ aliases = ["shell-tn"]
 description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git"
 debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
 termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
-post_install_commands = ["chsh -s $(which zsh)"]
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "chsh -s $(which zsh)"
+platform = "debian"
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "chsh -s zsh"
+platform = "termux"
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF 'eval \"$(starship init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'eval \"$(starship init zsh)\"' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/starship.toml"

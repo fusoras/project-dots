@@ -21,7 +21,7 @@ pub struct Category {
     pub termux_packages: Option<Vec<String>>,
     pub custom: Option<BTreeMap<String, CustomInstaller>>,
     pub copy_files: Option<Vec<CopyFileAction>>,
-    pub post_install_commands: Option<Vec<String>>,
+    pub post_install_commands: Option<Vec<PostInstallCommand>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,6 +30,12 @@ pub struct CopyFileAction {
     pub dest: String,
     pub platform: Option<String>,
     pub only_if_not_exists: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PostInstallCommand {
+    pub command: String,
+    pub platform: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

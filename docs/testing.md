@@ -23,6 +23,7 @@ cargo test -- --nocapture
 | `test_process_copy_files_dry_run` | `src/installer.rs` | Verifies dry-run preview execution for `copy_files` actions without modifying filesystem. |
 | `test_process_copy_files_termux_font_dry_run` | `src/installer.rs` | Verifies platform-filtered `copy_files` actions (Termux font copying) during dry-run. |
 | `test_process_post_install_commands_dry_run` | `src/installer.rs` | Verifies dry-run execution of `post_install_commands` actions. |
+| `test_process_post_install_commands_platform_filter` | `src/installer.rs` | Verifies platform-filtered `post_install_commands` (Debian vs Termux) and platform-agnostic commands. |
 | `test_list_categories_output` | `src/installer.rs` | Verifies simplified single-line `list` output formatting. |
 | `test_show_category_resolution` | `src/installer.rs` | Verifies category inspection (`show`) via canonical key and explicit alias. |
 | `test_command_exists_utility` | `src/platform.rs` | Verifies PATH directory inspection for command presence without relying on external `which`. |

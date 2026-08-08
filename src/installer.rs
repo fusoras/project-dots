@@ -170,7 +170,12 @@ pub fn show_category(
     if let Some(post_cmds) = &cat.post_install_commands {
         println!("\n{BOLD_BLUE}Post-Install Commands:{RESET}");
         for cmd in post_cmds {
-            println!("  - {}", cmd);
+            let platform_info = cmd
+                .platform
+                .as_ref()
+                .map(|p| format!(" (Platform: {})", p))
+                .unwrap_or_default();
+            println!("  - {}{}", cmd.command, platform_info);
         }
     }
 
@@ -280,7 +285,7 @@ pub fn install_category(
         }
 
         if let Some(post_cmds) = &cat.post_install_commands {
-            process_post_install_commands(post_cmds, dry_run)?;
+            process_post_install_commands(post_cmds, platform, dry_run)?;
         }
     }
 
@@ -339,9 +344,20 @@ fn process_copy_files(
     Ok(())
 }
 
-fn process_post_install_commands(commands: &[String], dry_run: bool) -> Result<(), String> {
+fn process_post_install_commands(
+    commands: &[crate::config::PostInstallCommand],
+    platform: &Platform,
+    dry_run: bool,
+) -> Result<(), String> {
     for cmd in commands {
-        if cmd.contains("chsh") {
+        if let Some(target_platform) = &cmd.platform {
+            let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
+            if !matches_platform {
+                continue;
+            }
+        }
+
+        if cmd.command.contains("chsh") {
             let current_shell = env::var("SHELL").unwrap_or_default();
             if current_shell.ends_with("/zsh") {
                 println!("  [SKIP] Default shell is already Zsh ('{}').", current_shell);
@@ -350,21 +366,21 @@ fn process_post_install_commands(commands: &[String], dry_run: bool) -> Result<(
         }
 
         if dry_run {
-            println!("  [Dry-Run] Would execute post-install command: {}", cmd);
+            println!("  [Dry-Run] Would execute post-install command: {}", cmd.command);
             continue;
         }
 
-        println!("  [Executing] Post-install command: {}", cmd);
+        println!("  [Executing] Post-install command: {}", cmd.command);
         let status = Command::new("sh")
             .arg("-c")
-            .arg(cmd)
+            .arg(&cmd.command)
             .status()
-            .map_err(|e| format!("Failed to execute post-install command '{}': {}", cmd, e))?;
+            .map_err(|e| format!("Failed to execute post-install command '{}': {}", cmd.command, e))?;
 
         if !status.success() {
-            println!("  [WARNING] Post-install command '{}' exited with status {}", cmd, status);
+            println!("  [WARNING] Post-install command '{}' exited with status {}", cmd.command, status);
         } else {
-            println!("  [Success] Post-install command completed: {}", cmd);
+            println!("  [Success] Post-install command completed: {}", cmd.command);
         }
     }
     Ok(())
@@ -650,9 +666,34 @@ mod tests {
 
     #[test]
     fn test_process_post_install_commands_dry_run() {
-        let commands = vec!["chsh -s $(which zsh)".to_string()];
-        let res = process_post_install_commands(&commands, true);
+        let commands = vec![crate::config::PostInstallCommand {
+            command: "chsh -s $(which zsh)".to_string(),
+            platform: Some("debian".to_string()),
+        }];
+        let res = process_post_install_commands(&commands, &Platform::Debian, true);
         assert!(res.is_ok(), "Post install commands dry-run should succeed");
+    }
+
+    #[test]
+    fn test_process_post_install_commands_platform_filter() {
+        let commands = vec![
+            crate::config::PostInstallCommand {
+                command: "chsh -s $(which zsh)".to_string(),
+                platform: Some("debian".to_string()),
+            },
+            crate::config::PostInstallCommand {
+                command: "chsh -s zsh".to_string(),
+                platform: Some("termux".to_string()),
+            },
+            crate::config::PostInstallCommand {
+                command: "echo common".to_string(),
+                platform: None,
+            },
+        ];
+        let res_debian = process_post_install_commands(&commands, &Platform::Debian, true);
+        assert!(res_debian.is_ok());
+        let res_termux = process_post_install_commands(&commands, &Platform::Termux, true);
+        assert!(res_termux.is_ok());
     }
 
     #[test]
