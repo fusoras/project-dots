@@ -23,12 +23,13 @@ CodeGraph v1.5.0 is installed globally (`~/.local/bin/codegraph`) with an active
 - Sync index: `codegraph sync`
 
 ## Additional Documentation
-For detailed architecture, roadmap, CLI reference, and unit testing specifications, consult:
+For detailed architecture, roadmap, CLI reference, unit testing, and release specifications, consult:
 - Planning and Roadmap: @docs/planning.md
 - Categories and Packages: @docs/categories.md
 - Debian & Termux Support: @docs/platforms.md
 - CLI Reference & Commands: @docs/commands.md
 - Unit Testing Guide: @docs/testing.md
+- Versioning & Release Guide: @docs/versioning.md
 
 ## Rules and Conventions
 - Keep the codebase lightweight and modular in Rust.
