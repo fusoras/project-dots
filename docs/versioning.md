@@ -72,3 +72,15 @@ Pushing a tag starting with `v*` (e.g. `v0.1.0-beta.3`) automatically triggers G
 1. **x86_64-unknown-linux-gnu**: Compiles native Linux 64-bit binary and packages `project-dots-x86_64-unknown-linux-gnu.tar.gz`.
 2. **aarch64-unknown-linux-musl**: Cross-compiles static ARM64 binary via `musl-tools` + `gcc-aarch64-linux-gnu` and packages `project-dots-aarch64-unknown-linux-musl.tar.gz`.
 3. **GitHub Release Creation**: Uploads both tarball assets to the new GitHub Release tag automatically using `softprops/action-gh-release@v2`.
+
+---
+
+## 5. Changelog Strategy (`CHANGELOG.md` Policy)
+
+- **Current Beta Phase (`develop` branch)**:
+  During the active pre-release / beta iteration phase (`v0.1.0-beta.*`), rapid architecture adjustments and feature tests occur without maintaining a manual `CHANGELOG.md` file. Release details are tracked via Conventional Commit messages and GitHub Release tags.
+
+- **Stable Release Phase (`main` branch TODO)**:
+  When `project-dots` exits beta, undergoes final verification, and merges into the `main` production branch for stable releases (`v1.0.0+` / `v0.1.0` stable):
+  1. A formal **`CHANGELOG.md`** file will be established following the [Keep a Changelog](https://keepachangelog.com/) standard.
+  2. Every release merged into `main` must record an explicit changelog entry detailing Added, Changed, Deprecated, Removed, Fixed, and Security changes.
