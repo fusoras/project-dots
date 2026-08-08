@@ -114,6 +114,11 @@ fn main() {
         }
     };
 
+    if config_source != "Embedded default configuration" {
+        println!("{BOLD_YELLOW}[SECURITY WARNING] Loaded external configuration file: {config_source}{RESET}");
+        println!("{BOLD_YELLOW}[SECURITY WARNING] Verify contents before running custom installers or post-install commands.{RESET}\n");
+    }
+
     let mut state = State::load();
     let platform = Platform::detect();
 
