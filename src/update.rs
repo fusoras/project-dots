@@ -31,7 +31,7 @@ pub fn check_and_perform_update(
 
     let asset_name = match platform {
         Platform::Debian => "project-dots-x86_64-unknown-linux-gnu.tar.gz",
-        Platform::Termux => "project-dots-aarch64-linux-android.tar.gz",
+        Platform::Termux => "project-dots-aarch64-unknown-linux-gnu.tar.gz",
         Platform::Unsupported(reason) => return Err(format!("Unsupported platform for self-update: {}", reason)),
     };
 
@@ -182,10 +182,10 @@ mod tests {
         println!("   ✓ Debian target asset resolved correctly: {}", debian_asset);
 
         let termux_asset = match Platform::Termux {
-            Platform::Termux => "project-dots-aarch64-linux-android.tar.gz",
+            Platform::Termux => "project-dots-aarch64-unknown-linux-gnu.tar.gz",
             _ => "unknown",
         };
-        assert_eq!(termux_asset, "project-dots-aarch64-linux-android.tar.gz");
+        assert_eq!(termux_asset, "project-dots-aarch64-unknown-linux-gnu.tar.gz");
         println!("   ✓ Termux target asset resolved correctly: {}\n", termux_asset);
     }
 }

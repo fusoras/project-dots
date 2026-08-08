@@ -17,13 +17,13 @@ case "$OS" in
     Linux*)
         if [ -d "/data/data/com.termux/files/usr" ]; then
             PLATFORM="termux"
-            TARGET_ASSET="project-dots-aarch64-linux-android.tar.gz"
+            TARGET_ASSET="project-dots-aarch64-unknown-linux-gnu.tar.gz"
         else
             PLATFORM="debian"
             if [ "$ARCH" = "x86_64" ]; then
                 TARGET_ASSET="project-dots-x86_64-unknown-linux-gnu.tar.gz"
             else
-                TARGET_ASSET="project-dots-aarch64-linux-android.tar.gz"
+                TARGET_ASSET="project-dots-aarch64-unknown-linux-gnu.tar.gz"
             fi
         fi
         ;;
