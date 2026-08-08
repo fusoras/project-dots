@@ -59,6 +59,11 @@ impl Config {
         Ok((config, "Embedded default configuration".to_string()))
     }
 
+    /// Returns the standard user configuration directory (~/.config/project-dots).
+    pub fn get_user_config_dir() -> Option<PathBuf> {
+        dirs_home_dir().map(|home| home.join(".config/project-dots"))
+    }
+
     /// Resolves an input query (canonical category ID or any defined alias) to the canonical category key.
     pub fn resolve_category_key<'a>(&'a self, query: &'a str) -> Option<&'a String> {
         if self.categories.contains_key(query) {
@@ -66,10 +71,8 @@ impl Config {
         }
 
         for (key, category) in &self.categories {
-            if let Some(aliases) = &category.aliases {
-                if aliases.iter().any(|alias| alias.eq_ignore_ascii_case(query)) {
-                    return Some(key);
-                }
+            if category.aliases.as_ref().is_some_and(|aliases| aliases.iter().any(|alias| alias.eq_ignore_ascii_case(query))) {
+                return Some(key);
             }
         }
 

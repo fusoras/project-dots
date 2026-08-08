@@ -97,17 +97,21 @@ pub fn check_and_perform_update(
     Ok(())
 }
 
-/// Safely removes project-dots binary executable and state directory from system.
-pub fn perform_self_uninstall(dry_run: bool) -> Result<(), String> {
+/// Safely removes project-dots binary executable and state/config directories.
+pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> Result<(), String> {
     let current_exe = env::current_exe()
         .map_err(|e| format!("Failed to resolve current binary path: {}", e))?;
 
     let state_path = crate::state::State::get_state_path();
     let state_dir = state_path.parent().unwrap_or(&state_path);
+    let config_dir = crate::config::Config::get_user_config_dir();
 
     println!("=== project-dots Self-Uninstall Engine ===");
     println!("Target Binary Path: {}", current_exe.display());
     println!("Target State Directory: {}", state_dir.display());
+    if let Some(ref cfg_dir) = config_dir {
+        println!("Target Config Directory: {}", cfg_dir.display());
+    }
 
     if dry_run {
         println!("\n=== DRY-RUN MODE ACTIVE: No files will be deleted ===");
@@ -115,8 +119,28 @@ pub fn perform_self_uninstall(dry_run: bool) -> Result<(), String> {
         if state_dir.exists() {
             println!("[Dry-Run] Would remove state directory: {}", state_dir.display());
         }
+        if let Some(ref cfg_dir) = config_dir {
+            if cfg_dir.exists() {
+                println!("[Dry-Run] Would remove config directory: {}", cfg_dir.display());
+            }
+        }
         return Ok(());
     }
+
+    let remove_config = if auto_confirm {
+        true
+    } else {
+        use std::io::{self, Write};
+        print!("\nDo you also want to remove all project-dots configuration files and package state registry? [y/N]: ");
+        let _ = io::stdout().flush();
+        let mut input = String::new();
+        if io::stdin().read_line(&mut input).is_ok() {
+            let trimmed = input.trim().to_lowercase();
+            trimmed == "y" || trimmed == "yes"
+        } else {
+            false
+        }
+    };
 
     // 1. Remove binary executable
     if current_exe.exists() {
@@ -125,11 +149,22 @@ pub fn perform_self_uninstall(dry_run: bool) -> Result<(), String> {
         println!("✓ Executable removed: {}", current_exe.display());
     }
 
-    // 2. Remove state directory if it exists
-    if state_dir.exists() {
-        fs::remove_dir_all(state_dir)
-            .map_err(|e| format!("Failed to remove state directory at {}: {}", state_dir.display(), e))?;
-        println!("✓ State directory removed: {}", state_dir.display());
+    // 2. Remove configuration and state directories if confirmed
+    if remove_config {
+        if state_dir.exists() {
+            fs::remove_dir_all(state_dir)
+                .map_err(|e| format!("Failed to remove state directory at {}: {}", state_dir.display(), e))?;
+            println!("✓ State directory removed: {}", state_dir.display());
+        }
+        if let Some(ref cfg_dir) = config_dir {
+            if cfg_dir.exists() {
+                fs::remove_dir_all(cfg_dir)
+                    .map_err(|e| format!("Failed to remove config directory at {}: {}", cfg_dir.display(), e))?;
+                println!("✓ Config directory removed: {}", cfg_dir.display());
+            }
+        }
+    } else {
+        println!("[Preserved] Configuration and state directories kept intact.");
     }
 
     println!("\n\x1b[1;32mproject-dots uninstalled successfully!\x1b[0m");
@@ -237,7 +272,7 @@ mod tests {
         println!("\n🔍 [TEST] Self-Uninstall Engine (Dry-Run Simulation)");
         println!("   Explanation: Verifies that perform_self_uninstall(true) previews executable and state directory removal cleanly without altering disk state.");
 
-        let result = perform_self_uninstall(true);
+        let result = perform_self_uninstall(true, false);
         assert!(result.is_ok(), "Self-uninstall dry-run should complete cleanly");
         println!("   ✓ Self-uninstall dry-run completed successfully.\n");
     }

@@ -39,6 +39,7 @@ enum Commands {
     },
 
     /// Installs packages for a specific category or all categories
+    #[command(visible_alias = "i", short_flag = 'i', alias = "-i")]
     Install {
         /// Category name to install (e.g. 'shell', 'editors', 'cli-tools'), or 'all'
         #[arg(default_value = "all")]
@@ -70,8 +71,12 @@ enum Commands {
         dry_run: bool,
     },
 
-    /// Uninstalls project-dots executable and state directory from system
+    /// Uninstalls project-dots executable and state/config directories from system
     SelfUninstall {
+        /// Automatically confirm deletion of configuration files and package state registry
+        #[arg(short = 'y', long)]
+        yes: bool,
+
         /// Preview uninstallation actions without deleting files
         #[arg(short = 'n', long = "dry-run")]
         dry_run: bool,
@@ -158,14 +163,29 @@ fn main() {
             }
             println!("\n{BOLD_GREEN}Self-update processing completed successfully.{RESET}");
         }
-        Commands::SelfUninstall { dry_run } => {
+        Commands::SelfUninstall { yes, dry_run } => {
             if dry_run {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No files will be deleted ==={RESET}");
             }
-            if let Err(e) = update::perform_self_uninstall(dry_run) {
+            if let Err(e) = update::perform_self_uninstall(dry_run, yes) {
                 eprintln!("\n{BOLD_RED}Self-uninstall error:{RESET} {}", e);
                 std::process::exit(1);
             }
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_install_subcommand_alias() {
+        let cli_dash = Cli::try_parse_from(["project-dots", "-i"]).expect("failed to parse -i");
+        assert!(matches!(cli_dash.command, Some(Commands::Install { .. })));
+
+        let cli_alias = Cli::try_parse_from(["project-dots", "i"]).expect("failed to parse i");
+        assert!(matches!(cli_alias.command, Some(Commands::Install { .. })));
+    }
+}
+
