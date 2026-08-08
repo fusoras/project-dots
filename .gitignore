@@ -1,2 +1,23 @@
+# Rust / Cargo
 /target
-.codegraph
+**/*.rs.bk
+*.rs.bk
+
+# IDEs & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+
+# Local tools & indexing
+.codegraph/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Logs & Environment
+*.log
+.env
