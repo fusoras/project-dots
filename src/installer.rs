@@ -9,6 +9,7 @@ use std::process::Command;
 
 const BOLD_GREEN: &str = "\x1b[1;32m";
 const BOLD_BLUE: &str = "\x1b[1;34m";
+const BOLD_YELLOW: &str = "\x1b[1;33m";
 const WHITE: &str = "\x1b[37m";
 const RESET: &str = "\x1b[0m";
 const DIM_GRAY: &str = "\x1b[90m";
@@ -296,7 +297,7 @@ pub fn install_category(
             if dry_run {
                 println!("  [Dry-Run] Would show final message: {}", msg);
             } else {
-                println!("\n  {BOLD_BLUE}>>> {}{RESET}", msg);
+                println!("\n  {BOLD_YELLOW}>>> {}{RESET}", msg);
             }
         }
     }
