@@ -91,7 +91,50 @@ pub fn check_and_perform_update(
     let _ = fs::remove_file(&backup_exe);
     let _ = fs::remove_dir_all(&tmp_dir);
 
-    println!("\n[Success] project-dots updated successfully to {} at {}!", latest_tag, current_exe.display());
+    println!("\n\x1b[1;32mSelf-update completed successfully!\x1b[0m");
+    println!("Updated binary placed at: {}", current_exe.display());
+
+    Ok(())
+}
+
+/// Safely removes project-dots binary executable and state directory from system.
+pub fn perform_self_uninstall(dry_run: bool) -> Result<(), String> {
+    let current_exe = env::current_exe()
+        .map_err(|e| format!("Failed to resolve current binary path: {}", e))?;
+
+    let state_path = crate::state::State::get_state_path();
+    let state_dir = state_path.parent().unwrap_or(&state_path);
+
+    println!("=== project-dots Self-Uninstall Engine ===");
+    println!("Target Binary Path: {}", current_exe.display());
+    println!("Target State Directory: {}", state_dir.display());
+
+    if dry_run {
+        println!("\n=== DRY-RUN MODE ACTIVE: No files will be deleted ===");
+        println!("[Dry-Run] Would remove executable: {}", current_exe.display());
+        if state_dir.exists() {
+            println!("[Dry-Run] Would remove state directory: {}", state_dir.display());
+        }
+        return Ok(());
+    }
+
+    // 1. Remove binary executable
+    if current_exe.exists() {
+        fs::remove_file(&current_exe)
+            .map_err(|e| format!("Failed to remove binary at {}: {}", current_exe.display(), e))?;
+        println!("✓ Executable removed: {}", current_exe.display());
+    }
+
+    // 2. Remove state directory if it exists
+    if state_dir.exists() {
+        fs::remove_dir_all(state_dir)
+            .map_err(|e| format!("Failed to remove state directory at {}: {}", state_dir.display(), e))?;
+        println!("✓ State directory removed: {}", state_dir.display());
+    }
+
+    println!("\n\x1b[1;32mproject-dots uninstalled successfully!\x1b[0m");
+    println!("Tip: Remember to remove PATH entries from ~/.zshrc or ~/.bashrc if no longer needed.");
+
     Ok(())
 }
 
@@ -187,5 +230,15 @@ mod tests {
         };
         assert_eq!(termux_asset, "project-dots-aarch64-unknown-linux-musl.tar.gz");
         println!("   ✓ Termux target asset resolved correctly: {}\n", termux_asset);
+    }
+
+    #[test]
+    fn test_self_uninstall_dry_run() {
+        println!("\n🔍 [TEST] Self-Uninstall Engine (Dry-Run Simulation)");
+        println!("   Explanation: Verifies that perform_self_uninstall(true) previews executable and state directory removal cleanly without altering disk state.");
+
+        let result = perform_self_uninstall(true);
+        assert!(result.is_ok(), "Self-uninstall dry-run should complete cleanly");
+        println!("   ✓ Self-uninstall dry-run completed successfully.\n");
     }
 }

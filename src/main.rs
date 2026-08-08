@@ -52,8 +52,11 @@ enum Commands {
     /// Safely removes packages installed by project-dots
     Remove {
         /// Category name to remove (e.g. 'shell', 'editors', 'cli-tools'), or 'all'
-        #[arg(default_value = "all")]
-        category: String,
+        category: Option<String>,
+
+        /// Remove all installed categories
+        #[arg(short = 'a', long = "all")]
+        all: bool,
 
         /// Preview removal actions without running system package commands
         #[arg(short = 'n', long = "dry-run")]
@@ -63,6 +66,13 @@ enum Commands {
     /// Checks GitHub Releases and updates project-dots binary in-place
     SelfUpdate {
         /// Preview update check without replacing binary
+        #[arg(short = 'n', long = "dry-run")]
+        dry_run: bool,
+    },
+
+    /// Uninstalls project-dots executable and state directory from system
+    SelfUninstall {
+        /// Preview uninstallation actions without deleting files
         #[arg(short = 'n', long = "dry-run")]
         dry_run: bool,
     },
@@ -116,12 +126,23 @@ fn main() {
             }
             println!("\n{BOLD_GREEN}Installation processing completed successfully.{RESET}");
         }
-        Commands::Remove { category, dry_run } => {
+        Commands::Remove { category, all, dry_run } => {
+            let cat_target = if all || category.as_deref() == Some("all") {
+                println!("{BOLD_YELLOW}[WARNING] Removing ALL installed categories and packages managed by project-dots!{RESET}");
+                None
+            } else if let Some(ref cat) = category {
+                Some(cat.as_str())
+            } else {
+                eprintln!(
+                    "{BOLD_RED}Error:{RESET} Please specify a category to remove (e.g. 'project-dots remove <category>') or use '--all' / 'all' to remove all categories."
+                );
+                std::process::exit(1);
+            };
+
             if dry_run {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No system changes will be made ==={RESET}");
             }
-            let cat_arg = if category == "all" { None } else { Some(category.as_str()) };
-            if let Err(e) = remove_category(cat_arg, &config, &mut state, &platform, dry_run) {
+            if let Err(e) = remove_category(cat_target, &config, &mut state, &platform, dry_run) {
                 eprintln!("\n{BOLD_RED}Removal error:{RESET} {}", e);
                 std::process::exit(1);
             }
@@ -136,6 +157,15 @@ fn main() {
                 std::process::exit(1);
             }
             println!("\n{BOLD_GREEN}Self-update processing completed successfully.{RESET}");
+        }
+        Commands::SelfUninstall { dry_run } => {
+            if dry_run {
+                println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No files will be deleted ==={RESET}");
+            }
+            if let Err(e) = update::perform_self_uninstall(dry_run) {
+                eprintln!("\n{BOLD_RED}Self-uninstall error:{RESET} {}", e);
+                std::process::exit(1);
+            }
         }
     }
 }
