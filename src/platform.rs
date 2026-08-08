@@ -53,8 +53,17 @@ impl Platform {
 
 /// Utility function to check if a binary exists in the system PATH.
 pub fn command_exists(cmd: &str) -> bool {
-    Command::new("which")
-        .arg(cmd)
+    if let Some(path_var) = env::var_os("PATH") {
+        for dir in env::split_paths(&path_var) {
+            let bin = dir.join(cmd);
+            if bin.is_file() {
+                return true;
+            }
+        }
+    }
+
+    Command::new(cmd)
+        .arg("--version")
         .output()
         .map(|out| out.status.success())
         .unwrap_or(false)
@@ -75,4 +84,21 @@ pub fn check_apt_lock() -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_command_exists_utility() {
+        println!("\n🔍 [TEST] System Command Presence Check (PATH Inspection)");
+        println!("   Explanation: Verifies that command_exists checks PATH directories directly without relying on external 'which'.");
+
+        assert!(command_exists("cargo"), "cargo command should exist in test environment");
+        println!("   ✓ Command 'cargo' found in system PATH.");
+
+        assert!(!command_exists("non_existent_binary_xyz_123"), "Non-existent command should return false");
+        println!("   ✓ Non-existent command correctly identified as missing.\n");
+    }
 }
