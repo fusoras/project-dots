@@ -8,7 +8,7 @@
 | ------- | ------- | ------- |
 | `project-dots list` | Displays available categories and contained packages in a concise single-line format | None |
 | `project-dots show <category>` | Displays full detailed description, package tracking status, config files, and post-install commands | Accepts category name or alias (e.g. `shell-tokyonight`, `shell-tn`) |
-| `project-dots install [category]` / `project-dots -i` | Installs packages for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
+| `project-dots add [category]` | Adds packages and configurations for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `project-dots remove <category>` | Safely uninstalls packages for a specific category or all categories | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
 | `project-dots self-update` | Checks GitHub Releases and updates the application binary in-place | `--dry-run` / `-n` to preview version update without downloading |
 | `project-dots self-uninstall` | Safely removes project-dots binary executable and state/config directories | `--yes` / `-y` to confirm deletion, `--dry-run` / `-n` to preview |

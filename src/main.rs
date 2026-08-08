@@ -11,7 +11,8 @@ use platform::Platform;
 use state::State;
 use update::check_and_perform_update;
 
-const VERSION: &str = "0.1.0-beta.7";
+const VERSION: &str = "0.1.0-beta.8";
+const DIM_GRAY: &str = "\x1b[90m";
 
 #[derive(Parser)]
 #[command(
@@ -40,16 +41,23 @@ enum Commands {
         category: String,
     },
 
-    /// Installs packages for a specific category or all categories
-    #[command(visible_alias = "i", short_flag = 'i', alias = "-i")]
-    Install {
-        /// Category name to install (e.g. 'shell', 'editors', 'cli-tools'), or 'all'
+    /// Adds packages and configurations for a specific category or all categories
+    Add {
+        /// Category name to add (e.g. 'shell-tokyonight', 'lazyvim-minimal'), or 'all'
         #[arg(default_value = "all")]
         category: String,
 
         /// Preview actions without running system package commands
         #[arg(short = 'n', long = "dry-run")]
         dry_run: bool,
+    },
+
+    /// Deprecated subcommand error hint
+    #[command(hide = true)]
+    Install {
+        /// Catch trailing arguments
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        _args: Vec<String>,
     },
 
     /// Safely removes packages installed by project-dots
@@ -132,16 +140,22 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        Commands::Install { category, dry_run } => {
+        Commands::Add { category, dry_run } => {
             if dry_run {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No system changes will be made ==={RESET}");
             }
             let cat_arg = if category == "all" { None } else { Some(category.as_str()) };
             if let Err(e) = install_category(cat_arg, &config, &mut state, &platform, dry_run) {
-                eprintln!("\n{BOLD_RED}Installation error:{RESET} {}", e);
+                eprintln!("\n{BOLD_RED}Addition error:{RESET} {}", e);
                 std::process::exit(1);
             }
-            println!("\n{BOLD_GREEN}Installation processing completed successfully.{RESET}");
+            println!("\n{BOLD_GREEN}Addition processing completed successfully.{RESET}");
+        }
+        Commands::Install { .. } => {
+            eprintln!("{BOLD_RED}error:{RESET} unrecognized subcommand 'install'\n");
+            eprintln!("  {BOLD_GREEN}tip:{RESET} a similar subcommand exists: 'add'");
+            eprintln!("  {DIM_GRAY}tip: a similar subcommand exists: 'list'{RESET}\n");
+            std::process::exit(1);
         }
         Commands::Remove { category, all, dry_run } => {
             let cat_target = if all || category.as_deref() == Some("all") {
@@ -192,12 +206,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_install_subcommand_alias() {
-        let cli_dash = Cli::try_parse_from(["project-dots", "-i"]).expect("failed to parse -i");
-        assert!(matches!(cli_dash.command, Some(Commands::Install { .. })));
+    fn test_add_subcommand() {
+        let cli = Cli::try_parse_from(["project-dots", "add", "shell-tokyonight"]).expect("failed to parse add");
+        assert!(matches!(cli.command, Some(Commands::Add { .. })));
+    }
 
-        let cli_alias = Cli::try_parse_from(["project-dots", "i"]).expect("failed to parse i");
-        assert!(matches!(cli_alias.command, Some(Commands::Install { .. })));
+    #[test]
+    fn test_deprecated_install_subcommand_hint() {
+        let cli = Cli::try_parse_from(["project-dots", "install", "shell-tokyonight"]).expect("failed to parse install");
+        assert!(matches!(cli.command, Some(Commands::Install { .. })));
     }
 }
 

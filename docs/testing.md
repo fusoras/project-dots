@@ -29,7 +29,7 @@ cargo test -- --nocapture
 | `test_is_newer_version_logic` | `src/update.rs` | Verifies SemVer version comparison logic for `self-update`. |
 | `test_platform_asset_resolution` | `src/update.rs` | Verifies target release asset resolution for Debian (`x86_64`) vs Termux (`aarch64-musl`). |
 | `test_self_uninstall_dry_run` | `src/update.rs` | Verifies dry-run preview for `self-uninstall` executable and state/config removal. |
-| `test_install_subcommand_alias` | `src/main.rs` | Verifies parsing of short flag `-i` and alias `i` for the `install` subcommand. |
+| `test_add_subcommand` | `src/main.rs` | Verifies parsing of the `add` subcommand. |
 
 ---
 
