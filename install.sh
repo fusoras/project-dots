@@ -2,9 +2,9 @@
 set -e
 
 # project-dots (v0.1.0-beta.1) System Installer Script
-# Usage: curl -sSL https://raw.githubusercontent.com/user/project-dots/main/install.sh | sh
+# Usage: curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
 
-REPO="${PROJECT_DOTS_REPO:-user/project-dots}"
+REPO="${PROJECT_DOTS_REPO:-fusoras/project-dots}"
 INSTALL_DIR="$HOME/.local/bin"
 
 echo "=== project-dots System Installer ==="

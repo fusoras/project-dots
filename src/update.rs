@@ -17,7 +17,7 @@ pub fn check_and_perform_update(
     }
 
     // Default GitHub repository path (overridable via PROJECT_DOTS_REPO env var for testing)
-    let repo = env::var("PROJECT_DOTS_REPO").unwrap_or_else(|_| "user/project-dots".to_string());
+    let repo = env::var("PROJECT_DOTS_REPO").unwrap_or_else(|_| "fusoras/project-dots".to_string());
     let api_url = format!("https://api.github.com/repos/{}/releases/latest", repo);
 
     // Fetch latest release payload or construct tag query

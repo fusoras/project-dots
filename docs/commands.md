@@ -66,7 +66,7 @@ Latest release tag: v0.1.0-beta.2
 ### 4. System Bootstrap Installation Script
 **Command**:
 ```bash
-curl -sSL https://raw.githubusercontent.com/<user>/project-dots/main/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
 ```
 **Purpose**:
 Installs `project-dots` on a fresh machine (Debian or Termux) in one command without requiring Rust or Cargo.
