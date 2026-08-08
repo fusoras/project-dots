@@ -7,7 +7,7 @@
 | Command | Purpose | Options |
 | ------- | ------- | ------- |
 | `project-dots list` | Displays available categories and package lists in a clean format | `--debug` / `-d` for detailed system package status |
-| `project-dots install [category]` | Installs packages for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
+| `project-dots install [category]` / `project-dots -i` | Installs packages for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `project-dots remove <category>` | Safely uninstalls packages for a specific category or all categories | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
 | `project-dots self-update` | Checks GitHub Releases and updates the application binary in-place | `--dry-run` / `-n` to preview version update without downloading |
 | `project-dots self-uninstall` | Safely removes project-dots binary executable and state directory from system | `--dry-run` / `-n` to preview file deletion without making changes |
@@ -30,6 +30,8 @@ project-dots list
 **Command**:
 ```bash
 project-dots install lazyvim-minimal --dry-run
+# Or using short flag/alias:
+project-dots -i lazyvim-minimal --dry-run
 ```
 
 ---

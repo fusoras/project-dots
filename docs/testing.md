@@ -23,6 +23,7 @@ cargo test -- --nocapture
 | `test_command_exists_utility` | `src/platform.rs` | Verifies PATH directory inspection for command presence without relying on external `which`. |
 | `test_is_newer_version_logic` | `src/update.rs` | Verifies SemVer version comparison logic for `self-update`. |
 | `test_platform_asset_resolution` | `src/update.rs` | Verifies target release asset resolution for Debian (`x86_64`) vs Termux (`aarch64-musl`). |
+| `test_install_subcommand_alias` | `src/main.rs` | Verifies parsing of short flag `-i` and alias `i` for the `install` subcommand. |
 
 ---
 

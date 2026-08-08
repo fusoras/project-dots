@@ -4,7 +4,7 @@
 
 ## Core Features & Commands
 - **`project-dots list [--debug / -d]`**: Displays available categories, descriptions, and package listings.
-- **`project-dots install [category] [--dry-run / -n]`**: Installs packages for a specific category (or all categories) with dry-run preview.
+- **`project-dots install [category] [--dry-run / -n]` / `-i`**: Installs packages for a specific category (or all categories) with dry-run preview.
 - **`project-dots remove [category] [--dry-run / -n]`**: Safely removes packages installed by `project-dots`.
 - **`project-dots self-update [--dry-run / -n]`**: Checks GitHub Releases for new versions and updates the binary in-place.
 
