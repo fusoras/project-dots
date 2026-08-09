@@ -52,7 +52,7 @@ Packages (Debian):
   - zoxide [Pre-existing (system)]
   - bat [Pre-existing (system)]
   - starship [Pre-existing (system)]
-  - carapace [Pre-existing (system)]
+  - carapace-bin [Pre-existing (system)]
 
 Config File Actions:
   - config/shell-tokyonight/starship.toml -> ~/.config/starship.toml
