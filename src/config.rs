@@ -40,6 +40,7 @@ pub struct CopyFileAction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostInstallCommand {
     pub command: String,
+    pub description: Option<String>,
     pub platform: Option<String>,
     pub prompt: Option<String>,
     pub confirm: Option<bool>,

@@ -12,6 +12,7 @@ extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
 
 [[categories.lazyvim-minimal.post_install_commands]]
+description = "Clone LazyVim starter configuration to ~/.config/nvim"
 prompt = "Do you want to clone LazyVim starter configuration to ~/.config/nvim (backups will be created if existing config found)?"
 confirm = true
 command = "if [ ! -d \"$HOME/.config/nvim/.git\" ]; then [ -d \"$HOME/.config/nvim\" ] && mv \"$HOME/.config/nvim\" \"$HOME/.config/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.local/share/nvim\" ] && mv \"$HOME/.local/share/nvim\" \"$HOME/.local/share/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.local/state/nvim\" ] && mv \"$HOME/.local/state/nvim\" \"$HOME/.local/state/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.cache/nvim\" ] && mv \"$HOME/.cache/nvim\" \"$HOME/.cache/nvim.bak.$(date +%Y%m%d%H%M%S)\"; git clone https://github.com/LazyVim/starter \"$HOME/.config/nvim\" && rm -rf \"$HOME/.config/nvim/.git\"; fi"
@@ -25,41 +26,53 @@ termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin"]
 final_message = "Close and reopen your terminal so Zsh and the Starship prompt take effect."
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Change default user shell to Zsh"
 command = "chsh -s $(which zsh)"
 platform = "debian"
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Change default user shell to Zsh"
 command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Export XDG_STATE_HOME env var in ~/.zshenv"
 command = "grep -qF 'export XDG_STATE_HOME=\"$HOME/.local/state\"' \"$HOME/.zshenv\" 2>/dev/null || echo 'export XDG_STATE_HOME=\"$HOME/.local/state\"' >> \"$HOME/.zshenv\""
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Configure Zsh persistent history file and options in ~/.zshrc"
 command = "grep -qF 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' 'HISTSIZE=100000' 'SAVEHIST=100000' 'setopt SHARE_HISTORY' 'setopt HIST_IGNORE_DUPS' 'setopt HIST_IGNORE_SPACE' 'setopt HIST_EXPIRE_DUPS_FIRST' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Initialize Starship prompt in ~/.zshrc"
 command = "grep -qF 'eval \"$(starship init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'eval \"$(starship init zsh)\"' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Download zsh-autosuggestions plugin repository"
 command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Enable zsh-autosuggestions plugin in ~/.zshrc"
 command = "grep -qF 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Download fast-syntax-highlighting plugin repository"
 command = "git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-highlighting ~/.config/zsh/plugins/fast-syntax-highlighting 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/fast-syntax-highlighting/.git"
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Enable fast-syntax-highlighting plugin in ~/.zshrc"
 command = "grep -qF 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Enable Zsh completion system (compinit) in ~/.zshrc"
 command = "grep -qF 'autoload -Uz compinit' \"$HOME/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Set Zsh completion format styling in ~/.zshrc"
 command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.post_install_commands]]
+description = "Initialize Atuin shell history integration in ~/.zshrc"
 command = "grep -qF 'eval \"$(atuin init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'eval \"$(atuin init zsh)\"' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.copy_files]]
@@ -81,23 +94,29 @@ termux_packages = ["zsh", "git", "eza", "zoxide", "bat"]
 final_message = "Close and reopen your terminal so Zsh takes effect."
 
 [[categories.shell-minimal.post_install_commands]]
+description = "Change default user shell to Zsh"
 command = "chsh -s $(which zsh)"
 platform = "debian"
 
 [[categories.shell-minimal.post_install_commands]]
+description = "Change default user shell to Zsh"
 command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.shell-minimal.post_install_commands]]
+description = "Export XDG_STATE_HOME env var in ~/.zshenv"
 command = "grep -qF 'export XDG_STATE_HOME=\"$HOME/.local/state\"' \"$HOME/.zshenv\" 2>/dev/null || echo 'export XDG_STATE_HOME=\"$HOME/.local/state\"' >> \"$HOME/.zshenv\""
 
 [[categories.shell-minimal.post_install_commands]]
+description = "Configure Zsh persistent history file and options in ~/.zshrc"
 command = "grep -qF 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' 'HISTSIZE=100000' 'SAVEHIST=100000' 'setopt SHARE_HISTORY' 'setopt HIST_IGNORE_DUPS' 'setopt HIST_IGNORE_SPACE' 'setopt HIST_EXPIRE_DUPS_FIRST' >> \"$HOME/.zshrc\""
 
 [[categories.shell-minimal.post_install_commands]]
+description = "Enable Zsh completion system (compinit) in ~/.zshrc"
 command = "grep -qF 'autoload -Uz compinit' \"$HOME/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.zshrc\""
 
 [[categories.shell-minimal.post_install_commands]]
+description = "Set Zsh completion format styling in ~/.zshrc"
 command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.zshrc\""
 
 [[categories.shell-minimal.copy_files]]

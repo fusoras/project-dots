@@ -162,14 +162,23 @@ pub fn show_category(
     }
 
     if let Some(post_cmds) = &cat.post_install_commands {
-        println!("\n{BOLD_BLUE}Post-Install Commands:{RESET}");
+        println!("\n{BOLD_BLUE}Post-Install Actions:{RESET}");
         for cmd in post_cmds {
             let platform_info = cmd
                 .platform
                 .as_ref()
                 .map(|p| format!(" (Platform: {p})"))
                 .unwrap_or_default();
-            println!("  - {}{platform_info}", cmd.command);
+            
+            let display_text = if let Some(ref desc) = cmd.description {
+                desc.clone()
+            } else if let Some(ref prompt) = cmd.prompt {
+                prompt.clone()
+            } else {
+                format_command_summary(&cmd.command)
+            };
+
+            println!("  - {display_text}{platform_info}");
         }
     }
 
@@ -706,6 +715,46 @@ fn check_path_and_recommend(dir: &Path) {
     }
 }
 
+/// Returns a human-readable summary of a shell command for display in CLI output.
+fn format_command_summary(cmd: &str) -> String {
+    if cmd.contains("chsh") {
+        "Change default shell to Zsh".to_string()
+    } else if cmd.contains("XDG_STATE_HOME") {
+        "Configure XDG_STATE_HOME in ~/.zshenv".to_string()
+    } else if cmd.contains("HISTFILE=") {
+        "Configure Zsh history file & options in ~/.zshrc".to_string()
+    } else if cmd.contains("starship init") {
+        "Initialize Starship prompt in ~/.zshrc".to_string()
+    } else if cmd.contains("atuin init") {
+        "Initialize Atuin shell history in ~/.zshrc".to_string()
+    } else if cmd.contains("zsh-autosuggestions") {
+        if cmd.contains("git clone") {
+            "Download zsh-autosuggestions plugin".to_string()
+        } else {
+            "Enable zsh-autosuggestions in ~/.zshrc".to_string()
+        }
+    } else if cmd.contains("fast-syntax-highlighting") {
+        if cmd.contains("git clone") {
+            "Download fast-syntax-highlighting plugin".to_string()
+        } else {
+            "Enable fast-syntax-highlighting in ~/.zshrc".to_string()
+        }
+    } else if cmd.contains("compinit") {
+        "Enable Zsh autocompletion (compinit)".to_string()
+    } else if cmd.contains("completion:*") {
+        "Configure Zsh completion format style".to_string()
+    } else if cmd.contains("LazyVim/starter") {
+        "Clone LazyVim starter configuration".to_string()
+    } else {
+        let first_line = cmd.lines().next().unwrap_or(cmd);
+        if first_line.len() > 60 {
+            format!("{}...", &first_line[..57])
+        } else {
+            first_line.to_string()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -752,6 +801,7 @@ mod tests {
     fn post_install_should_preview_commands_in_dry_run() {
         let commands = vec![crate::config::PostInstallCommand {
             command: "chsh -s $(which zsh)".to_string(),
+            description: None,
             platform: Some("debian".to_string()),
             prompt: None,
             confirm: None,
@@ -766,18 +816,21 @@ mod tests {
         let commands = vec![
             crate::config::PostInstallCommand {
                 command: "chsh -s $(which zsh)".to_string(),
+                description: None,
                 platform: Some("debian".to_string()),
                 prompt: None,
                 confirm: None,
             },
             crate::config::PostInstallCommand {
                 command: "chsh -s zsh".to_string(),
+                description: None,
                 platform: Some("termux".to_string()),
                 prompt: None,
                 confirm: None,
             },
             crate::config::PostInstallCommand {
                 command: "echo common".to_string(),
+                description: None,
                 platform: None,
                 prompt: None,
                 confirm: None,
