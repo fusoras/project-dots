@@ -38,7 +38,7 @@ enum Commands {
     /// Lists categories and contained packages for current platform
     List {
         /// Show categories not supported by current platform (e.g. i3wm on Termux)
-        #[arg(short = 's', long = "show-hidden")]
+        #[arg(short = 's', long = "show-hidden", visible_alias = "sh")]
         show_hidden: bool,
     },
 
@@ -244,6 +244,13 @@ mod tests {
 
         let cli_short = Cli::try_parse_from(["dotss", "list", "-s"]).expect("failed to parse list -s");
         if let Some(Commands::List { show_hidden }) = cli_short.command {
+            assert!(show_hidden);
+        } else {
+            panic!("Expected Commands::List");
+        }
+
+        let cli_alias = Cli::try_parse_from(["dotss", "list", "--sh"]).expect("failed to parse list --sh");
+        if let Some(Commands::List { show_hidden }) = cli_alias.command {
             assert!(show_hidden);
         } else {
             panic!("Expected Commands::List");

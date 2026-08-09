@@ -85,8 +85,14 @@ pub fn list_categories(
     }
 
     if hidden_count > 0 && !show_hidden {
+        let platform_str = match platform {
+            Platform::Debian => "Debian",
+            Platform::Termux => "Termux",
+            Platform::Unsupported(reason) => reason.as_str(),
+        };
+        let cat_plural = if hidden_count == 1 { "category" } else { "categories" };
         println!(
-            "\n{DIM_GRAY}Note: {hidden_count} category/categories not supported on this platform were hidden. Use 'dotss list --show-hidden' or 'dotss list -s' to view all.{RESET}"
+            "\n{DIM_GRAY}{hidden_count} hidden {cat_plural} ({platform_str}). Use '--show-hidden' or '--sh' to view all.{RESET}"
         );
     }
 }
