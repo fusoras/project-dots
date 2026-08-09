@@ -19,9 +19,9 @@ command = "if [ ! -d \"$HOME/.config/nvim/.git\" ]; then [ -d \"$HOME/.config/nv
 
 [categories.shell-tokyonight]
 aliases = ["shell-tn"]
-description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git"
-debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
-termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship"]
+description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, and carapace"
+debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "carapace"]
+termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "carapace"]
 final_message = "Close and reopen your terminal so Zsh and the Starship prompt take effect."
 
 [[categories.shell-tokyonight.post_install_commands]]

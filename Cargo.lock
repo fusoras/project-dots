@@ -161,7 +161,7 @@ dependencies = [
 
 [[package]]
 name = "project-dots"
-version = "0.1.0-beta.14"
+version = "0.1.0-beta.15"
 dependencies = [
  "anyhow",
  "clap",

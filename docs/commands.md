@@ -27,7 +27,7 @@ project-dots list
 **Exact Output**:
 ```text
 lazyvim-minimal (lzv-min) / git, curl, clang, fd-find, lazygit, neovim (custom binary) [apply]
-shell-tokyonight (shell-tn) / zsh, git, eza, zoxide, bat, starship [apply]
+shell-tokyonight (shell-tn) / zsh, git, eza, zoxide, bat, starship, carapace [apply]
 ```
 
 ---
@@ -42,7 +42,7 @@ project-dots show shell-tn
 **Exact Output**:
 ```text
 Category: shell-tokyonight
-Description: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git
+Description: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, and carapace
 Aliases: shell-tn
 
 Packages (Debian):
@@ -52,6 +52,7 @@ Packages (Debian):
   - zoxide [Pre-existing (system)]
   - bat [Pre-existing (system)]
   - starship [Pre-existing (system)]
+  - carapace [Pre-existing (system)]
 
 Config File Actions:
   - config/shell-tokyonight/starship.toml -> ~/.config/starship.toml
