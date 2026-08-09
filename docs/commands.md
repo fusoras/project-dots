@@ -7,6 +7,7 @@
 | Command | Purpose | Options |
 | ------- | ------- | ------- |
 | `project-dots list` | Displays available categories and contained packages in a concise single-line format | None |
+| `project-dots search <query>` | Searches categories by name, alias, or contained packages and prints matches in the same format as `list` | Query is matched case-insensitively against category names, aliases, and the current platform's packages |
 | `project-dots show <category>` | Displays full detailed description, package tracking status, config files, and post-install commands | Accepts category name or alias (e.g. `shell-tokyonight`, `shell-tn`) |
 | `project-dots add [category]` | Adds packages and configurations for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `project-dots remove <category>` | Safely uninstalls packages for a specific category or all categories | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
@@ -32,7 +33,25 @@ shell-tokyonight (shell-tn) / zsh, git, eza, zoxide, bat, starship, carapace [ap
 
 ---
 
-### 2. Show Category Details (`show`)
+### 2. Search Categories (`search`)
+**Command**:
+```bash
+project-dots search lazygit
+project-dots search shell-tn
+```
+**Exact Output** (same format as `list`; matched categories unsupported on the platform keep the `[unsupported]` suffix):
+```text
+lazyvim-minimal (lzv-min) / git, curl, clang, fd-find, lazygit, neovim (custom binary) [apply]
+shell-tokyonight (shell-tn) / zsh, git, eza, zoxide, bat, starship, atuin [apply]
+```
+The query matches case-insensitively against:
+- the **category name** (e.g. `search lazy` → `lazyvim-minimal`)
+- the **aliases** (e.g. `search lzv` → `lazyvim-minimal`)
+- the **package list** for the current platform, including Debian custom binaries (e.g. `search lazygit` or `search neovim` → `lazyvim-minimal`, `search atuin` → `shell-tokyonight`)
+
+---
+
+### 3. Show Category Details (`show`)
 **Command**:
 ```bash
 project-dots show shell-tokyonight
@@ -68,7 +87,7 @@ Final Message: Close and reopen your terminal so Zsh and the Starship prompt tak
 
 ---
 
-### 3. Remove Packages (`remove`)
+### 4. Remove Packages (`remove`)
 **Command**:
 ```bash
 project-dots remove lazyvim-minimal --dry-run
@@ -88,7 +107,7 @@ Removal processing completed successfully.
 
 ---
 
-### 4. Self-Update Engine
+### 5. Self-Update Engine
 **Command**:
 ```bash
 project-dots self-update --dry-run
@@ -118,7 +137,7 @@ Latest release tag: v<newer-version>
 
 ---
 
-### 5. Self-Uninstall Engine
+### 6. Self-Uninstall Engine
 **Command**:
 ```bash
 project-dots self-uninstall --dry-run
@@ -143,7 +162,7 @@ Target Config Directory: /home/user/.config/project-dots
 
 ---
 
-### 6. System Bootstrap Installation Script
+### 7. System Bootstrap Installation Script
 **Command**:
 ```bash
 curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh

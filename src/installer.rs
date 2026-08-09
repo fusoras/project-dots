@@ -11,7 +11,17 @@ use std::process::Command;
 
 /// Simplified list of categories and contained packages on a single line per category.
 /// Format: <bold-green-category-name> (aliases) / pkg1, pkg2, pkg3 [apply]
-pub fn list_categories(config: &Config, state: &State, platform: &Platform, show_hidden: bool) {
+///
+/// When `filter` is `Some(query)`, only categories whose name, aliases, or platform
+/// packages match the query are printed. The `show_hidden` flag keeps its behavior:
+/// matched categories unsupported on the current platform are shown with `[unsupported]`.
+pub fn list_categories(
+    config: &Config,
+    state: &State,
+    platform: &Platform,
+    show_hidden: bool,
+    filter: Option<&str>,
+) {
     if config.categories.is_empty() {
         println!("No categories found in configuration.");
         return;
@@ -25,6 +35,12 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform, show
             Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
             Platform::Unsupported(_) => Vec::new(),
         };
+
+        if let Some(query) = filter
+            && !category_matches_query(query, cat_name, cat, platform)
+        {
+            continue;
+        }
 
         if matches!(platform, Platform::Debian)
             && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
@@ -73,6 +89,48 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform, show
             "\n{DIM_GRAY}Note: {hidden_count} category/categories not supported on this platform were hidden. Use 'dotss list --show-hidden' or 'dotss list -s' to view all.{RESET}"
         );
     }
+}
+
+/// Case-insensitive substring match of `query` against a category name, its aliases,
+/// and the packages declared for the current platform.
+fn category_matches_query(
+    query: &str,
+    cat_name: &str,
+    cat: &crate::config::Category,
+    platform: &Platform,
+) -> bool {
+    let q = query.to_lowercase();
+
+    if cat_name.to_lowercase().contains(&q) {
+        return true;
+    }
+
+    if cat
+        .aliases
+        .as_ref()
+        .is_some_and(|aliases| aliases.iter().any(|alias| alias.to_lowercase().contains(&q)))
+    {
+        return true;
+    }
+
+    let pkgs = match platform {
+        Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
+        Platform::Termux => cat.termux_packages.as_deref().unwrap_or(&[]),
+        Platform::Unsupported(_) => &[],
+    };
+
+    if pkgs.iter().any(|pkg| pkg.to_lowercase().contains(&q)) {
+        return true;
+    }
+
+    if matches!(platform, Platform::Debian)
+        && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+        && custom.name.to_lowercase().contains(&q)
+    {
+        return true;
+    }
+
+    false
 }
 
 fn is_category_applied(cat_name: &str, cat: &crate::config::Category, state: &State, platform: &Platform) -> bool {
@@ -868,8 +926,42 @@ mod tests {
     fn list_categories_should_include_configured_categories() {
         let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
         let state = State::load();
-        list_categories(&config, &state, &Platform::Debian, false);
-        list_categories(&config, &state, &Platform::Termux, true);
+        list_categories(&config, &state, &Platform::Debian, false, None);
+        list_categories(&config, &state, &Platform::Termux, true, None);
+    }
+
+    #[test]
+    fn category_matches_query_should_match_name_alias_and_packages() {
+        let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+        let platform = Platform::Debian;
+
+        let (name, cat) = config
+            .categories
+            .get_key_value("lazyvim-minimal")
+            .expect("lazyvim-minimal category should exist");
+
+        assert!(category_matches_query("lazy", name, cat, &platform), "Should match by category name");
+        assert!(category_matches_query("LAZY", name, cat, &platform), "Should match case-insensitively");
+        assert!(category_matches_query("lzv", name, cat, &platform), "Should match by alias");
+        assert!(category_matches_query("lazygit", name, cat, &platform), "Should match by package name");
+        assert!(
+            category_matches_query("neovim", name, cat, &platform),
+            "Should match by Debian custom binary name"
+        );
+        assert!(
+            !category_matches_query("nvim", name, cat, &platform),
+            "'nvim' is not a substring of 'neovim', so it must not match"
+        );
+        assert!(!category_matches_query("zzz-nonexistent", name, cat, &platform), "Should not match unrelated query");
+
+        let (shell_name, shell_cat) = config
+            .categories
+            .get_key_value("shell-tokyonight")
+            .expect("shell-tokyonight category should exist");
+        assert!(
+            category_matches_query("atuin", shell_name, shell_cat, &platform),
+            "Should match package only present in shell-tokyonight"
+        );
     }
 
     #[test]

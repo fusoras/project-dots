@@ -48,6 +48,12 @@ enum Commands {
         category: String,
     },
 
+    /// Searches categories by name, alias, or contained packages for the current platform
+    Search {
+        /// Query to match against category names, aliases, or package names (e.g. 'nvim', 'shell-tn')
+        query: String,
+    },
+
     /// Adds packages and configurations for a specific category or all categories
     Add {
         /// Category name to add (e.g. 'shell-tokyonight', 'lazyvim-minimal'), or 'all'
@@ -142,7 +148,10 @@ fn main() {
 
     match command {
         Commands::List { show_hidden } => {
-            list_categories(&config, &state, &platform, show_hidden);
+            list_categories(&config, &state, &platform, show_hidden, None);
+        }
+        Commands::Search { query } => {
+            list_categories(&config, &state, &platform, true, Some(&query));
         }
         Commands::Show { category } => {
             if let Err(e) = show_category(&category, &config, &state, &platform) {
@@ -238,6 +247,16 @@ mod tests {
             assert!(show_hidden);
         } else {
             panic!("Expected Commands::List");
+        }
+    }
+
+    #[test]
+    fn search_subcommand_should_parse_query() {
+        let cli = Cli::try_parse_from(["dotss", "search", "nvim"]).expect("failed to parse search nvim");
+        if let Some(Commands::Search { query }) = cli.command {
+            assert_eq!(query, "nvim");
+        } else {
+            panic!("Expected Commands::Search");
         }
     }
 
