@@ -6,6 +6,10 @@ use std::path::{Path, PathBuf};
 pub const EMBEDDED_CONFIG: &str = include_str!("../categories.toml");
 pub const EMBEDDED_STARSHIP: &str = include_str!("../config/shell-tokyonight/starship.toml");
 pub const EMBEDDED_FONT: &[u8] = include_bytes!("../config/shell-tokyonight/font.ttf");
+pub const EMBEDDED_I3_CONFIG: &str = include_str!("../config/i3wm/config");
+pub const EMBEDDED_POLYBAR_CONFIG: &str = include_str!("../config/i3wm/config.ini");
+pub const EMBEDDED_POLYBAR_LAUNCH: &str = include_str!("../config/i3wm/launch.sh");
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {

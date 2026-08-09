@@ -212,6 +212,57 @@ pub fn install_category(
     for (cat_name, cat) in target_categories {
         println!("\n--> Processing Category: {cat_name}");
 
+        // Pre-prompt for any interactive post-install commands before doing packages/downloads
+        let mut confirmed_commands: std::collections::HashMap<usize, bool> = std::collections::HashMap::new();
+
+        if let Some(post_cmds) = &cat.post_install_commands {
+            for (idx, cmd) in post_cmds.iter().enumerate() {
+                if let Some(target_platform) = &cmd.platform {
+                    let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
+                    if !matches_platform {
+                        continue;
+                    }
+                }
+
+                if cmd.command.contains("chsh") {
+                    let current_shell = env::var("SHELL").unwrap_or_default();
+                    if current_shell.ends_with("/zsh") {
+                        continue;
+                    }
+                }
+
+                let is_confirm_required = cmd.confirm.unwrap_or(false) || cmd.prompt.is_some();
+                if is_confirm_required {
+                    let prompt_text = cmd
+                        .prompt
+                        .as_deref()
+                        .unwrap_or("Do you want to run this post-install step?");
+
+                    if dry_run {
+                        println!("  [Dry-Run] Prompt: {prompt_text} [y/N]");
+                        confirmed_commands.insert(idx, true);
+                        continue;
+                    }
+
+                    use std::io::{self, Write};
+                    print!("  {BOLD_YELLOW}? {prompt_text} [y/N]: {RESET}");
+                    let _ = io::stdout().flush();
+                    let mut input = String::new();
+                    let confirmed = if io::stdin().read_line(&mut input).is_ok() {
+                        let trimmed = input.trim().to_lowercase();
+                        trimmed == "y" || trimmed == "yes"
+                    } else {
+                        false
+                    };
+
+                    confirmed_commands.insert(idx, confirmed);
+                    if !confirmed {
+                        println!("  [SKIP] Step will be skipped.");
+                    }
+                }
+            }
+        }
+
         let pkgs = match platform {
             Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
             Platform::Termux => cat.termux_packages.as_deref().unwrap_or(&[]),
@@ -283,7 +334,7 @@ pub fn install_category(
         }
 
         if let Some(post_cmds) = &cat.post_install_commands {
-            process_post_install_commands(post_cmds, platform, dry_run)?;
+            process_post_install_commands(post_cmds, platform, &confirmed_commands, dry_run)?;
         }
 
         if let Some(msg) = &cat.final_message {
@@ -333,6 +384,12 @@ fn process_copy_files(
             crate::config::EMBEDDED_STARSHIP.as_bytes().to_vec()
         } else if action.src == "config/shell-tokyonight/font.ttf" {
             crate::config::EMBEDDED_FONT.to_vec()
+        } else if action.src == "config/i3wm/config" {
+            crate::config::EMBEDDED_I3_CONFIG.as_bytes().to_vec()
+        } else if action.src == "config/i3wm/config.ini" {
+            crate::config::EMBEDDED_POLYBAR_CONFIG.as_bytes().to_vec()
+        } else if action.src == "config/i3wm/launch.sh" {
+            crate::config::EMBEDDED_POLYBAR_LAUNCH.as_bytes().to_vec()
         } else {
             anyhow::bail!("Source file '{}' not found.", action.src);
         };
@@ -353,9 +410,10 @@ fn process_copy_files(
 fn process_post_install_commands(
     commands: &[crate::config::PostInstallCommand],
     platform: &Platform,
+    confirmed_commands: &std::collections::HashMap<usize, bool>,
     dry_run: bool,
 ) -> anyhow::Result<()> {
-    for cmd in commands {
+    for (idx, cmd) in commands.iter().enumerate() {
         if let Some(target_platform) = &cmd.platform {
             let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
             if !matches_platform {
@@ -373,33 +431,14 @@ fn process_post_install_commands(
 
         let is_confirm_required = cmd.confirm.unwrap_or(false) || cmd.prompt.is_some();
         if is_confirm_required {
-            let prompt_text = cmd
-                .prompt
-                .as_deref()
-                .unwrap_or("Do you want to run this post-install step?");
-
-            if dry_run {
-                println!("  [Dry-Run] Prompt: {prompt_text} [y/N]");
-                println!("  [Dry-Run] Would execute post-install command: {}", cmd.command);
+            let is_confirmed = confirmed_commands.get(&idx).copied().unwrap_or(false);
+            if !is_confirmed {
+                println!("  [SKIP] Post-install command '{}' skipped by user choice.", cmd.command);
                 continue;
             }
+        }
 
-            use std::io::{self, Write};
-            print!("  {BOLD_YELLOW}? {prompt_text} [y/N]: {RESET}");
-            let _ = io::stdout().flush();
-            let mut input = String::new();
-            let confirmed = if io::stdin().read_line(&mut input).is_ok() {
-                let trimmed = input.trim().to_lowercase();
-                trimmed == "y" || trimmed == "yes"
-            } else {
-                false
-            };
-
-            if !confirmed {
-                println!("  [SKIP] Skipped by user choice.");
-                continue;
-            }
-        } else if dry_run {
+        if dry_run {
             println!("  [Dry-Run] Would execute post-install command: {}", cmd.command);
             continue;
         }
@@ -717,7 +756,8 @@ mod tests {
             prompt: None,
             confirm: None,
         }];
-        let res = process_post_install_commands(&commands, &Platform::Debian, true);
+        let confirmed = std::collections::HashMap::new();
+        let res = process_post_install_commands(&commands, &Platform::Debian, &confirmed, true);
         assert!(res.is_ok(), "Post install commands dry-run should succeed");
     }
 
@@ -743,9 +783,10 @@ mod tests {
                 confirm: None,
             },
         ];
-        let res_debian = process_post_install_commands(&commands, &Platform::Debian, true);
+        let confirmed = std::collections::HashMap::new();
+        let res_debian = process_post_install_commands(&commands, &Platform::Debian, &confirmed, true);
         assert!(res_debian.is_ok());
-        let res_termux = process_post_install_commands(&commands, &Platform::Termux, true);
+        let res_termux = process_post_install_commands(&commands, &Platform::Termux, &confirmed, true);
         assert!(res_termux.is_ok());
     }
 

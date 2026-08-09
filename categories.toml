@@ -58,3 +58,26 @@ platform = "termux"
 only_if_not_exists = true
 
 
+[categories.i3wm]
+description = "i3 window manager setup with polybar, picom, rofi, dunst, and feh"
+debian_packages = ["i3", "picom", "polybar", "rofi", "feh", "lxappearance", "lxterminal", "dunst", "wget", "gnome-keyring", "libsecret-1-0"]
+final_message = "Remember to place your wallpaper at ~/Wallpaper/wp.jpg (or update the path in ~/.config/i3/config) and set system default applications via xdg-open / update-alternatives."
+
+[[categories.i3wm.copy_files]]
+src = "config/i3wm/config"
+dest = "~/.config/i3/config"
+platform = "debian"
+
+[[categories.i3wm.copy_files]]
+src = "config/i3wm/config.ini"
+dest = "~/.config/polybar/config.ini"
+platform = "debian"
+
+[[categories.i3wm.copy_files]]
+src = "config/i3wm/launch.sh"
+dest = "~/.config/polybar/launch.sh"
+platform = "debian"
+
+
+
+

@@ -1,6 +1,6 @@
 # AGENTS.md — project-dots
 
-Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.12`).
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.14`).
 
 ## Project Facts
 - Binary crate `project-dots` v0.1.0-beta.10, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
