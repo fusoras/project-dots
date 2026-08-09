@@ -207,7 +207,7 @@ fn main() {
             if dry_run {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No files will be deleted ==={RESET}");
             }
-            if let Err(e) = update::perform_self_uninstall(dry_run, yes, no) {
+            if let Err(e) = update::perform_self_uninstall(&config, &mut state, &platform, dry_run, yes, no) {
                 eprintln!("\n{BOLD_RED}Self-uninstall error:{RESET} {:?}", e);
                 std::process::exit(1);
             }

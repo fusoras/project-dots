@@ -109,7 +109,14 @@ pub fn check_and_perform_update(
 }
 
 /// Safely removes project-dots binary executable and state/config directories.
-pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool, auto_reject: bool) -> anyhow::Result<()> {
+pub fn perform_self_uninstall(
+    config: &crate::config::Config,
+    state: &mut crate::state::State,
+    platform: &crate::platform::Platform,
+    dry_run: bool,
+    auto_confirm: bool,
+    auto_reject: bool,
+) -> anyhow::Result<()> {
     let current_exe = env::current_exe().context("Failed to resolve current binary path")?;
 
     let state_path = crate::state::State::get_state_path();
@@ -121,6 +128,12 @@ pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool, auto_reject: bo
     println!("Target State Directory: {}", state_dir.display());
     if let Some(ref cfg_dir) = config_dir {
         println!("Target Config Directory: {}", cfg_dir.display());
+    }
+
+    // 0. Uninstall all categories and packages installed by project-dots
+    println!("\n--> Step 1/3: Uninstalling all packages managed by project-dots...");
+    if let Err(e) = crate::installer::remove_category(Some("all"), config, state, platform, dry_run) {
+        eprintln!("[WARNING] Error while removing packages: {e}");
     }
 
     if dry_run {
@@ -281,16 +294,24 @@ mod tests {
 
     mod self_uninstall {
         use super::*;
+        use crate::config::Config;
+        use crate::state::State;
 
         #[test]
         fn self_uninstall_should_preview_without_deleting_in_dry_run() {
-            let result = perform_self_uninstall(true, false, false);
+            let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+            let mut state = State::load();
+            let platform = Platform::Debian;
+            let result = perform_self_uninstall(&config, &mut state, &platform, true, false, false);
             assert!(result.is_ok(), "Self-uninstall dry-run should complete cleanly");
         }
 
         #[test]
         fn self_uninstall_should_respect_auto_reject_flag() {
-            let result = perform_self_uninstall(true, false, true);
+            let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+            let mut state = State::load();
+            let platform = Platform::Debian;
+            let result = perform_self_uninstall(&config, &mut state, &platform, true, false, true);
             assert!(result.is_ok(), "Self-uninstall with auto_reject should complete cleanly");
         }
     }
