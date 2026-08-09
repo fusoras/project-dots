@@ -73,6 +73,40 @@ platform = "termux"
 only_if_not_exists = true
 
 
+[categories.shell-minimal]
+aliases = ["shell-min"]
+description = "Minimal Zsh terminal setup with JetBrains Mono font, eza, zoxide, bat, and git"
+debian_packages = ["zsh", "git", "eza", "zoxide", "bat"]
+termux_packages = ["zsh", "git", "eza", "zoxide", "bat"]
+final_message = "Close and reopen your terminal so Zsh takes effect."
+
+[[categories.shell-minimal.post_install_commands]]
+command = "chsh -s $(which zsh)"
+platform = "debian"
+
+[[categories.shell-minimal.post_install_commands]]
+command = "chsh -s zsh"
+platform = "termux"
+
+[[categories.shell-minimal.post_install_commands]]
+command = "grep -qF 'export XDG_STATE_HOME=\"$HOME/.local/state\"' \"$HOME/.zshenv\" 2>/dev/null || echo 'export XDG_STATE_HOME=\"$HOME/.local/state\"' >> \"$HOME/.zshenv\""
+
+[[categories.shell-minimal.post_install_commands]]
+command = "grep -qF 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' 'HISTSIZE=100000' 'SAVEHIST=100000' 'setopt SHARE_HISTORY' 'setopt HIST_IGNORE_DUPS' 'setopt HIST_IGNORE_SPACE' 'setopt HIST_EXPIRE_DUPS_FIRST' >> \"$HOME/.zshrc\""
+
+[[categories.shell-minimal.post_install_commands]]
+command = "grep -qF 'autoload -Uz compinit' \"$HOME/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.zshrc\""
+
+[[categories.shell-minimal.post_install_commands]]
+command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.zshrc\""
+
+[[categories.shell-minimal.copy_files]]
+src = "config/shell-minimal/font.ttf"
+dest = "~/.termux/font.ttf"
+platform = "termux"
+only_if_not_exists = true
+
+
 [categories.i3wm]
 description = "i3 window manager setup with polybar, picom, rofi, dunst, and feh"
 debian_packages = ["i3", "picom", "polybar", "rofi", "feh", "lxappearance", "lxterminal", "dunst", "wget", "gnome-keyring", "libsecret-1-0"]
