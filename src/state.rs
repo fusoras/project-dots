@@ -18,12 +18,12 @@ pub struct TrackedPackage {
 }
 
 impl State {
-    /// Returns the standard state file path (~/.local/state/project-dots/state.toml).
+    /// Returns the standard state file path (~/.local/state/dotss/state.toml).
     pub fn get_state_path() -> PathBuf {
         let home = std::env::var_os("HOME")
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from("."));
-        home.join(".local/state/project-dots/state.toml")
+        home.join(".local/state/dotss/state.toml")
     }
 
     /// Loads the persistent state file, returning a default empty state if the file does not exist or is corrupt.

@@ -19,7 +19,7 @@ const DIM_GRAY: &str = "\x1b[90m";
 
 #[derive(Parser)]
 #[command(
-    name = "project-dots",
+    name = "dotss",
     author = "user",
     about = "Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux",
     disable_version_flag = true
@@ -149,7 +149,7 @@ fn main() {
         Commands::Add { category, trailing_categories, dry_run } => {
             if !trailing_categories.is_empty() {
                 eprintln!(
-                    "{BOLD_RED}Error:{RESET} Cannot add multiple categories at the same time ('{}' and '{}'). Please run 'project-dots add <category>' for one category at a time, or use 'project-dots add all'.",
+                    "{BOLD_RED}Error:{RESET} Cannot add multiple categories at the same time ('{}' and '{}'). Please run 'dotss add <category>' for one category at a time, or use 'dotss add all'.",
                     category,
                     trailing_categories.join(" ")
                 );
@@ -173,13 +173,13 @@ fn main() {
         }
         Commands::Remove { category, all, dry_run } => {
             let cat_target = if all || category.as_deref() == Some("all") {
-                println!("{BOLD_YELLOW}[WARNING] Removing ALL installed categories and packages managed by project-dots!{RESET}");
+                println!("{BOLD_YELLOW}[WARNING] Removing ALL installed categories and packages managed by dotss!{RESET}");
                 None
             } else if let Some(ref cat) = category {
                 Some(cat.as_str())
             } else {
                 eprintln!(
-                    "{BOLD_RED}Error:{RESET} Please specify a category to remove (e.g. 'project-dots remove <category>') or use '--all' / 'all' to remove all categories."
+                    "{BOLD_RED}Error:{RESET} Please specify a category to remove (e.g. 'dotss remove <category>') or use '--all' / 'all' to remove all categories."
                 );
                 std::process::exit(1);
             };
@@ -222,13 +222,13 @@ mod tests {
 
     #[test]
     fn add_subcommand_should_parse_as_add_command() {
-        let cli = Cli::try_parse_from(["project-dots", "add", "shell-tokyonight"]).expect("failed to parse add");
+        let cli = Cli::try_parse_from(["dotss", "add", "shell-tokyonight"]).expect("failed to parse add");
         assert!(matches!(cli.command, Some(Commands::Add { .. })));
     }
 
     #[test]
     fn add_subcommand_with_multiple_categories_should_capture_trailing() {
-        let cli = Cli::try_parse_from(["project-dots", "add", "shell-tokyonight", "lazyvim-minimal"]).expect("failed to parse multiple add");
+        let cli = Cli::try_parse_from(["dotss", "add", "shell-tokyonight", "lazyvim-minimal"]).expect("failed to parse multiple add");
         if let Some(Commands::Add { category, trailing_categories, .. }) = cli.command {
             assert_eq!(category, "shell-tokyonight");
             assert_eq!(trailing_categories, vec!["lazyvim-minimal".to_string()]);
@@ -239,13 +239,13 @@ mod tests {
 
     #[test]
     fn install_subcommand_should_parse_as_deprecated_hint() {
-        let cli = Cli::try_parse_from(["project-dots", "install", "shell-tokyonight"]).expect("failed to parse install");
+        let cli = Cli::try_parse_from(["dotss", "install", "shell-tokyonight"]).expect("failed to parse install");
         assert!(matches!(cli.command, Some(Commands::Install { .. })));
     }
 
     #[test]
     fn self_uninstall_subcommand_flags_parsing() {
-        let cli = Cli::try_parse_from(["project-dots", "self-uninstall", "-n", "-d"]).expect("failed to parse self-uninstall");
+        let cli = Cli::try_parse_from(["dotss", "self-uninstall", "-n", "-d"]).expect("failed to parse self-uninstall");
         if let Some(Commands::SelfUninstall { no, dry_run, yes }) = cli.command {
             assert!(no);
             assert!(dry_run);

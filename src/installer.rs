@@ -119,7 +119,7 @@ pub fn show_category(
                 if tracked.was_preexisting {
                     "Pre-existing (system)"
                 } else {
-                    "Installed by project-dots"
+                    "Installed by dotss"
                 }
             } else if platform.is_package_installed(pkg) {
                 "Installed (untracked)"
@@ -557,7 +557,7 @@ fn install_custom_debian(
     Ok(())
 }
 
-/// Safely removes packages installed by project-dots.
+/// Safely removes packages installed by dotss.
 pub fn remove_category(
     category_filter: Option<&str>,
     config: &Config,
@@ -597,11 +597,11 @@ pub fn remove_category(
         for pkg in pkgs {
             if let Some(tracked) = state.packages.get(pkg) {
                 if tracked.was_preexisting {
-                    println!("  [SKIP] Package '{pkg}' was pre-existing on system before project-dots. Skipping removal.");
+                    println!("  [SKIP] Package '{pkg}' was pre-existing on system before dotss. Skipping removal.");
                     continue;
                 }
             } else {
-                println!("  [SKIP] Package '{pkg}' was not installed by project-dots. Skipping removal.");
+                println!("  [SKIP] Package '{pkg}' was not installed by dotss. Skipping removal.");
                 continue;
             }
 

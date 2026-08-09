@@ -56,7 +56,7 @@ pub struct CustomInstaller {
 }
 
 impl Config {
-    /// Loads configuration from local ./categories.toml, ~/.config/project-dots/categories.toml,
+    /// Loads configuration from local ./categories.toml, ~/.config/dotss/categories.toml,
     /// or falls back to the embedded default configuration compiled into the binary.
     pub fn load() -> anyhow::Result<(Self, String)> {
         let local_path = Path::new("categories.toml");
@@ -69,7 +69,7 @@ impl Config {
         }
 
         if let Some(home) = dirs_home_dir() {
-            let xdg_path = home.join(".config/project-dots/categories.toml");
+            let xdg_path = home.join(".config/dotss/categories.toml");
             if xdg_path.exists() {
                 let content = fs::read_to_string(&xdg_path)
                     .map_err(|e| anyhow::anyhow!("Failed to read {}: {e}", xdg_path.display()))?;
@@ -84,9 +84,9 @@ impl Config {
         Ok((config, "Embedded default configuration".to_string()))
     }
 
-    /// Returns the standard user configuration directory (~/.config/project-dots).
+    /// Returns the standard user configuration directory (~/.config/dotss).
     pub fn get_user_config_dir() -> Option<PathBuf> {
-        dirs_home_dir().map(|home| home.join(".config/project-dots"))
+        dirs_home_dir().map(|home| home.join(".config/dotss"))
     }
 
     /// Resolves an input query (canonical category ID or any defined alias) to the canonical category key.

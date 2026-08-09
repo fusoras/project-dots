@@ -8,8 +8,8 @@ use std::process::Command;
 /// Resolves the release asset name for a given platform.
 pub fn resolve_asset_name(platform: &Platform) -> anyhow::Result<&'static str> {
     match platform {
-        Platform::Debian => Ok("project-dots-x86_64-unknown-linux-gnu.tar.gz"),
-        Platform::Termux => Ok("project-dots-aarch64-unknown-linux-musl.tar.gz"),
+        Platform::Debian => Ok("dotss-x86_64-unknown-linux-gnu.tar.gz"),
+        Platform::Termux => Ok("dotss-aarch64-unknown-linux-musl.tar.gz"),
         Platform::Unsupported(reason) => anyhow::bail!("Unsupported platform for self-update: {reason}"),
     }
 }
@@ -27,8 +27,10 @@ pub fn check_and_perform_update(
         anyhow::bail!("Prerequisite binary 'curl' is required for self-update checks.");
     }
 
-    // Default GitHub repository path (overridable via PROJECT_DOTS_REPO env var for testing)
-    let repo = env::var("PROJECT_DOTS_REPO").unwrap_or_else(|_| "fusoras/project-dots".to_string());
+    // Default GitHub repository path (overridable via DOTSS_REPO / PROJECT_DOTS_REPO env var for testing)
+    let repo = env::var("DOTSS_REPO")
+        .or_else(|_| env::var("PROJECT_DOTS_REPO"))
+        .unwrap_or_else(|_| "fusoras/project-dots".to_string());
     let api_url = format!("https://api.github.com/repos/{repo}/releases/latest");
 
     // Fetch latest release payload or construct tag query
@@ -36,7 +38,7 @@ pub fn check_and_perform_update(
     println!("Latest release tag: {latest_tag}");
 
     if !is_newer_version(&latest_tag, current_version) {
-        println!("\n[Up-to-Date] project-dots is already running the latest version (v{current_version}).");
+        println!("\n[Up-to-Date] dotss is already running the latest version (v{current_version}).");
         Ok(())
     } else {
         let asset_name = resolve_asset_name(platform)?;
@@ -51,7 +53,7 @@ pub fn check_and_perform_update(
             Ok(())
         } else {
             println!("\n[Downloading] Fetching release binary from {download_url}...");
-            let tmp_dir = env::temp_dir().join("project_dots_update");
+            let tmp_dir = env::temp_dir().join("dotss_update");
             fs::create_dir_all(&tmp_dir).context("Failed to create temp directory")?;
             let tmp_tarball = tmp_dir.join("update.tar.gz");
 
@@ -79,9 +81,9 @@ pub fn check_and_perform_update(
                 anyhow::bail!("Failed to extract update tarball payload.");
             }
 
-            let new_binary = tmp_dir.join("project-dots");
+            let new_binary = tmp_dir.join("dotss");
             if !new_binary.exists() {
-                anyhow::bail!("Extracted tarball did not contain expected 'project-dots' binary.");
+                anyhow::bail!("Extracted tarball did not contain expected 'dotss' binary.");
             }
 
             // Atomic binary replacement
@@ -108,7 +110,7 @@ pub fn check_and_perform_update(
     }
 }
 
-/// Safely removes project-dots binary executable and state/config directories.
+/// Safely removes dotss binary executable and state/config directories.
 pub fn perform_self_uninstall(
     config: &crate::config::Config,
     state: &mut crate::state::State,
@@ -123,7 +125,7 @@ pub fn perform_self_uninstall(
     let state_dir = state_path.parent().unwrap_or(&state_path);
     let config_dir = crate::config::Config::get_user_config_dir();
 
-    println!("=== project-dots Self-Uninstall Engine ===");
+    println!("=== dotss Self-Uninstall Engine ===");
     println!("Target Binary Path: {}", current_exe.display());
     println!("Target State Directory: {}", state_dir.display());
     if let Some(ref cfg_dir) = config_dir {
@@ -136,7 +138,7 @@ pub fn perform_self_uninstall(
         true
     } else {
         use std::io::{self, Write};
-        print!("\nDo you want to uninstall packages installed by project-dots and remove configuration/state directories? [y/N]: ");
+        print!("\nDo you want to uninstall packages installed by dotss and remove configuration/state directories? [y/N]: ");
         let _ = io::stdout().flush();
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_ok() {
@@ -150,7 +152,7 @@ pub fn perform_self_uninstall(
     if dry_run {
         println!("\n=== DRY-RUN MODE ACTIVE: No files will be deleted ===");
         if should_remove_packages_and_config {
-            println!("[Dry-Run] Would uninstall all packages managed by project-dots.");
+            println!("[Dry-Run] Would uninstall all packages managed by dotss.");
             if state_dir.exists() {
                 println!("[Dry-Run] Would remove state directory: {}", state_dir.display());
             }
@@ -164,9 +166,9 @@ pub fn perform_self_uninstall(
         return Ok(());
     }
 
-    // 1. Uninstall packages managed by project-dots if confirmed
+    // 1. Uninstall packages managed by dotss if confirmed
     if should_remove_packages_and_config {
-        println!("\n--> Uninstalling all packages managed by project-dots...");
+        println!("\n--> Uninstalling all packages managed by dotss...");
         if let Err(e) = crate::installer::remove_category(Some("all"), config, state, platform, dry_run) {
             eprintln!("[WARNING] Error while removing packages: {e}");
         }
@@ -198,7 +200,7 @@ pub fn perform_self_uninstall(
         println!("[Preserved] Configuration and state directories kept intact.");
     }
 
-    println!("\n{BOLD_GREEN}project-dots uninstalled successfully!{RESET}");
+    println!("\n{BOLD_GREEN}dotss uninstalled successfully!{RESET}");
     println!("Tip: Remember to remove PATH entries from ~/.zshrc or ~/.bashrc if no longer needed.");
 
     Ok(())
@@ -209,7 +211,7 @@ fn fetch_latest_release_tag(url: &str) -> anyhow::Result<String> {
     let output = Command::new("curl")
         .arg("-fsSL")
         .arg("-H")
-        .arg("User-Agent: project-dots-cli")
+        .arg("User-Agent: dotss-cli")
         .arg(url)
         .output()
         .context("curl failed")?;
@@ -287,13 +289,13 @@ mod tests {
         #[test]
         fn asset_name_should_match_debian_x86_64_triple() {
             let asset = resolve_asset_name(&Platform::Debian).unwrap();
-            assert_eq!(asset, "project-dots-x86_64-unknown-linux-gnu.tar.gz");
+            assert_eq!(asset, "dotss-x86_64-unknown-linux-gnu.tar.gz");
         }
 
         #[test]
         fn asset_name_should_match_termux_aarch64_triple() {
             let asset = resolve_asset_name(&Platform::Termux).unwrap();
-            assert_eq!(asset, "project-dots-aarch64-unknown-linux-musl.tar.gz");
+            assert_eq!(asset, "dotss-aarch64-unknown-linux-musl.tar.gz");
         }
     }
 
