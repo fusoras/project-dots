@@ -19,9 +19,9 @@ command = "if [ ! -d \"$HOME/.config/nvim/.git\" ]; then [ -d \"$HOME/.config/nv
 
 [categories.shell-tokyonight]
 aliases = ["shell-tn"]
-description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, and carapace"
-debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "carapace-bin"]
-termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "carapace"]
+description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, and atuin"
+debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin"]
+termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin"]
 final_message = "Close and reopen your terminal so Zsh and the Starship prompt take effect."
 
 [[categories.shell-tokyonight.post_install_commands]]
@@ -60,7 +60,7 @@ command = "grep -qF 'autoload -Uz compinit' \"$HOME/.zshrc\" 2>/dev/null || echo
 command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.post_install_commands]]
-command = "grep -qF 'source <(carapace _carapace)' \"$HOME/.zshrc\" 2>/dev/null || echo 'source <(carapace _carapace)' >> \"$HOME/.zshrc\""
+command = "grep -qF 'eval \"$(atuin init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'eval \"$(atuin init zsh)\"' >> \"$HOME/.zshrc\""
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/starship.toml"
