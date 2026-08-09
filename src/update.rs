@@ -109,7 +109,7 @@ pub fn check_and_perform_update(
 }
 
 /// Safely removes project-dots binary executable and state/config directories.
-pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> anyhow::Result<()> {
+pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool, auto_reject: bool) -> anyhow::Result<()> {
     let current_exe = env::current_exe().context("Failed to resolve current binary path")?;
 
     let state_path = crate::state::State::get_state_path();
@@ -126,16 +126,22 @@ pub fn perform_self_uninstall(dry_run: bool, auto_confirm: bool) -> anyhow::Resu
     if dry_run {
         println!("\n=== DRY-RUN MODE ACTIVE: No files will be deleted ===");
         println!("[Dry-Run] Would remove executable: {}", current_exe.display());
-        if state_dir.exists() {
-            println!("[Dry-Run] Would remove state directory: {}", state_dir.display());
-        }
-        if config_dir.as_ref().is_some_and(|d| d.exists()) {
-            println!("[Dry-Run] Would remove config directory: {}", config_dir.as_ref().unwrap().display());
+        if !auto_reject {
+            if state_dir.exists() {
+                println!("[Dry-Run] Would remove state directory: {}", state_dir.display());
+            }
+            if config_dir.as_ref().is_some_and(|d| d.exists()) {
+                println!("[Dry-Run] Would remove config directory: {}", config_dir.as_ref().unwrap().display());
+            }
+        } else {
+            println!("[Dry-Run] Configuration and state directories will be kept intact (--no / -n).");
         }
         return Ok(());
     }
 
-    let remove_config = if auto_confirm {
+    let remove_config = if auto_reject {
+        false
+    } else if auto_confirm {
         true
     } else {
         use std::io::{self, Write};
@@ -278,8 +284,14 @@ mod tests {
 
         #[test]
         fn self_uninstall_should_preview_without_deleting_in_dry_run() {
-            let result = perform_self_uninstall(true, false);
+            let result = perform_self_uninstall(true, false, false);
             assert!(result.is_ok(), "Self-uninstall dry-run should complete cleanly");
+        }
+
+        #[test]
+        fn self_uninstall_should_respect_auto_reject_flag() {
+            let result = perform_self_uninstall(true, false, true);
+            assert!(result.is_ok(), "Self-uninstall with auto_reject should complete cleanly");
         }
     }
 }

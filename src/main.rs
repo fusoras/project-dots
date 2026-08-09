@@ -94,8 +94,12 @@ enum Commands {
         #[arg(short = 'y', long)]
         yes: bool,
 
+        /// Explicitly reject/skip deletion of configuration files and package state registry
+        #[arg(short = 'n', long = "no")]
+        no: bool,
+
         /// Preview uninstallation actions without deleting files
-        #[arg(short = 'n', long = "dry-run")]
+        #[arg(short = 'd', long = "dry-run")]
         dry_run: bool,
     },
 }
@@ -199,11 +203,11 @@ fn main() {
             }
             println!("\n{BOLD_GREEN}Self-update processing completed successfully.{RESET}");
         }
-        Commands::SelfUninstall { yes, dry_run } => {
+        Commands::SelfUninstall { yes, no, dry_run } => {
             if dry_run {
                 println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No files will be deleted ==={RESET}");
             }
-            if let Err(e) = update::perform_self_uninstall(dry_run, yes) {
+            if let Err(e) = update::perform_self_uninstall(dry_run, yes, no) {
                 eprintln!("\n{BOLD_RED}Self-uninstall error:{RESET} {:?}", e);
                 std::process::exit(1);
             }
@@ -237,6 +241,18 @@ mod tests {
     fn install_subcommand_should_parse_as_deprecated_hint() {
         let cli = Cli::try_parse_from(["project-dots", "install", "shell-tokyonight"]).expect("failed to parse install");
         assert!(matches!(cli.command, Some(Commands::Install { .. })));
+    }
+
+    #[test]
+    fn self_uninstall_subcommand_flags_parsing() {
+        let cli = Cli::try_parse_from(["project-dots", "self-uninstall", "-n", "-d"]).expect("failed to parse self-uninstall");
+        if let Some(Commands::SelfUninstall { no, dry_run, yes }) = cli.command {
+            assert!(no);
+            assert!(dry_run);
+            assert!(!yes);
+        } else {
+            panic!("Expected Commands::SelfUninstall");
+        }
     }
 }
 

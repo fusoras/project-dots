@@ -11,7 +11,7 @@
 | `project-dots add [category]` | Adds packages and configurations for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `project-dots remove <category>` | Safely uninstalls packages for a specific category or all categories | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
 | `project-dots self-update` | Checks GitHub Releases and updates the application binary in-place | `--dry-run` / `-n` to preview version update without downloading |
-| `project-dots self-uninstall` | Safely removes project-dots binary executable and state/config directories | `--yes` / `-y` to confirm deletion, `--dry-run` / `-n` to preview |
+| `project-dots self-uninstall` | Safely removes project-dots binary executable and state/config directories | `--yes` / `-y` to confirm deletion, `--no` / `-n` to keep state/config, `--dry-run` / `-d` to preview |
 | `project-dots --version` | Displays the current application version | `-v` |
 | `project-dots --help` | Displays the command-line help summary | `-h` |
 
@@ -124,6 +124,8 @@ Latest release tag: v<newer-version>
 project-dots self-uninstall --dry-run
 # Or non-interactive confirmation:
 project-dots self-uninstall --yes
+# Or skip removing config/state directories:
+project-dots self-uninstall --no
 ```
 
 **Exact Terminal Output (Dry-Run Preview)**:

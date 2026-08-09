@@ -29,4 +29,4 @@ curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install
 | `project-dots add [category]` | Adds packages and configurations for a specific category (or `all`) | `--dry-run` / `-n` to preview actions without system changes |
 | `project-dots remove <category>` | Safely uninstalls packages managed by `project-dots` | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
 | `project-dots self-update` | Checks GitHub Releases and updates `project-dots` binary in-place | `--dry-run` / `-n` to preview update check |
-| `project-dots self-uninstall` | Safely removes `project-dots` binary executable, state, and config directories | `--yes` / `-y` for non-interactive confirmation |
+| `project-dots self-uninstall` | Safely removes `project-dots` binary executable, state, and config directories | `--yes` / `-y` to confirm deletion, `--no` / `-n` to keep state/config |
