@@ -91,4 +91,13 @@ Each category can declare optional short aliases via the `aliases` array propert
   - All: ensures `~/.zshrc` exists and adds `eval "$(starship init zsh)"` so Starship starts with Zsh
 - **Final Message**: Close and reopen the terminal so Zsh and the Starship prompt take effect.
 
+### 3. `nodejs-pnpm` (Node.js & pnpm Setup)
+- **Description**: Node.js environment with NVM (Debian) or Node.js LTS (Termux) and pnpm enabled via Corepack.
+- **Termux Packages**: `nodejs-lts`
+- **Debian Packages**: `curl`
+- **Post-Install**:
+  - Debian: Installs NVM v0.40.6, installs Node.js v24, enables pnpm via Corepack, prepares `pnpm@latest`, and verifies version (`pnpm -v`).
+  - Termux: Enables pnpm via Corepack, prepares `pnpm@latest`, and verifies version (`pnpm -v`).
+
+
 

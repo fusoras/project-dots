@@ -155,5 +155,22 @@ dest = "~/.config/polybar/launch.sh"
 platform = "debian"
 
 
+[categories.nodejs-pnpm]
+description = "Node.js environment with NVM (Debian) or Node.js LTS (Termux) and pnpm enabled via Corepack"
+debian_packages = ["curl"]
+termux_packages = ["nodejs-lts"]
 
+[[categories.nodejs-pnpm.post_install_commands]]
+description = "Install NVM v0.40.6 on Debian"
+command = "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.6/install.sh | bash"
+platform = "debian"
 
+[[categories.nodejs-pnpm.post_install_commands]]
+description = "Load NVM, install Node.js 24, enable pnpm via Corepack, and verify pnpm version"
+command = "export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\" && nvm install 24 && corepack enable pnpm && corepack prepare pnpm@latest --activate && pnpm -v"
+platform = "debian"
+
+[[categories.nodejs-pnpm.post_install_commands]]
+description = "Enable pnpm via Corepack, prepare pnpm@latest, and verify pnpm version"
+command = "corepack enable pnpm && corepack prepare pnpm@latest --activate && pnpm -v"
+platform = "termux"

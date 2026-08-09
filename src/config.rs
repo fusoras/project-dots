@@ -128,7 +128,8 @@ mod tests {
         println!("   ✓ Valid TOML structure. Total categories loaded: {}", cfg.categories.len());
 
         assert!(cfg.categories.contains_key("lazyvim-minimal"), "Must include 'lazyvim-minimal' category");
-        println!("   ✓ Category 'lazyvim-minimal' verified in catalog.\n");
+        assert!(cfg.categories.contains_key("nodejs-pnpm"), "Must include 'nodejs-pnpm' category");
+        println!("   ✓ Category 'lazyvim-minimal' and 'nodejs-pnpm' verified in catalog.\n");
     }
 
     #[test]
