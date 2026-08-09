@@ -769,6 +769,62 @@ pub fn remove_category(
                 state.save_atomic()?;
             }
         }
+
+        if let Some(copy_files) = &cat.copy_files {
+            for action in copy_files {
+                if let Some(target_platform) = &action.platform {
+                    let matches_platform = matches!(
+                        (target_platform.to_lowercase().as_str(), platform),
+                        ("debian", Platform::Debian) | ("termux", Platform::Termux)
+                    );
+                    if !matches_platform {
+                        continue;
+                    }
+                }
+
+                let dest_path_str = expand_home(&action.dest);
+                let dest_path = Path::new(&dest_path_str);
+                if dest_path.exists() && dest_path.is_file() {
+                    if dry_run {
+                        println!("  [Dry-Run] Would remove configuration file: '{dest_path_str}'");
+                    } else {
+                        println!("  [Removing] Removing configuration file '{dest_path_str}'...");
+                        if let Err(e) = fs::remove_file(dest_path) {
+                            eprintln!("  [WARN] Failed to remove configuration file {dest_path_str}: {e}");
+                        }
+                    }
+                }
+            }
+        }
+
+        if cat_name == "shell-tokyonight" {
+            let plugins_dir = expand_home("~/.config/zsh/plugins");
+            let plugins_path = Path::new(&plugins_dir);
+            if plugins_path.exists() {
+                if dry_run {
+                    println!("  [Dry-Run] Would remove Zsh plugins directory: '{plugins_dir}'");
+                } else {
+                    println!("  [Removing] Removing Zsh plugins directory '{plugins_dir}'...");
+                    if let Err(e) = fs::remove_dir_all(plugins_path) {
+                        eprintln!("  [WARN] Failed to remove Zsh plugins directory {plugins_dir}: {e}");
+                    }
+                }
+            }
+
+            let zsh_dir = expand_home("~/.config/zsh");
+            let zsh_path = Path::new(&zsh_dir);
+            if zsh_path.exists() {
+                if let Ok(mut entries) = fs::read_dir(zsh_path) {
+                    if entries.next().is_none() {
+                        if dry_run {
+                            println!("  [Dry-Run] Would remove empty directory: '{zsh_dir}'");
+                        } else if let Err(e) = fs::remove_dir(zsh_path) {
+                            eprintln!("  [WARN] Failed to remove directory {zsh_dir}: {e}");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Ok(())
@@ -976,6 +1032,15 @@ mod tests {
         assert!(show_category("shell-tokyonight", &config, &state, &platform).is_ok());
         assert!(show_category("shell-tn", &config, &state, &platform).is_ok());
         assert!(show_category("nonexistent", &config, &state, &platform).is_err());
+    }
+
+    #[test]
+    fn remove_category_should_cleanup_copy_files_and_plugins_dir_in_dry_run() {
+        let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+        let mut state = State::load();
+        let platform = Platform::Debian;
+
+        assert!(remove_category(Some("shell-tokyonight"), &config, &mut state, &platform, true).is_ok());
     }
 }
 
