@@ -130,35 +130,13 @@ pub fn perform_self_uninstall(
         println!("Target Config Directory: {}", cfg_dir.display());
     }
 
-    // 0. Uninstall all categories and packages installed by project-dots
-    println!("\n--> Step 1/3: Uninstalling all packages managed by project-dots...");
-    if let Err(e) = crate::installer::remove_category(Some("all"), config, state, platform, dry_run) {
-        eprintln!("[WARNING] Error while removing packages: {e}");
-    }
-
-    if dry_run {
-        println!("\n=== DRY-RUN MODE ACTIVE: No files will be deleted ===");
-        println!("[Dry-Run] Would remove executable: {}", current_exe.display());
-        if !auto_reject {
-            if state_dir.exists() {
-                println!("[Dry-Run] Would remove state directory: {}", state_dir.display());
-            }
-            if config_dir.as_ref().is_some_and(|d| d.exists()) {
-                println!("[Dry-Run] Would remove config directory: {}", config_dir.as_ref().unwrap().display());
-            }
-        } else {
-            println!("[Dry-Run] Configuration and state directories will be kept intact (--no / -n).");
-        }
-        return Ok(());
-    }
-
-    let remove_config = if auto_reject {
+    let should_remove_packages_and_config = if auto_reject {
         false
     } else if auto_confirm {
         true
     } else {
         use std::io::{self, Write};
-        print!("\nDo you also want to remove all project-dots configuration files and package state registry? [y/N]: ");
+        print!("\nDo you want to uninstall packages installed by project-dots and remove configuration/state directories? [y/N]: ");
         let _ = io::stdout().flush();
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_ok() {
@@ -169,15 +147,42 @@ pub fn perform_self_uninstall(
         }
     };
 
-    // 1. Remove binary executable
+    if dry_run {
+        println!("\n=== DRY-RUN MODE ACTIVE: No files will be deleted ===");
+        if should_remove_packages_and_config {
+            println!("[Dry-Run] Would uninstall all packages managed by project-dots.");
+            if state_dir.exists() {
+                println!("[Dry-Run] Would remove state directory: {}", state_dir.display());
+            }
+            if config_dir.as_ref().is_some_and(|d| d.exists()) {
+                println!("[Dry-Run] Would remove config directory: {}", config_dir.as_ref().unwrap().display());
+            }
+        } else {
+            println!("[Dry-Run] Managed packages, state directory, and config directory will be kept intact (--no / -n / declined).");
+        }
+        println!("[Dry-Run] Would remove executable: {}", current_exe.display());
+        return Ok(());
+    }
+
+    // 1. Uninstall packages managed by project-dots if confirmed
+    if should_remove_packages_and_config {
+        println!("\n--> Uninstalling all packages managed by project-dots...");
+        if let Err(e) = crate::installer::remove_category(Some("all"), config, state, platform, dry_run) {
+            eprintln!("[WARNING] Error while removing packages: {e}");
+        }
+    } else {
+        println!("\n[Preserved] Managed packages kept intact.");
+    }
+
+    // 2. Remove binary executable
     if current_exe.exists() {
         fs::remove_file(&current_exe)
             .map_err(|e| anyhow::anyhow!("Failed to remove binary at {}: {e}", current_exe.display()))?;
         println!("✓ Executable removed: {}", current_exe.display());
     }
 
-    // 2. Remove configuration and state directories if confirmed
-    if remove_config {
+    // 3. Remove configuration and state directories if confirmed
+    if should_remove_packages_and_config {
         if state_dir.exists() {
             fs::remove_dir_all(state_dir)
                 .map_err(|e| anyhow::anyhow!("Failed to remove state directory at {}: {e}", state_dir.display()))?;
