@@ -15,10 +15,10 @@ Format: `v<MAJOR>.<MINOR>.<PATCH>-<PRERELEASE>` (e.g. `v0.1.0-beta.3`)
 - **PATCH**: Backward-compatible bug fixes and internal refactoring (e.g. `0.1.1`).
 - **PRERELEASE**: Pre-release testing phase indicator (e.g. `-beta.1`, `-beta.2`).
 
-### Version Bumping Rules
-- **Code Changes Trigger Version Bumps**: Any code addition (`feat`), feature enhancement, or bug fix (`fix`) MUST increment/bump the application version number.
-- **Documentation Exemption**: Documentation updates, additions, or Markdown edits (`docs`, `style`) **NEVER** trigger or alter the program version number.
-- **Bumps Happen Only on `develop`**: Version increments are executed **exclusively on the `develop` branch** when preparing a release. Feature branches and git worktrees MUST NOT modify the version number (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`) — the bump is applied once on `develop` after merging the feature work.
+### Version Bumping Rules (Push / Release Trigger Only)
+- **No Automatic Bumps for Intermediate Local Edits**: Do NOT increment the version number for every small local commit or feature/fix edit.
+- **Bumping Executed Only on Release Push**: Version increments (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`) are executed ONLY when preparing to push commits to GitHub / publish a release tag, OR when explicitly requested by the user ("sube y cambia de versión").
+- **No Spurious Push Prompts**: Do NOT prompt the user after small local edits asking to tag or publish a version. The user will explicitly instruct when to bump version and push to remote repositories.
 
 ---
 

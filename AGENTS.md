@@ -55,7 +55,7 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
   - All development edits must be conducted on a development branch (`develop` or feature branches). Only merge into `main` once code is fully tested and verified to work cleanly.
   - **Explicit Merge Restriction**: Never execute a branch merge (`git merge`) unless the user explicitly instructs to merge in their message.
   - **Explicit Push Restriction**: Never execute a remote push command (`git push`) unless the user explicitly instructs to push in their message. Before pushing, clearly explain what commits, branches, or tags will be pushed and request confirmation.
-- **Version Bumping Policy**:
-  - Any code addition (`feat`), feature enhancement, or bug fix (`fix`) MUST increment/bump the application version number.
-  - Documentation updates, additions, or Markdown edits (`docs`, `style`) NEVER trigger or alter the program version number.
-  - **Bumps happen only in `develop`**: Version increments are executed exclusively on the `develop` branch when preparing a release. Feature branches and git worktrees MUST NOT modify the version number (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`). The bump is applied once on `develop` after merging feature work.
+- **Version Bumping Policy (Bump Only on Remote Push / Release)**:
+  - Do NOT increment or bump the version number for intermediate local commits or small feature/bugfix edits.
+  - **Bump Trigger**: Version increments (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`) are executed ONLY when preparing to push to GitHub / publish a release, OR when the user explicitly instructs to bump/publish the version.
+  - **No Spurious Push Prompts**: Do NOT prompt the user after small local edits asking to tag or publish a version. Wait for the user to explicitly instruct to push and release.
