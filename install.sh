@@ -1,33 +1,25 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
+#!/bin/sh
+set -e
 
-# project-dots (v0.1.0-beta.11) System Installer Script
-# Usage: curl -fsSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | bash
-
-# ── Error trap ─────────────────────────────────────────────────
-on_error() {
-    local exit_code=$?
-    echo "Error: command failed with exit code $exit_code at line $1" >&2
-    echo "Script: $0" >&2
-}
-trap 'on_error $LINENO' ERR
+# project-dots (v0.1.0-beta.14) System Installer Script
+# Usage: curl -fsSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
 
 # ── Dependency check ──────────────────────────────────────────
 check_dependencies() {
-    local missing=()
+    missing=""
     for cmd in curl tar grep sed; do
-        if ! command -v "$cmd" &>/dev/null; then
-            missing+=("$cmd")
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            missing="$missing $cmd"
         fi
     done
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        printf 'Missing required tools: %s\n' "${missing[*]}" >&2
+    if [ -n "$missing" ]; then
+        printf 'Missing required tools:%s\n' "$missing" >&2
         exit 1
     fi
 }
 check_dependencies
 
-readonly REPO="${PROJECT_DOTS_REPO:-fusoras/project-dots}"
+REPO="${PROJECT_DOTS_REPO:-fusoras/project-dots}"
 INSTALL_DIR="$HOME/.local/bin"
 
 echo "=== project-dots System Installer ==="
@@ -38,14 +30,14 @@ ARCH="$(uname -m)"
 
 case "$OS" in
     Linux*)
-        if [[ -d "/data/data/com.termux/files/usr" ]]; then
+        if [ -d "/data/data/com.termux/files/usr" ]; then
             PLATFORM="termux"
             INSTALL_DIR="${PREFIX:-$HOME/.local}/bin"
             TARGET_ASSET="project-dots-aarch64-unknown-linux-musl.tar.gz"
         else
             PLATFORM="debian"
             INSTALL_DIR="$HOME/.local/bin"
-            if [[ "$ARCH" == "x86_64" ]]; then
+            if [ "$ARCH" = "x86_64" ]; then
                 TARGET_ASSET="project-dots-x86_64-unknown-linux-gnu.tar.gz"
             else
                 TARGET_ASSET="project-dots-aarch64-unknown-linux-musl.tar.gz"
@@ -58,28 +50,26 @@ case "$OS" in
         ;;
 esac
 
-readonly PLATFORM TARGET_ASSET
 echo "Detected Platform: $PLATFORM ($ARCH)"
 echo "Target Binary Asset: $TARGET_ASSET"
 
 # 2. Fetch Latest Release Version Tag
-readonly RELEASE_API="https://api.github.com/repos/$REPO/releases/latest"
+RELEASE_API="https://api.github.com/repos/$REPO/releases/latest"
 echo "Querying latest release from $RELEASE_API..."
 
 TAG_NAME=$(curl -fsSL -H "User-Agent: project-dots-installer" "$RELEASE_API" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' || true)
 
-if [[ -z "$TAG_NAME" ]]; then
-    TAG_NAME="v0.1.0-beta.12"
+if [ -z "$TAG_NAME" ]; then
+    TAG_NAME="v0.1.0-beta.14"
 fi
-readonly TAG_NAME
 echo "Installing release version: $TAG_NAME"
 
-readonly DOWNLOAD_URL="https://github.com/$REPO/releases/download/$TAG_NAME/$TARGET_ASSET"
+DOWNLOAD_URL="https://github.com/$REPO/releases/download/$TAG_NAME/$TARGET_ASSET"
 
 # 3. Create Installation Directory & Download Asset
 mkdir -p "$INSTALL_DIR"
 TMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TMP_DIR"' EXIT
+trap 'rm -rf "$TMP_DIR"' EXIT INT TERM
 
 echo "Downloading binary payload..."
 curl -fSL -o "$TMP_DIR/project-dots.tar.gz" "$DOWNLOAD_URL" || {
@@ -90,7 +80,7 @@ curl -fSL -o "$TMP_DIR/project-dots.tar.gz" "$DOWNLOAD_URL" || {
 echo "Extracting binary to $INSTALL_DIR..."
 tar -xzf "$TMP_DIR/project-dots.tar.gz" -C "$TMP_DIR"
 
-if [[ ! -f "$TMP_DIR/project-dots" ]]; then
+if [ ! -f "$TMP_DIR/project-dots" ]; then
     echo "Error: extracted archive did not contain 'project-dots' binary" >&2
     exit 1
 fi
@@ -104,4 +94,3 @@ echo "Binary installed to: $INSTALL_DIR/project-dots"
 echo ""
 printf "\033[1;33m[TIP] Add this line to your ~/.zshrc or ~/.bashrc:\033[0m\n"
 echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
-
