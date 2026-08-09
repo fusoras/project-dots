@@ -1,9 +1,9 @@
 # AGENTS.md — project-dots
 
-Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.31`).
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.32`).
 
 ## Project Facts
-- Binary crate `dotss` v0.1.0-beta.31, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Binary crate `dotss` v0.1.0-beta.32, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
 - **Command Renaming Note**: Executable binary command was officially renamed from `project-dots` to `dotss` in `v0.1.0-beta.20` for CLI user convenience.
 - Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
 - Entrypoint: `src/main.rs`.
@@ -58,3 +58,4 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
 - **Version Bumping Policy**:
   - Any code addition (`feat`), feature enhancement, or bug fix (`fix`) MUST increment/bump the application version number.
   - Documentation updates, additions, or Markdown edits (`docs`, `style`) NEVER trigger or alter the program version number.
+  - **Bumps happen only in `develop`**: Version increments are executed exclusively on the `develop` branch when preparing a release. Feature branches and git worktrees MUST NOT modify the version number (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`). The bump is applied once on `develop` after merging feature work.

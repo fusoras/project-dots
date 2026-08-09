@@ -470,7 +470,9 @@ fn process_copy_files(
                 .map_err(|e| anyhow::anyhow!("Failed to read source file {}: {e}", action.src))?
         } else if action.src == "config/shell-tokyonight/starship.toml" {
             crate::config::EMBEDDED_STARSHIP.as_bytes().to_vec()
-        } else if action.src == "config/shell-tokyonight/font.ttf" {
+        } else if action.src == "config/shell-tokyonight/aliases.zsh" {
+            crate::config::EMBEDDED_ALIASES.as_bytes().to_vec()
+        } else if action.src == "config/shell-tokyonight/font.ttf" || action.src == "config/shell-minimal/font.ttf" {
             crate::config::EMBEDDED_FONT.to_vec()
         } else if action.src == "config/i3wm/config" {
             crate::config::EMBEDDED_I3_CONFIG.as_bytes().to_vec()
