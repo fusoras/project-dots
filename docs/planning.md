@@ -4,6 +4,7 @@
 
 ## Core Features & Commands
 - **`project-dots list`**: Displays available categories and contained packages on a single line per category.
+- **`project-dots search <query>`**: Searches categories by name, alias, or the current platform's packages, printing matches in the same single-line format as `list`.
 - **`project-dots show <category>`**: Displays detailed description, package tracking status, config files, and post-install commands.
 - **`project-dots add [category] [--dry-run / -n]`**: Adds packages and configurations for a specific category (or all categories) with dry-run preview.
 - **`project-dots remove <category> [--all / -a] [--dry-run / -n]`**: Safely removes packages installed by `project-dots`.
