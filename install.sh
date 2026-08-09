@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# project-dots (v0.1.0-beta.27) System Installer Script
+# project-dots (v0.1.0-beta.28) System Installer Script
 # Usage: curl -fsSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
 
 # ── Dependency check ──────────────────────────────────────────
@@ -60,7 +60,7 @@ echo "Querying latest release from $RELEASE_API..."
 TAG_NAME=$(curl -fsSL -H "User-Agent: dotss-installer" "$RELEASE_API" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' || true)
 
 if [ -z "$TAG_NAME" ]; then
-    TAG_NAME="v0.1.0-beta.27"
+    TAG_NAME="v0.1.0-beta.28"
 fi
 echo "Installing release version: $TAG_NAME"
 

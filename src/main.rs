@@ -35,8 +35,12 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Lists all categories and contained packages on a single line
-    List,
+    /// Lists categories and contained packages for current platform
+    List {
+        /// Show categories not supported by current platform (e.g. i3wm on Termux)
+        #[arg(short = 's', long = "show-hidden")]
+        show_hidden: bool,
+    },
 
     /// Shows detailed description, packages, config files, and installation status for a specific category
     Show {
@@ -137,8 +141,8 @@ fn main() {
     let platform = Platform::detect();
 
     match command {
-        Commands::List => {
-            list_categories(&config, &state, &platform);
+        Commands::List { show_hidden } => {
+            list_categories(&config, &state, &platform, show_hidden);
         }
         Commands::Show { category } => {
             if let Err(e) = show_category(&category, &config, &state, &platform) {
@@ -219,6 +223,23 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn list_subcommand_should_parse_show_hidden_flag() {
+        let cli = Cli::try_parse_from(["dotss", "list", "--show-hidden"]).expect("failed to parse list --show-hidden");
+        if let Some(Commands::List { show_hidden }) = cli.command {
+            assert!(show_hidden);
+        } else {
+            panic!("Expected Commands::List");
+        }
+
+        let cli_short = Cli::try_parse_from(["dotss", "list", "-s"]).expect("failed to parse list -s");
+        if let Some(Commands::List { show_hidden }) = cli_short.command {
+            assert!(show_hidden);
+        } else {
+            panic!("Expected Commands::List");
+        }
+    }
 
     #[test]
     fn add_subcommand_should_parse_as_add_command() {

@@ -9,23 +9,17 @@ use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::process::Command;
 
-/// Simplified list of all categories and contained packages on a single line per category.
+/// Simplified list of categories and contained packages on a single line per category.
 /// Format: <bold-green-category-name> (aliases) / pkg1, pkg2, pkg3 [apply]
-pub fn list_categories(config: &Config, state: &State, platform: &Platform) {
+pub fn list_categories(config: &Config, state: &State, platform: &Platform, show_hidden: bool) {
     if config.categories.is_empty() {
         println!("No categories found in configuration.");
         return;
     }
 
-    for (cat_name, cat) in &config.categories {
-        let alias_part = cat.aliases.as_ref().map_or_else(String::new, |aliases| {
-            if aliases.is_empty() {
-                String::new()
-            } else {
-                format!(" ({})", aliases.join(", "))
-            }
-        });
+    let mut hidden_count = 0;
 
+    for (cat_name, cat) in &config.categories {
         let mut pkgs: Vec<String> = match platform {
             Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
             Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
@@ -37,6 +31,21 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform) {
         {
             pkgs.push(format!("{} (custom binary)", custom.name));
         }
+
+        let is_supported = !pkgs.is_empty();
+
+        if !is_supported && !show_hidden {
+            hidden_count += 1;
+            continue;
+        }
+
+        let alias_part = cat.aliases.as_ref().map_or_else(String::new, |aliases| {
+            if aliases.is_empty() {
+                String::new()
+            } else {
+                format!(" ({})", aliases.join(", "))
+            }
+        });
 
         let pkgs_str = if pkgs.is_empty() {
             "none".to_string()
@@ -50,7 +59,19 @@ pub fn list_categories(config: &Config, state: &State, platform: &Platform) {
             String::new()
         };
 
-        println!("{BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{pkgs_str}{RESET}{apply_suffix}");
+        let hidden_suffix = if !is_supported {
+            format!(" {DIM_GRAY}[unsupported]{RESET}")
+        } else {
+            String::new()
+        };
+
+        println!("{BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{pkgs_str}{RESET}{apply_suffix}{hidden_suffix}");
+    }
+
+    if hidden_count > 0 && !show_hidden {
+        println!(
+            "\n{DIM_GRAY}Note: {hidden_count} category/categories not supported on this platform were hidden. Use 'dotss list --show-hidden' or 'dotss list -s' to view all.{RESET}"
+        );
     }
 }
 
@@ -844,10 +865,11 @@ mod tests {
     }
 
     #[test]
-    fn list_categories_should_include_all_configured_categories() {
+    fn list_categories_should_include_configured_categories() {
         let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
         let state = State::load();
-        list_categories(&config, &state, &Platform::Debian);
+        list_categories(&config, &state, &Platform::Debian, false);
+        list_categories(&config, &state, &Platform::Termux, true);
     }
 
     #[test]
