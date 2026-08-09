@@ -39,7 +39,7 @@ enum Commands {
     #[command(disable_help_flag = true)]
     List {
         /// Show categories not supported by current platform (e.g. i3wm on Termux)
-        #[arg(short = 's', visible_short_alias = 'h', long = "show-hidden", visible_alias = "sh", action = clap::ArgAction::SetTrue, overrides_with = "show_hidden")]
+        #[arg(short = 's', visible_short_alias = 'h', long = "show-hidden", action = clap::ArgAction::SetTrue, overrides_with = "show_hidden")]
         show_hidden: bool,
 
         /// Print help information
@@ -120,6 +120,12 @@ enum Commands {
 }
 
 fn main() {
+    let raw_args: Vec<String> = std::env::args().collect();
+    if raw_args.iter().any(|arg| arg == "-s" || arg == "--sh") {
+        eprintln!("{BOLD_RED}error:{RESET} unexpected argument found for 'list'. Use '-sh' or '--show-hidden'.");
+        std::process::exit(1);
+    }
+
     let cli = Cli::parse();
 
     if cli.version {
@@ -256,26 +262,15 @@ mod tests {
             panic!("Expected Commands::List");
         }
 
-        let cli_short = Cli::try_parse_from(["dotss", "list", "-s"]).expect("failed to parse list -s");
-        if let Some(Commands::List { show_hidden, .. }) = cli_short.command {
-            assert!(show_hidden);
-        } else {
-            panic!("Expected Commands::List");
-        }
-
-        let cli_alias = Cli::try_parse_from(["dotss", "list", "--sh"]).expect("failed to parse list --sh");
-        if let Some(Commands::List { show_hidden, .. }) = cli_alias.command {
-            assert!(show_hidden);
-        } else {
-            panic!("Expected Commands::List");
-        }
-
         let cli_short_alias = Cli::try_parse_from(["dotss", "list", "-sh"]).expect("failed to parse list -sh");
         if let Some(Commands::List { show_hidden, .. }) = cli_short_alias.command {
             assert!(show_hidden);
         } else {
             panic!("Expected Commands::List");
         }
+
+        // --sh should fail parsing (not a valid long flag alias)
+        assert!(Cli::try_parse_from(["dotss", "list", "--sh"]).is_err());
     }
 
     #[test]
