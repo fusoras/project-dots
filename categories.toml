@@ -47,6 +47,15 @@ command = "git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-
 [[categories.shell-tokyonight.post_install_commands]]
 command = "grep -qF 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' >> \"$HOME/.zshrc\""
 
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF 'autoload -Uz compinit' \"$HOME/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.zshrc\""
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.zshrc\""
+
+[[categories.shell-tokyonight.post_install_commands]]
+command = "grep -qF 'source <(carapace _carapace)' \"$HOME/.zshrc\" 2>/dev/null || echo 'source <(carapace _carapace)' >> \"$HOME/.zshrc\""
+
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/starship.toml"
 dest = "~/.config/starship.toml"
