@@ -36,7 +36,7 @@ final_message = "Close and reopen your terminal so Zsh and the Starship prompt t
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/starship.toml"
-dest = "~/.config/starship.toml"
+dest = "~/.config/zsh/starship.toml"
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/font.ttf"
@@ -83,7 +83,7 @@ Each category can declare optional short aliases via the `aliases` array propert
 - **Aliases**: `tokyonight-shell`, `zsh-tokyonight`, `shell-tokyo`, `terminal`, `shell`, `zsh`
 - **Packages**: `zsh`, `git`, `eza`, `zoxide`, `bat`, `starship`
 - **Config Copies**:
-  - `config/shell-tokyonight/starship.toml` -> `~/.config/starship.toml`
+  - `config/shell-tokyonight/starship.toml` -> `~/.config/zsh/starship.toml`
   - `config/shell-tokyonight/font.ttf` -> `~/.termux/font.ttf` (Termux only, skipped if `font.ttf` already exists)
 - **Post-Install**:
   - Debian: `chsh -s $(which zsh)` (sets Zsh as default shell)

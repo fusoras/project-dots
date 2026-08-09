@@ -912,7 +912,7 @@ mod tests {
     fn copy_files_should_succeed_in_dry_run_mode() {
         let copy_actions = vec![crate::config::CopyFileAction {
             src: "config/shell-tokyonight/starship.toml".to_string(),
-            dest: "~/.config/starship.toml".to_string(),
+            dest: "~/.config/zsh/starship.toml".to_string(),
             platform: None,
             only_if_not_exists: None,
         }];

@@ -36,8 +36,8 @@ command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.shell-tokyonight.post_install_commands]]
-description = "Export ZCONFIGDIR and XDG_STATE_HOME env vars in ~/.zshenv"
-command = "grep -qF 'export ZCONFIGDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZCONFIGDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' >> \"$HOME/.zshenv\""
+description = "Export ZCONFIGDIR, XDG_STATE_HOME, and STARSHIP_CONFIG env vars in ~/.zshenv"
+command = "grep -qF 'export STARSHIP_CONFIG=\"$ZCONFIGDIR/starship.toml\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZCONFIGDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZCONFIGDIR/starship.toml\"' >> \"$HOME/.zshenv\""
 
 [[categories.shell-tokyonight.post_install_commands]]
 description = "Configure Zsh persistent history file and options in ~/.zshrc"
@@ -81,7 +81,7 @@ command = "grep -qF 'eval \"$(atuin init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null ||
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/starship.toml"
-dest = "~/.config/starship.toml"
+dest = "~/.config/zsh/starship.toml"
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/aliases.zsh"

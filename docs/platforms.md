@@ -22,7 +22,7 @@ Before initiating installation steps, `project-dots` runs pre-flight checks:
 | **Safe Remove Command**| `sudo apt remove -y <only-installed-by-dots>` | `pkg remove -y <only-installed-by-dots>` |
 | **Neovim Strategy** | GitHub release tarball -> `/opt/nvim` -> `~/.local/bin/nvim` | Official `pkg install neovim` |
 | **Binary Symlinks** | `~/.local/bin/` | `$PREFIX/bin/` (`/data/data/com.termux/files/usr/bin`) |
-| **Platform Config Copies** | Config files (`~/.config/starship.toml`) | Config files + Termux font (`~/.termux/font.ttf`) |
+| **Platform Config Copies** | Config files (`~/.config/zsh/starship.toml`) | Config files + Termux font (`~/.termux/font.ttf`) |
 
 ## Bootstrap Script POSIX Compliance (`install.sh`)
 

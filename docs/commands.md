@@ -74,7 +74,7 @@ Packages (Debian):
   - carapace-bin [Pre-existing (system)]
 
 Config File Actions:
-  - config/shell-tokyonight/starship.toml -> ~/.config/starship.toml
+  - config/shell-tokyonight/starship.toml -> ~/.config/zsh/starship.toml
   - config/shell-tokyonight/font.ttf -> ~/.termux/font.ttf (Platform: termux) [skip if exists]
 
 Post-Install Commands:
