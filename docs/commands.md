@@ -6,7 +6,7 @@
 
 | Command | Purpose | Options |
 | ------- | ------- | ------- |
-| `project-dots list` | Displays available categories and contained packages in a concise single-line format | `--show-hidden` / `--sh` / `-s` to display unsupported categories |
+| `project-dots list` | Displays available categories and contained packages in a concise single-line format | `-sh` / `--show-hidden` / `-s` to display unsupported categories |
 | `project-dots search <query>` | Searches categories by name, alias, or contained packages and prints matches in the same format as `list` | Query is matched case-insensitively against category names, aliases, and the current platform's packages |
 | `project-dots show <category>` | Displays full detailed description, package tracking status, config files, and post-install commands | Accepts category name or alias (e.g. `shell-tokyonight`, `shell-tn`) |
 | `project-dots add [category]` | Adds packages and configurations for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |

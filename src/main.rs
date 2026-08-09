@@ -36,10 +36,15 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Lists categories and contained packages for current platform
+    #[command(disable_help_flag = true)]
     List {
         /// Show categories not supported by current platform (e.g. i3wm on Termux)
-        #[arg(short = 's', long = "show-hidden", visible_alias = "sh")]
+        #[arg(short = 's', visible_short_alias = 'h', long = "show-hidden", visible_alias = "sh", action = clap::ArgAction::SetTrue, overrides_with = "show_hidden")]
         show_hidden: bool,
+
+        /// Print help information
+        #[arg(long = "help")]
+        help: bool,
     },
 
     /// Shows detailed description, packages, config files, and installation status for a specific category
@@ -147,7 +152,16 @@ fn main() {
     let platform = Platform::detect();
 
     match command {
-        Commands::List { show_hidden } => {
+        Commands::List { show_hidden, help } => {
+            if help {
+                use clap::CommandFactory;
+                let mut cmd = Cli::command();
+                if let Some(sub) = cmd.find_subcommand_mut("list") {
+                    sub.print_help().ok();
+                    println!();
+                }
+                return;
+            }
             list_categories(&config, &state, &platform, show_hidden, None);
         }
         Commands::Search { query } => {
@@ -236,21 +250,28 @@ mod tests {
     #[test]
     fn list_subcommand_should_parse_show_hidden_flag() {
         let cli = Cli::try_parse_from(["dotss", "list", "--show-hidden"]).expect("failed to parse list --show-hidden");
-        if let Some(Commands::List { show_hidden }) = cli.command {
+        if let Some(Commands::List { show_hidden, .. }) = cli.command {
             assert!(show_hidden);
         } else {
             panic!("Expected Commands::List");
         }
 
         let cli_short = Cli::try_parse_from(["dotss", "list", "-s"]).expect("failed to parse list -s");
-        if let Some(Commands::List { show_hidden }) = cli_short.command {
+        if let Some(Commands::List { show_hidden, .. }) = cli_short.command {
             assert!(show_hidden);
         } else {
             panic!("Expected Commands::List");
         }
 
         let cli_alias = Cli::try_parse_from(["dotss", "list", "--sh"]).expect("failed to parse list --sh");
-        if let Some(Commands::List { show_hidden }) = cli_alias.command {
+        if let Some(Commands::List { show_hidden, .. }) = cli_alias.command {
+            assert!(show_hidden);
+        } else {
+            panic!("Expected Commands::List");
+        }
+
+        let cli_short_alias = Cli::try_parse_from(["dotss", "list", "-sh"]).expect("failed to parse list -sh");
+        if let Some(Commands::List { show_hidden, .. }) = cli_short_alias.command {
             assert!(show_hidden);
         } else {
             panic!("Expected Commands::List");
