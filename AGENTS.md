@@ -1,17 +1,17 @@
 # AGENTS.md — project-dots
 
-Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.14`).
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.21`).
 
 ## Project Facts
-- Binary crate `project-dots` v0.1.0-beta.10, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Binary crate `dotss` v0.1.0-beta.21, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
 - Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
 - Entrypoint: `src/main.rs`.
 - `.gitignore` ignores `/target` and `.codegraph`.
 
 ## Commands
 - Build / Run (Dev): `cargo build` / `cargo run`
-- Release Build: `cargo build --release` (binary at `./target/release/project-dots`)
-- Local Installation: `cargo install --path .` (installs `project-dots` executable to `~/.cargo/bin` or `$PATH`)
+- Release Build: `cargo build --release` (binary at `./target/release/dotss`)
+- Local Installation: `cargo install --path .` (installs `dotss` executable to `~/.cargo/bin` or `$PATH`)
 - Code linting: `cargo clippy` (warnings)
 - Type checking: `cargo check`
 - Unit Testing: `cargo test -- --nocapture`
@@ -35,7 +35,7 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
 ## Rules and Conventions
 - Keep the codebase lightweight and modular in Rust.
 - Use concise bullet points for agent rules and documentation.
-- Present user-facing commands using the compiled binary (`project-dots <command>`) rather than `cargo run --`.
+- Present user-facing commands using the compiled binary (`dotss <command>`) rather than `cargo run --`.
 - **Security Governance & Secret Leak Prevention**:
   - NEVER commit API keys, private keys (`id_*`), certificates (`*.key`, `*.pem`), or `.env` files within `config/<category>/` or project directories.
   - Template files in `config/` are embedded directly into the compiled executable release binary (`include_str!`/`include_bytes!`). Any committed secret will be permanently exposed in public release binaries.

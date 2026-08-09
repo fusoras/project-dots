@@ -16,17 +16,17 @@ curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install
 ```
 
 > [!NOTE]
-> This command downloads the compiled pre-release binary from the active **`develop`** branch build assets and installs it to `~/.local/bin/project-dots` (or `$PREFIX/bin` on Termux).
+> This command downloads the compiled pre-release binary from the active **`develop`** branch build assets and installs it to `~/.local/bin/dotss` (or `$PREFIX/bin` on Termux).
 
 ---
 
-## 🛠️ Quick CLI Reference
+### Quick CLI Overview
 
-| Command | Purpose | Options |
-| ------- | ------- | ------- |
-| `project-dots list` | Displays available categories and contained packages on a single line | Shows `[apply]` tag on applied categories |
-| `project-dots show <category>` | Displays full description, package tracking status, config file actions, and post-install commands | Accepts category name or alias (e.g. `shell-tokyonight`, `shell-tn`) |
-| `project-dots add [category]` | Adds packages and configurations for a specific category (or `all`) | `--dry-run` / `-n` to preview actions without system changes |
-| `project-dots remove <category>` | Safely uninstalls packages managed by `project-dots` | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
-| `project-dots self-update` | Checks GitHub Releases and updates `project-dots` binary in-place | `--dry-run` / `-n` to preview update check |
-| `project-dots self-uninstall` | Safely removes `project-dots` binary executable, state, and config directories | `--yes` / `-y` to confirm deletion, `--no` / `-n` to keep state/config |
+| Command | Description | Notes |
+|---|---|---|
+| `dotss list` | Displays available categories and contained packages on a single line | Shows `[apply]` tag on applied categories |
+| `dotss show <category>` | Displays full description, package tracking status, config file actions, and post-install commands | Accepts category name or alias (e.g. `shell-tokyonight`, `shell-tn`) |
+| `dotss add [category]` | Adds packages and configurations for a specific category (or `all`) | `--dry-run` / `-n` to preview actions without system changes |
+| `dotss remove <category>` | Safely uninstalls packages managed by `dotss` | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
+| `dotss self-update` | Checks GitHub Releases and updates `dotss` binary in-place | `--dry-run` / `-n` to preview update check |
+| `dotss self-uninstall` | Safely removes `dotss` binary executable, state, and config directories | `--yes` / `-y` to confirm deletion, `--no` / `-n` to keep state/config |

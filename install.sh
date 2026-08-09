@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# project-dots (v0.1.0-beta.14) System Installer Script
+# project-dots (v0.1.0-beta.21) System Installer Script
 # Usage: curl -fsSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
 
 # ── Dependency check ──────────────────────────────────────────
@@ -19,10 +19,10 @@ check_dependencies() {
 }
 check_dependencies
 
-REPO="${PROJECT_DOTS_REPO:-fusoras/project-dots}"
+REPO="${DOTSS_REPO:-${PROJECT_DOTS_REPO:-fusoras/project-dots}}"
 INSTALL_DIR="$HOME/.local/bin"
 
-echo "=== project-dots System Installer ==="
+echo "=== dotss System Installer ==="
 
 # 1. Platform & Architecture Detection
 OS="$(uname -s)"
@@ -33,14 +33,14 @@ case "$OS" in
         if [ -d "/data/data/com.termux/files/usr" ]; then
             PLATFORM="termux"
             INSTALL_DIR="${PREFIX:-$HOME/.local}/bin"
-            TARGET_ASSET="project-dots-aarch64-unknown-linux-musl.tar.gz"
+            TARGET_ASSET="dotss-aarch64-unknown-linux-musl.tar.gz"
         else
             PLATFORM="debian"
             INSTALL_DIR="$HOME/.local/bin"
             if [ "$ARCH" = "x86_64" ]; then
-                TARGET_ASSET="project-dots-x86_64-unknown-linux-gnu.tar.gz"
+                TARGET_ASSET="dotss-x86_64-unknown-linux-gnu.tar.gz"
             else
-                TARGET_ASSET="project-dots-aarch64-unknown-linux-musl.tar.gz"
+                TARGET_ASSET="dotss-aarch64-unknown-linux-musl.tar.gz"
             fi
         fi
         ;;
@@ -57,10 +57,10 @@ echo "Target Binary Asset: $TARGET_ASSET"
 RELEASE_API="https://api.github.com/repos/$REPO/releases/latest"
 echo "Querying latest release from $RELEASE_API..."
 
-TAG_NAME=$(curl -fsSL -H "User-Agent: project-dots-installer" "$RELEASE_API" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' || true)
+TAG_NAME=$(curl -fsSL -H "User-Agent: dotss-installer" "$RELEASE_API" 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/' || true)
 
 if [ -z "$TAG_NAME" ]; then
-    TAG_NAME="v0.1.0-beta.14"
+    TAG_NAME="v0.1.0-beta.21"
 fi
 echo "Installing release version: $TAG_NAME"
 
@@ -72,25 +72,25 @@ TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT INT TERM
 
 echo "Downloading binary payload..."
-curl -fSL -o "$TMP_DIR/project-dots.tar.gz" "$DOWNLOAD_URL" || {
+curl -fSL -o "$TMP_DIR/dotss.tar.gz" "$DOWNLOAD_URL" || {
     echo "Error: Failed to download release asset from $DOWNLOAD_URL" >&2
     exit 1
 }
 
 echo "Extracting binary to $INSTALL_DIR..."
-tar -xzf "$TMP_DIR/project-dots.tar.gz" -C "$TMP_DIR"
+tar -xzf "$TMP_DIR/dotss.tar.gz" -C "$TMP_DIR"
 
-if [ ! -f "$TMP_DIR/project-dots" ]; then
-    echo "Error: extracted archive did not contain 'project-dots' binary" >&2
+if [ ! -f "$TMP_DIR/dotss" ]; then
+    echo "Error: extracted archive did not contain 'dotss' binary" >&2
     exit 1
 fi
 
-mv "$TMP_DIR/project-dots" "$INSTALL_DIR/project-dots"
-chmod +x "$INSTALL_DIR/project-dots"
+mv "$TMP_DIR/dotss" "$INSTALL_DIR/dotss"
+chmod +x "$INSTALL_DIR/dotss"
 
 echo ""
 printf "\033[1;32mInstallation completed successfully!\033[0m\n"
-echo "Binary installed to: $INSTALL_DIR/project-dots"
+echo "Binary installed to: $INSTALL_DIR/dotss"
 echo ""
 printf "\033[1;33m[TIP] Add this line to your ~/.zshrc or ~/.bashrc:\033[0m\n"
 echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
