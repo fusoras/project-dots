@@ -1,4 +1,4 @@
-name: Release project-dots Binaries
+name: Release dotss Binaries
 
 on:
   push:
@@ -19,9 +19,9 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            asset_name: project-dots-x86_64-unknown-linux-gnu.tar.gz
+            asset_name: dotss-x86_64-unknown-linux-gnu.tar.gz
           - target: aarch64-unknown-linux-musl
-            asset_name: project-dots-aarch64-unknown-linux-musl.tar.gz
+            asset_name: dotss-aarch64-unknown-linux-musl.tar.gz
 
     steps:
       - name: Checkout repository
@@ -48,7 +48,7 @@ jobs:
       - name: Package binary into tarball
         run: |
           set -Eeuo pipefail
-          tar -czf ${{ matrix.asset_name }} -C target/${{ matrix.target }}/release project-dots
+          tar -czf ${{ matrix.asset_name }} -C target/${{ matrix.target }}/release dotss
 
       - name: Upload asset to GitHub Release
         uses: softprops/action-gh-release@v2
