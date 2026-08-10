@@ -84,6 +84,8 @@ Post-Install Commands:
 Section Injections:
   - Initialize Starship prompt in ~/.zshrc under section '# Fast init tools' -> ~/.zshrc under section '# Fast init tools'
   - Initialize zoxide in ~/.zshrc under section '# Fast init tools' -> ~/.zshrc under section '# Fast init tools'
+  - Enable zsh-autosuggestions plugin in ~/.zshrc under section '# Zsh plugins' -> ~/.zshrc under section '# Zsh plugins'
+  - Enable fast-syntax-highlighting plugin in ~/.zshrc under section '# Zsh plugins' -> ~/.zshrc under section '# Zsh plugins'
   - Initialize Atuin shell history in ~/.zshrc under section '# Fast init tools' -> ~/.zshrc under section '# Fast init tools'
 
 Final Message: Close and reopen your terminal so Zsh and the Starship prompt take effect.

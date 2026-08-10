@@ -63,17 +63,21 @@ description = "Initialize zoxide in ~/.zshrc under section '# Fast init tools'"
 description = "Download zsh-autosuggestions plugin repository"
 command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
 
-[[categories.shell-tokyonight.post_install_commands]]
-description = "Enable zsh-autosuggestions plugin in ~/.zshrc"
-command = "grep -qF 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' >> \"$HOME/.zshrc\""
+[[categories.shell-tokyonight.section_injections]]
+file = "~/.zshrc"
+section = "# Zsh plugins"
+line = 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh'
+description = "Enable zsh-autosuggestions plugin in ~/.zshrc under section '# Zsh plugins'"
 
 [[categories.shell-tokyonight.post_install_commands]]
 description = "Download fast-syntax-highlighting plugin repository"
 command = "git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-highlighting ~/.config/zsh/plugins/fast-syntax-highlighting 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/fast-syntax-highlighting/.git"
 
-[[categories.shell-tokyonight.post_install_commands]]
-description = "Enable fast-syntax-highlighting plugin in ~/.zshrc"
-command = "grep -qF 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' >> \"$HOME/.zshrc\""
+[[categories.shell-tokyonight.section_injections]]
+file = "~/.zshrc"
+section = "# Zsh plugins"
+line = 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh'
+description = "Enable fast-syntax-highlighting plugin in ~/.zshrc under section '# Zsh plugins'"
 
 [[categories.shell-tokyonight.post_install_commands]]
 description = "Enable Zsh completion system (compinit) in ~/.zshrc"

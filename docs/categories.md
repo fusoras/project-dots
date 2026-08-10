@@ -66,6 +66,18 @@ description = "Initialize zoxide in ~/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-tokyonight.section_injections]]
 file = "~/.zshrc"
+section = "# Zsh plugins"
+line = 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh'
+description = "Enable zsh-autosuggestions plugin in ~/.zshrc under section '# Zsh plugins'"
+
+[[categories.shell-tokyonight.section_injections]]
+file = "~/.zshrc"
+section = "# Zsh plugins"
+line = 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh'
+description = "Enable fast-syntax-highlighting plugin in ~/.zshrc under section '# Zsh plugins'"
+
+[[categories.shell-tokyonight.section_injections]]
+file = "~/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(atuin init zsh)"'
 description = "Initialize Atuin shell history in ~/.zshrc under section '# Fast init tools'"
