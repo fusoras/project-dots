@@ -26,6 +26,9 @@ cargo test -- --nocapture
 | `test_process_copy_files_termux_font_dry_run` | `src/installer.rs` | Verifies platform-filtered `copy_files` actions (Termux font copying) during dry-run. |
 | `test_process_post_install_commands_dry_run` | `src/installer.rs` | Verifies dry-run execution of `post_install_commands` actions. |
 | `test_process_post_install_commands_platform_filter` | `src/installer.rs` | Verifies platform-filtered `post_install_commands` (Debian vs Termux) and platform-agnostic commands. |
+| `inject_line_into_section_should_insert_under_existing_header` | `src/installer.rs` | Verifies line insertion under pre-existing section header comments. |
+| `inject_line_into_section_should_create_header_if_missing` | `src/installer.rs` | Verifies automatic header comment generation and line insertion when header is missing. |
+| `process_section_injections_should_preview_in_dry_run` | `src/installer.rs` | Verifies dry-run preview execution for `section_injections` actions. |
 | `test_list_categories_output` | `src/installer.rs` | Verifies simplified single-line `list` output formatting. |
 | `test_show_category_resolution` | `src/installer.rs` | Verifies category inspection (`show`) via canonical key and explicit alias. |
 | `test_command_exists_utility` | `src/platform.rs` | Verifies PATH directory inspection for command presence without relying on external `which`. |

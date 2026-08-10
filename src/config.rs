@@ -27,6 +27,7 @@ pub struct Category {
     pub custom: Option<BTreeMap<String, CustomInstaller>>,
     pub copy_files: Option<Vec<CopyFileAction>>,
     pub post_install_commands: Option<Vec<PostInstallCommand>>,
+    pub section_injections: Option<Vec<SectionInjection>>,
     pub final_message: Option<String>,
 }
 
@@ -45,6 +46,15 @@ pub struct PostInstallCommand {
     pub platform: Option<String>,
     pub prompt: Option<String>,
     pub confirm: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SectionInjection {
+    pub file: String,
+    pub section: String,
+    pub line: String,
+    pub description: Option<String>,
+    pub platform: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

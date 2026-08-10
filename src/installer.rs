@@ -262,6 +262,22 @@ pub fn show_category(
         }
     }
 
+    if let Some(injections) = &cat.section_injections {
+        println!("\n{BOLD_BLUE}Section Injections:{RESET}");
+        for inj in injections {
+            let platform_info = inj
+                .platform
+                .as_ref()
+                .map(|p| format!(" (Platform: {p})"))
+                .unwrap_or_default();
+            let desc = inj
+                .description
+                .as_deref()
+                .unwrap_or(inj.line.as_str());
+            println!("  - {desc} -> {} under section '{}'{platform_info}", inj.file, inj.section);
+        }
+    }
+
     if let Some(msg) = &cat.final_message {
         println!("\n{BOLD_BLUE}Final Message:{RESET} {msg}");
     }
@@ -426,6 +442,10 @@ pub fn install_category(
             process_post_install_commands(post_cmds, platform, &confirmed_commands, dry_run)?;
         }
 
+        if let Some(injections) = &cat.section_injections {
+            process_section_injections(injections, platform, dry_run)?;
+        }
+
         if let Some(msg) = &cat.final_message {
             if dry_run {
                 println!("  [Dry-Run] Would show final message: {msg}");
@@ -548,6 +568,95 @@ fn process_post_install_commands(
         }
     }
     Ok(())
+}
+
+fn process_section_injections(
+    injections: &[crate::config::SectionInjection],
+    platform: &Platform,
+    dry_run: bool,
+) -> anyhow::Result<()> {
+    for injection in injections {
+        if let Some(target_platform) = &injection.platform {
+            let matches_platform = matches!(
+                (target_platform.to_lowercase().as_str(), platform),
+                ("debian", Platform::Debian) | ("termux", Platform::Termux)
+            );
+            if !matches_platform {
+                continue;
+            }
+        }
+
+        let expanded_path = expand_home(&injection.file);
+        let path = Path::new(&expanded_path);
+
+        let desc = injection
+            .description
+            .as_deref()
+            .unwrap_or(injection.line.as_str());
+
+        let content = if path.exists() {
+            fs::read_to_string(path)
+                .map_err(|e| anyhow::anyhow!("Failed to read config file '{}': {e}", path.display()))?
+        } else {
+            String::new()
+        };
+
+        if content.lines().any(|l| l.trim() == injection.line.trim()) {
+            println!("  [SKIP] Section line '{}' already exists in {}.", injection.line, injection.file);
+            continue;
+        }
+
+        if dry_run {
+            println!(
+                "  [Dry-Run] Would inject line into {} under section '{}': {}",
+                injection.file, injection.section, desc
+            );
+            continue;
+        }
+
+        let new_content = inject_line_into_section(&content, &injection.section, &injection.line);
+
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| anyhow::anyhow!("Failed to create directories for '{}': {e}", path.display()))?;
+        }
+
+        fs::write(path, new_content)
+            .map_err(|e| anyhow::anyhow!("Failed to write updated config to '{}': {e}", path.display()))?;
+
+        println!("  [Success] Injected line into {} under section '{}': {}", injection.file, injection.section, desc);
+    }
+    Ok(())
+}
+
+/// Helper to inject a line into content under a section header.
+/// If the section header exists, inserts line directly beneath it.
+/// If the section header does NOT exist, appends the section header and line to the end of content.
+pub fn inject_line_into_section(content: &str, section: &str, line: &str) -> String {
+    let lines: Vec<&str> = content.lines().collect();
+
+    if let Some(header_idx) = lines.iter().position(|l| l.trim() == section.trim()) {
+        let mut new_lines: Vec<String> = lines.iter().map(|s| s.to_string()).collect();
+        new_lines.insert(header_idx + 1, line.to_string());
+        let mut result = new_lines.join("\n");
+        if content.ends_with('\n') || content.is_empty() {
+            result.push('\n');
+        }
+        result
+    } else {
+        let mut result = content.to_string();
+        if !result.is_empty() && !result.ends_with('\n') {
+            result.push('\n');
+        }
+        if !result.is_empty() {
+            result.push('\n');
+        }
+        result.push_str(section.trim());
+        result.push('\n');
+        result.push_str(line.trim());
+        result.push('\n');
+        result
+    }
 }
 
 /// Handles special binary installations (e.g. Neovim on Debian via tar.gz release).
@@ -1041,6 +1150,33 @@ mod tests {
         let platform = Platform::Debian;
 
         assert!(remove_category(Some("shell-tokyonight"), &config, &mut state, &platform, true).is_ok());
+    }
+
+    #[test]
+    fn inject_line_into_section_should_insert_under_existing_header() {
+        let content = "HISTFILE=~/history\n# Fast init tools\neval \"$(starship init zsh)\"\n";
+        let updated = inject_line_into_section(content, "# Fast init tools", "eval \"$(zoxide init zsh)\"");
+        assert!(updated.contains("# Fast init tools\neval \"$(zoxide init zsh)\"\neval \"$(starship init zsh)\""));
+    }
+
+    #[test]
+    fn inject_line_into_section_should_create_header_if_missing() {
+        let content = "HISTFILE=~/history\n";
+        let updated = inject_line_into_section(content, "# Fast init tools", "eval \"$(zoxide init zsh)\"");
+        assert!(updated.contains("\n# Fast init tools\neval \"$(zoxide init zsh)\"\n"));
+    }
+
+    #[test]
+    fn process_section_injections_should_preview_in_dry_run() {
+        let injections = vec![crate::config::SectionInjection {
+            file: "~/.zshrc".to_string(),
+            section: "# Fast init tools".to_string(),
+            line: "eval \"$(zoxide init zsh)\"".to_string(),
+            description: Some("Initialize zoxide".to_string()),
+            platform: None,
+        }];
+        let res = process_section_injections(&injections, &Platform::Debian, true);
+        assert!(res.is_ok(), "Section injection dry-run should succeed");
     }
 }
 

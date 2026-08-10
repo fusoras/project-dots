@@ -52,8 +52,23 @@ platform = "debian"
 command = "chsh -s zsh"
 platform = "termux"
 
-[[categories.shell-tokyonight.post_install_commands]]
-command = "grep -qF 'eval \"$(starship init zsh)\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'eval \"$(starship init zsh)\"' >> \"$HOME/.zshrc\""
+[[categories.shell-tokyonight.section_injections]]
+file = "~/.zshrc"
+section = "# Fast init tools"
+line = 'eval "$(starship init zsh)"'
+description = "Initialize Starship prompt in ~/.zshrc under section '# Fast init tools'"
+
+[[categories.shell-tokyonight.section_injections]]
+file = "~/.zshrc"
+section = "# Fast init tools"
+line = 'eval "$(zoxide init zsh)"'
+description = "Initialize zoxide in ~/.zshrc under section '# Fast init tools'"
+
+[[categories.shell-tokyonight.section_injections]]
+file = "~/.zshrc"
+section = "# Fast init tools"
+line = 'eval "$(atuin init zsh)"'
+description = "Initialize Atuin shell history in ~/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-tokyonight.post_install_commands]]
 command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
