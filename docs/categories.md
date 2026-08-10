@@ -85,17 +85,14 @@ description = "Initialize Atuin shell history in ~/.zshrc under section '# Fast 
 [[categories.shell-tokyonight.post_install_commands]]
 command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
 
-[[categories.shell-tokyonight.post_install_commands]]
-command = "grep -qF 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh' >> \"$HOME/.zshrc\""
-
-[[categories.shell-tokyonight.post_install_commands]]
-command = "git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-highlighting ~/.config/zsh/plugins/fast-syntax-highlighting 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/fast-syntax-highlighting/.git"
-
-[[categories.shell-tokyonight.post_install_commands]]
-command = "grep -qF 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' \"$HOME/.zshrc\" 2>/dev/null || echo 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh' >> \"$HOME/.zshrc\""
-```
-
-## Category Aliases
+## Section Injections (`section_injections`)
+Categories can declare structured line injections under specific comment headers (e.g. `# History configuration` or `# Fast init tools`).
+- **File**: Path to target file (e.g. `~/.zshrc`).
+- **Section**: Header comment string (e.g. `# History configuration`).
+- **Line**: Content line(s) to insert directly beneath the header comment.
+- **Position** (Optional): Optional placement preference when creating a new section comment (`"top"` or `"bottom"`, default `"bottom"`). Setting `position = "top"` ensures history or env configuration sections are prepended to the very beginning of `~/.zshrc`.
+- **Auto Header Generation**: If the section comment header does not exist in the file, `dotss` automatically inserts the header comment before inserting the line beneath it (at the top if `position = "top"` or bottom otherwise).
+- **Idempotency**: If the line already exists anywhere in the file, insertion is skipped (`[SKIP]`).
 Each category can declare optional short aliases via the `aliases` array property in `categories.toml`. Users can invoke `project-dots install <alias>` or `project-dots remove <alias>` interchangeably with the canonical category name.
 
 ## Active Production Categories

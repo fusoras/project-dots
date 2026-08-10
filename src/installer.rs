@@ -601,20 +601,31 @@ fn process_section_injections(
             String::new()
         };
 
-        if content.lines().any(|l| l.trim() == injection.line.trim()) {
-            println!("  [SKIP] Section line '{}' already exists in {}.", injection.line, injection.file);
+        let first_line = injection.line.lines().next().unwrap_or(&injection.line).trim();
+        if content.lines().any(|l| l.trim() == first_line) {
+            println!("  [SKIP] Section line '{}' already exists in {}.", first_line, injection.file);
             continue;
         }
 
         if dry_run {
+            let pos_info = injection
+                .position
+                .as_deref()
+                .map(|p| format!(" [position: {p}]"))
+                .unwrap_or_default();
             println!(
-                "  [Dry-Run] Would inject line into {} under section '{}': {}",
-                injection.file, injection.section, desc
+                "  [Dry-Run] Would inject line into {} under section '{}'{}: {}",
+                injection.file, injection.section, pos_info, desc
             );
             continue;
         }
 
-        let new_content = inject_line_into_section(&content, &injection.section, &injection.line);
+        let new_content = inject_line_into_section(
+            &content,
+            &injection.section,
+            &injection.line,
+            injection.position.as_deref(),
+        );
 
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)
@@ -631,31 +642,54 @@ fn process_section_injections(
 
 /// Helper to inject a line into content under a section header.
 /// If the section header exists, inserts line directly beneath it.
-/// If the section header does NOT exist, appends the section header and line to the end of content.
-pub fn inject_line_into_section(content: &str, section: &str, line: &str) -> String {
+/// If the section header does NOT exist, prepends (position="top") or appends to content.
+pub fn inject_line_into_section(
+    content: &str,
+    section: &str,
+    line: &str,
+    position: Option<&str>,
+) -> String {
     let lines: Vec<&str> = content.lines().collect();
 
     if let Some(header_idx) = lines.iter().position(|l| l.trim() == section.trim()) {
         let mut new_lines: Vec<String> = lines.iter().map(|s| s.to_string()).collect();
-        new_lines.insert(header_idx + 1, line.to_string());
+        new_lines.insert(header_idx + 1, line.trim().to_string());
         let mut result = new_lines.join("\n");
         if content.ends_with('\n') || content.is_empty() {
             result.push('\n');
         }
         result
     } else {
-        let mut result = content.to_string();
-        if !result.is_empty() && !result.ends_with('\n') {
+        let is_top = position.map(|p| p.to_lowercase() == "top").unwrap_or(false);
+
+        if is_top {
+            let mut result = String::new();
+            result.push_str(section.trim());
             result.push('\n');
-        }
-        if !result.is_empty() {
+            result.push_str(line.trim());
             result.push('\n');
+            if !content.is_empty() {
+                result.push('\n');
+                result.push_str(content.trim_start());
+                if !result.ends_with('\n') {
+                    result.push('\n');
+                }
+            }
+            result
+        } else {
+            let mut result = content.to_string();
+            if !result.is_empty() && !result.ends_with('\n') {
+                result.push('\n');
+            }
+            if !result.is_empty() {
+                result.push('\n');
+            }
+            result.push_str(section.trim());
+            result.push('\n');
+            result.push_str(line.trim());
+            result.push('\n');
+            result
         }
-        result.push_str(section.trim());
-        result.push('\n');
-        result.push_str(line.trim());
-        result.push('\n');
-        result
     }
 }
 
@@ -1155,15 +1189,27 @@ mod tests {
     #[test]
     fn inject_line_into_section_should_insert_under_existing_header() {
         let content = "HISTFILE=~/history\n# Fast init tools\neval \"$(starship init zsh)\"\n";
-        let updated = inject_line_into_section(content, "# Fast init tools", "eval \"$(zoxide init zsh)\"");
+        let updated = inject_line_into_section(content, "# Fast init tools", "eval \"$(zoxide init zsh)\"", None);
         assert!(updated.contains("# Fast init tools\neval \"$(zoxide init zsh)\"\neval \"$(starship init zsh)\""));
     }
 
     #[test]
     fn inject_line_into_section_should_create_header_if_missing() {
         let content = "HISTFILE=~/history\n";
-        let updated = inject_line_into_section(content, "# Fast init tools", "eval \"$(zoxide init zsh)\"");
+        let updated = inject_line_into_section(content, "# Fast init tools", "eval \"$(zoxide init zsh)\"", None);
         assert!(updated.contains("\n# Fast init tools\neval \"$(zoxide init zsh)\"\n"));
+    }
+
+    #[test]
+    fn inject_line_into_section_should_prepend_to_top_when_position_is_top() {
+        let content = "# Fast init tools\neval \"$(starship init zsh)\"\n";
+        let updated = inject_line_into_section(
+            content,
+            "# History configuration",
+            "HISTFILE=~/history",
+            Some("top"),
+        );
+        assert!(updated.starts_with("# History configuration\nHISTFILE=~/history"));
     }
 
     #[test]
@@ -1174,6 +1220,7 @@ mod tests {
             line: "eval \"$(zoxide init zsh)\"".to_string(),
             description: Some("Initialize zoxide".to_string()),
             platform: None,
+            position: Some("top".to_string()),
         }];
         let res = process_section_injections(&injections, &Platform::Debian, true);
         assert!(res.is_ok(), "Section injection dry-run should succeed");

@@ -55,6 +55,7 @@ pub struct SectionInjection {
     pub line: String,
     pub description: Option<String>,
     pub platform: Option<String>,
+    pub position: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

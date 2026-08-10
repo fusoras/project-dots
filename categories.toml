@@ -39,9 +39,19 @@ platform = "termux"
 description = "Export ZCONFIGDIR, XDG_STATE_HOME, and STARSHIP_CONFIG env vars in ~/.zshenv"
 command = "grep -qF 'export STARSHIP_CONFIG=\"$ZCONFIGDIR/starship.toml\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZCONFIGDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZCONFIGDIR/starship.toml\"' >> \"$HOME/.zshenv\""
 
-[[categories.shell-tokyonight.post_install_commands]]
-description = "Configure Zsh persistent history file and options in ~/.zshrc"
-command = "grep -qF 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' 'HISTSIZE=100000' 'SAVEHIST=100000' 'setopt SHARE_HISTORY' 'setopt HIST_IGNORE_DUPS' 'setopt HIST_IGNORE_SPACE' 'setopt HIST_EXPIRE_DUPS_FIRST' >> \"$HOME/.zshrc\""
+[[categories.shell-tokyonight.section_injections]]
+file = "~/.zshrc"
+section = "# History configuration"
+position = "top"
+line = """
+HISTFILE="$XDG_STATE_HOME/zsh/history"
+HISTSIZE=100000
+SAVEHIST=100000
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_EXPIRE_DUPS_FIRST"""
+description = "Configure Zsh persistent history options at top of ~/.zshrc under section '# History configuration'"
 
 [[categories.shell-tokyonight.post_install_commands]]
 description = "Source Zsh custom aliases ($ZCONFIGDIR/aliases.zsh) in ~/.zshrc"
@@ -129,9 +139,19 @@ platform = "termux"
 description = "Export XDG_STATE_HOME env var in ~/.zshenv"
 command = "grep -qF 'export XDG_STATE_HOME=\"$HOME/.local/state\"' \"$HOME/.zshenv\" 2>/dev/null || echo 'export XDG_STATE_HOME=\"$HOME/.local/state\"' >> \"$HOME/.zshenv\""
 
-[[categories.shell-minimal.post_install_commands]]
-description = "Configure Zsh persistent history file and options in ~/.zshrc"
-command = "grep -qF 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' 'HISTFILE=\"$XDG_STATE_HOME/zsh/history\"' 'HISTSIZE=100000' 'SAVEHIST=100000' 'setopt SHARE_HISTORY' 'setopt HIST_IGNORE_DUPS' 'setopt HIST_IGNORE_SPACE' 'setopt HIST_EXPIRE_DUPS_FIRST' >> \"$HOME/.zshrc\""
+[[categories.shell-minimal.section_injections]]
+file = "~/.zshrc"
+section = "# History configuration"
+position = "top"
+line = """
+HISTFILE="$XDG_STATE_HOME/zsh/history"
+HISTSIZE=100000
+SAVEHIST=100000
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_EXPIRE_DUPS_FIRST"""
+description = "Configure Zsh persistent history options at top of ~/.zshrc under section '# History configuration'"
 
 [[categories.shell-minimal.section_injections]]
 file = "~/.zshrc"
