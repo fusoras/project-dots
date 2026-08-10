@@ -71,7 +71,39 @@ pub struct CustomInstaller {
 impl Config {
     /// Loads configuration from local ./categories.toml, ~/.config/dotss/categories.toml,
     /// or falls back to the embedded default configuration compiled into the binary.
+    /// Also scans for modular configuration files in ./categories.d/*.toml and ~/.config/dotss/categories.d/*.toml.
     pub fn load() -> anyhow::Result<(Self, String)> {
+        let (mut config, primary_source) = Self::load_base()?;
+        let mut loaded_modular_files = Vec::new();
+
+        // 1. Scan local ./categories.d/ if it exists
+        let local_d = Path::new("categories.d");
+        if local_d.is_dir() {
+            Self::load_directory_into(&mut config, local_d, &mut loaded_modular_files)?;
+        }
+
+        // 2. Scan XDG ~/.config/dotss/categories.d/ if it exists
+        if let Some(user_dir) = Self::get_user_config_dir() {
+            let xdg_d = user_dir.join("categories.d");
+            if xdg_d.is_dir() {
+                Self::load_directory_into(&mut config, &xdg_d, &mut loaded_modular_files)?;
+            }
+        }
+
+        let source_summary = if loaded_modular_files.is_empty() {
+            primary_source
+        } else {
+            format!(
+                "{} (+ {} modular file(s) in categories.d/)",
+                primary_source,
+                loaded_modular_files.len()
+            )
+        };
+
+        Ok((config, source_summary))
+    }
+
+    fn load_base() -> anyhow::Result<(Self, String)> {
         let local_path = Path::new("categories.toml");
         if local_path.exists() {
             let content = fs::read_to_string(local_path)
@@ -95,6 +127,43 @@ impl Config {
         let config: Self = toml::from_str(EMBEDDED_CONFIG)
             .map_err(|e| anyhow::anyhow!("Failed to parse embedded default categories.toml: {e}"))?;
         Ok((config, "Embedded default configuration".to_string()))
+    }
+
+    fn load_directory_into(
+        config: &mut Self,
+        dir: &Path,
+        loaded_files: &mut Vec<PathBuf>,
+    ) -> anyhow::Result<()> {
+        let entries = match fs::read_dir(dir) {
+            Ok(e) => e,
+            Err(_) => return Ok(()),
+        };
+
+        let mut paths: Vec<PathBuf> = Vec::new();
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("toml") {
+                paths.push(path);
+            }
+        }
+
+        // Sort paths alphabetically for deterministic loading order
+        paths.sort();
+
+        for path in paths {
+            let content = fs::read_to_string(&path)
+                .map_err(|e| anyhow::anyhow!("Failed to read modular config {}: {e}", path.display()))?;
+            let sub_config: Self = toml::from_str(&content)
+                .map_err(|e| anyhow::anyhow!("Failed to parse modular config {}: {e}", path.display()))?;
+
+            for (cat_name, category) in sub_config.categories {
+                config.categories.insert(cat_name, category);
+            }
+
+            loaded_files.push(path);
+        }
+
+        Ok(())
     }
 
     /// Returns the standard user configuration directory (~/.config/dotss).
@@ -195,5 +264,46 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn modular_categories_directory_should_merge_categories() {
+        let temp_dir = std::env::temp_dir().join("dotss_test_categories_d");
+        let _ = fs::remove_dir_all(&temp_dir);
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let file1 = temp_dir.join("01-editors.toml");
+        let file2 = temp_dir.join("02-tools.toml");
+
+        fs::write(
+            &file1,
+            r#"[categories.custom-editor]
+description = "Custom modular editor setup"
+debian_packages = ["vim"]
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            &file2,
+            r#"[categories.custom-tool]
+description = "Custom modular tool setup"
+debian_packages = ["htop"]
+"#,
+        )
+        .unwrap();
+
+        let mut config = Config {
+            categories: BTreeMap::new(),
+        };
+        let mut loaded = Vec::new();
+        Config::load_directory_into(&mut config, &temp_dir, &mut loaded).unwrap();
+
+        assert_eq!(loaded.len(), 2, "Should load both .toml files");
+        assert!(config.categories.contains_key("custom-editor"));
+        assert!(config.categories.contains_key("custom-tool"));
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
 }
+
 

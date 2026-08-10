@@ -5,9 +5,40 @@ use crate::state::State;
 use anyhow::Context;
 use std::env;
 use std::fs;
+use std::io::{self, IsTerminal, Write};
 use std::os::unix::fs::symlink;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
+
+/// Writes the provided content to stdout, routing through a pager (`less` or `$PAGER`)
+/// if stdout is connected to an interactive terminal (TTY). If not a TTY or pager fails,
+/// writes directly to stdout.
+pub fn output_with_pager(content: &str) {
+    if !io::stdout().is_terminal() {
+        let _ = io::stdout().write_all(content.as_bytes());
+        return;
+    }
+
+    let pager_cmd = env::var("PAGER").unwrap_or_else(|_| "less".to_string());
+    let mut cmd = Command::new(&pager_cmd);
+
+    // If using default 'less', pass flags -FRX to preserve colors, exit if output fits one screen, and avoid screen clear
+    if pager_cmd == "less" || pager_cmd.ends_with("/less") {
+        cmd.args(["-F", "-R", "-X"]);
+    }
+
+    match cmd.stdin(Stdio::piped()).spawn() {
+        Ok(mut child) => {
+            if let Some(mut stdin) = child.stdin.take() {
+                let _ = stdin.write_all(content.as_bytes());
+            }
+            let _ = child.wait();
+        }
+        Err(_) => {
+            let _ = io::stdout().write_all(content.as_bytes());
+        }
+    }
+}
 
 /// Simplified list of categories and contained packages on a single line per category.
 /// Format: <bold-green-category-name> (aliases) / pkg1, pkg2, pkg3 [apply]
@@ -27,6 +58,7 @@ pub fn list_categories(
         return;
     }
 
+    let mut output = String::new();
     let mut hidden_count = 0;
 
     for (cat_name, cat) in &config.categories {
@@ -81,15 +113,19 @@ pub fn list_categories(
             String::new()
         };
 
-        println!("{BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{pkgs_str}{RESET}{apply_suffix}{hidden_suffix}");
+        output.push_str(&format!(
+            "{BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{pkgs_str}{RESET}{apply_suffix}{hidden_suffix}\n"
+        ));
     }
 
     if hidden_count > 0 && !show_hidden {
         let cat_plural = if hidden_count == 1 { "category" } else { "categories" };
-        println!(
-            "\n{DIM_GRAY}{hidden_count} hidden {cat_plural}. Use '-sh' or '--show-hidden' to view all.{RESET}"
-        );
+        output.push_str(&format!(
+            "\n{DIM_GRAY}{hidden_count} hidden {cat_plural}. Use '-sh' or '--show-hidden' to view all.{RESET}\n"
+        ));
     }
+
+    output_with_pager(&output);
 }
 
 /// Case-insensitive substring match of `query` against a category name, its aliases,
@@ -956,15 +992,14 @@ pub fn remove_category(
 
             let zsh_dir = expand_home("~/.config/zsh");
             let zsh_path = Path::new(&zsh_dir);
-            if zsh_path.exists() {
-                if let Ok(mut entries) = fs::read_dir(zsh_path) {
-                    if entries.next().is_none() {
-                        if dry_run {
-                            println!("  [Dry-Run] Would remove empty directory: '{zsh_dir}'");
-                        } else if let Err(e) = fs::remove_dir(zsh_path) {
-                            eprintln!("  [WARN] Failed to remove directory {zsh_dir}: {e}");
-                        }
-                    }
+            if zsh_path.exists()
+                && let Ok(mut entries) = fs::read_dir(zsh_path)
+                && entries.next().is_none()
+            {
+                if dry_run {
+                    println!("  [Dry-Run] Would remove empty directory: '{zsh_dir}'");
+                } else if let Err(e) = fs::remove_dir(zsh_path) {
+                    eprintln!("  [WARN] Failed to remove directory {zsh_dir}: {e}");
                 }
             }
         }

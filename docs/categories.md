@@ -4,9 +4,16 @@
 
 ## Configuration File Resolution Order
 
-1. `./categories.toml` (Current working directory)
-2. `~/.config/project-dots/categories.toml` (XDG User Config)
-3. Embedded default in binary (`include_str!("../categories.toml")`)
+1. **Base Catalog**:
+   - `./categories.toml` (Current working directory)
+   - `~/.config/dotss/categories.toml` (XDG User Config)
+   - Embedded default in binary (`include_str!("../categories.toml")`)
+
+2. **Modular Directories (`categories.d/`)**:
+   - `./categories.d/*.toml` (Local modular configurations, loaded alphabetically)
+   - `~/.config/dotss/categories.d/*.toml` (XDG User modular configurations)
+
+Modular `.toml` files allow breaking down large configurations into clean, domain-specific files (e.g. `editors.toml`, `shell.toml`). Categories declared in `categories.d/*.toml` are merged into the main category catalog.
 
 ## State Management (`~/.local/state/project-dots/state.toml`)
 
