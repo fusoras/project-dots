@@ -82,11 +82,12 @@ Post-Install Commands:
   - chsh -s zsh (Platform: termux)
 
 Section Injections:
-  - Initialize Starship prompt in ~/.zshrc under section '# Fast init tools' -> ~/.zshrc under section '# Fast init tools'
-  - Initialize zoxide in ~/.zshrc under section '# Fast init tools' -> ~/.zshrc under section '# Fast init tools'
-  - Enable zsh-autosuggestions plugin in ~/.zshrc under section '# Zsh plugins' -> ~/.zshrc under section '# Zsh plugins'
-  - Enable fast-syntax-highlighting plugin in ~/.zshrc under section '# Zsh plugins' -> ~/.zshrc under section '# Zsh plugins'
-  - Initialize Atuin shell history in ~/.zshrc under section '# Fast init tools' -> ~/.zshrc under section '# Fast init tools'
+  - Configure Zsh persistent history options at top of ~/.config/zsh/.zshrc under section '# History configuration' -> ~/.config/zsh/.zshrc under section '# History configuration'
+  - Initialize Starship prompt in ~/.config/zsh/.zshrc under section '# Fast init tools' -> ~/.config/zsh/.zshrc under section '# Fast init tools'
+  - Initialize zoxide in ~/.config/zsh/.zshrc under section '# Fast init tools' -> ~/.config/zsh/.zshrc under section '# Fast init tools'
+  - Enable zsh-autosuggestions plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins' -> ~/.config/zsh/.zshrc under section '# Zsh plugins'
+  - Enable fast-syntax-highlighting plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins' -> ~/.config/zsh/.zshrc under section '# Zsh plugins'
+  - Initialize Atuin shell history in ~/.config/zsh/.zshrc under section '# Fast init tools' -> ~/.config/zsh/.zshrc under section '# Fast init tools'
 
 Final Message: Close and reopen your terminal so Zsh and the Starship prompt take effect.
 ```

@@ -36,11 +36,11 @@ command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.shell-tokyonight.post_install_commands]]
-description = "Export ZCONFIGDIR, XDG_STATE_HOME, and STARSHIP_CONFIG env vars in ~/.zshenv"
-command = "grep -qF 'export STARSHIP_CONFIG=\"$ZCONFIGDIR/starship.toml\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZCONFIGDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZCONFIGDIR/starship.toml\"' >> \"$HOME/.zshenv\""
+description = "Export ZDOTDIR, ZCONFIGDIR, XDG_STATE_HOME, and STARSHIP_CONFIG env vars in ~/.zshenv"
+command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export ZCONFIGDIR=\"$ZDOTDIR\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZCONFIGDIR/starship.toml\"' >> \"$HOME/.zshenv\""
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# History configuration"
 position = "top"
 line = """
@@ -51,57 +51,57 @@ setopt SHARE_HISTORY
 setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 setopt HIST_EXPIRE_DUPS_FIRST"""
-description = "Configure Zsh persistent history options at top of ~/.zshrc under section '# History configuration'"
+description = "Configure Zsh persistent history options at top of ~/.config/zsh/.zshrc under section '# History configuration'"
 
 [[categories.shell-tokyonight.post_install_commands]]
-description = "Source Zsh custom aliases ($ZCONFIGDIR/aliases.zsh) in ~/.zshrc"
-command = "grep -qF 'source \"$ZCONFIGDIR/aliases.zsh\"' \"$HOME/.zshrc\" 2>/dev/null || echo 'source \"$ZCONFIGDIR/aliases.zsh\"' >> \"$HOME/.zshrc\""
+description = "Source Zsh custom aliases ($ZCONFIGDIR/aliases.zsh) in ~/.config/zsh/.zshrc"
+command = "grep -qF 'source \"$ZCONFIGDIR/aliases.zsh\"' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'source \"$ZCONFIGDIR/aliases.zsh\"' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(starship init zsh)"'
-description = "Initialize Starship prompt in ~/.zshrc under section '# Fast init tools'"
+description = "Initialize Starship prompt in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(zoxide init zsh)"'
-description = "Initialize zoxide in ~/.zshrc under section '# Fast init tools'"
+description = "Initialize zoxide in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-tokyonight.post_install_commands]]
 description = "Download zsh-autosuggestions plugin repository"
 command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Zsh plugins"
 line = 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh'
-description = "Enable zsh-autosuggestions plugin in ~/.zshrc under section '# Zsh plugins'"
+description = "Enable zsh-autosuggestions plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins'"
 
 [[categories.shell-tokyonight.post_install_commands]]
 description = "Download fast-syntax-highlighting plugin repository"
 command = "git clone --depth=1 https://github.com/zdharma-continuum/fast-syntax-highlighting ~/.config/zsh/plugins/fast-syntax-highlighting 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/fast-syntax-highlighting/.git"
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Zsh plugins"
 line = 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh'
-description = "Enable fast-syntax-highlighting plugin in ~/.zshrc under section '# Zsh plugins'"
+description = "Enable fast-syntax-highlighting plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins'"
 
 [[categories.shell-tokyonight.post_install_commands]]
-description = "Enable Zsh completion system (compinit) in ~/.zshrc"
-command = "grep -qF 'autoload -Uz compinit' \"$HOME/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.zshrc\""
+description = "Enable Zsh completion system (compinit) in ~/.config/zsh/.zshrc"
+command = "grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.shell-tokyonight.post_install_commands]]
-description = "Set Zsh completion format styling in ~/.zshrc"
-command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.zshrc\""
+description = "Set Zsh completion format styling in ~/.config/zsh/.zshrc"
+command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(atuin init zsh)"'
-description = "Initialize Atuin shell history in ~/.zshrc under section '# Fast init tools'"
+description = "Initialize Atuin shell history in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-tokyonight.copy_files]]
 src = "config/shell-tokyonight/starship.toml"
@@ -136,11 +136,11 @@ command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.shell-minimal.post_install_commands]]
-description = "Export XDG_STATE_HOME env var in ~/.zshenv"
-command = "grep -qF 'export XDG_STATE_HOME=\"$HOME/.local/state\"' \"$HOME/.zshenv\" 2>/dev/null || echo 'export XDG_STATE_HOME=\"$HOME/.local/state\"' >> \"$HOME/.zshenv\""
+description = "Export ZDOTDIR and XDG_STATE_HOME env vars in ~/.zshenv"
+command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' >> \"$HOME/.zshenv\""
 
 [[categories.shell-minimal.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# History configuration"
 position = "top"
 line = """
@@ -151,21 +151,21 @@ setopt SHARE_HISTORY
 setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_SPACE
 setopt HIST_EXPIRE_DUPS_FIRST"""
-description = "Configure Zsh persistent history options at top of ~/.zshrc under section '# History configuration'"
+description = "Configure Zsh persistent history options at top of ~/.config/zsh/.zshrc under section '# History configuration'"
 
 [[categories.shell-minimal.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(zoxide init zsh)"'
-description = "Initialize zoxide in ~/.zshrc under section '# Fast init tools'"
+description = "Initialize zoxide in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-minimal.post_install_commands]]
-description = "Enable Zsh completion system (compinit) in ~/.zshrc"
-command = "grep -qF 'autoload -Uz compinit' \"$HOME/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.zshrc\""
+description = "Enable Zsh completion system (compinit) in ~/.config/zsh/.zshrc"
+command = "grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.shell-minimal.post_install_commands]]
-description = "Set Zsh completion format styling in ~/.zshrc"
-command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.zshrc\""
+description = "Set Zsh completion format styling in ~/.config/zsh/.zshrc"
+command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.shell-minimal.copy_files]]
 src = "config/shell-minimal/font.ttf"

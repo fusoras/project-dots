@@ -53,34 +53,34 @@ command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(starship init zsh)"'
-description = "Initialize Starship prompt in ~/.zshrc under section '# Fast init tools'"
+description = "Initialize Starship prompt in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(zoxide init zsh)"'
-description = "Initialize zoxide in ~/.zshrc under section '# Fast init tools'"
+description = "Initialize zoxide in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Zsh plugins"
 line = 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh'
-description = "Enable zsh-autosuggestions plugin in ~/.zshrc under section '# Zsh plugins'"
+description = "Enable zsh-autosuggestions plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins'"
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Zsh plugins"
 line = 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh'
-description = "Enable fast-syntax-highlighting plugin in ~/.zshrc under section '# Zsh plugins'"
+description = "Enable fast-syntax-highlighting plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins'"
 
 [[categories.shell-tokyonight.section_injections]]
-file = "~/.zshrc"
+file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(atuin init zsh)"'
-description = "Initialize Atuin shell history in ~/.zshrc under section '# Fast init tools'"
+description = "Initialize Atuin shell history in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
 [[categories.shell-tokyonight.post_install_commands]]
 command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
