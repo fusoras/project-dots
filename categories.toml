@@ -36,8 +36,8 @@ command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.shell-tokyonight.post_install_commands]]
-description = "Export ZDOTDIR, ZCONFIGDIR, XDG_STATE_HOME, and STARSHIP_CONFIG env vars in ~/.zshenv"
-command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export ZCONFIGDIR=\"$ZDOTDIR\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZCONFIGDIR/starship.toml\"' >> \"$HOME/.zshenv\""
+description = "Export ZDOTDIR, XDG_STATE_HOME, and STARSHIP_CONFIG env vars in ~/.zshenv"
+command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZDOTDIR/starship.toml\"' >> \"$HOME/.zshenv\""
 
 [[categories.shell-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
@@ -54,8 +54,8 @@ setopt HIST_EXPIRE_DUPS_FIRST"""
 description = "Configure Zsh persistent history options at top of ~/.config/zsh/.zshrc under section '# History configuration'"
 
 [[categories.shell-tokyonight.post_install_commands]]
-description = "Source Zsh custom aliases ($ZCONFIGDIR/aliases.zsh) in ~/.config/zsh/.zshrc"
-command = "grep -qF 'source \"$ZCONFIGDIR/aliases.zsh\"' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'source \"$ZCONFIGDIR/aliases.zsh\"' >> \"$HOME/.config/zsh/.zshrc\""
+description = "Source Zsh custom aliases ($ZDOTDIR/aliases.zsh) in ~/.config/zsh/.zshrc"
+command = "grep -qF 'source \"$ZDOTDIR/aliases.zsh\"' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'source \"$ZDOTDIR/aliases.zsh\"' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.shell-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
