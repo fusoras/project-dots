@@ -15,10 +15,11 @@ Format: `v<MAJOR>.<MINOR>.<PATCH>-<PRERELEASE>` (e.g. `v0.1.0-beta.3`)
 - **PATCH**: Backward-compatible bug fixes and internal refactoring (e.g. `0.1.1`).
 - **PRERELEASE**: Pre-release testing phase indicator (e.g. `-beta.1`, `-beta.2`).
 
-### Version Bumping Rules (Push / Release Trigger Only)
+### Version Bumping Rules & User Authority
+- **Exclusive User Authority**: The user exclusively determines, authorizes, and defines version numbers (e.g., `v0.1.0-beta.34`) and release triggers. The AI assistant MAY ONLY suggest version numbers when asked, and MUST NEVER increment or assign version numbers autonomously.
 - **No Automatic Bumps for Intermediate Local Edits**: Do NOT increment the version number for every small local commit or feature/fix edit.
-- **Bumping Executed Only on Release Push**: Version increments (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`) are executed ONLY when preparing to push commits to GitHub / publish a release tag, OR when explicitly requested by the user ("sube y cambia de versión").
-- **No Spurious Push Prompts**: Do NOT prompt the user after small local edits asking to tag or publish a version. The user will explicitly instruct when to bump version and push to remote repositories.
+- **Main Branch Strict Prohibition**: The AI assistant must NEVER switch to, merge into, or operate on the `main` branch under any circumstances unless explicitly instructed by the user. All development occurs on `develop`.
+- **Bumping Executed Only on Explicit User Instruction**: Version updates across files (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`) are executed ONLY when the user explicitly instructs to update the version and specifies the exact version string.
 
 ---
 

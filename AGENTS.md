@@ -1,9 +1,9 @@
 # AGENTS.md — project-dots
 
-Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.37`).
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.34`).
 
 ## Project Facts
-- Binary crate `dotss` v0.1.0-beta.37, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Binary crate `dotss` v0.1.0-beta.34, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
 - **Command Renaming Note**: Executable binary command was officially renamed from `project-dots` to `dotss` in `v0.1.0-beta.20` for CLI user convenience.
 - Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
 - Entrypoint: `src/main.rs`.
@@ -49,13 +49,15 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
 - **Explicit Alias Governance**:
   - Aliases for categories or commands must ONLY be created when explicitly defined by the user.
   - Never generate, infer, or automatically append unrequested aliases. Always consult or ask the user before defining aliases.
-- **Git Strategy & Modern Commands**:
+- **Git Strategy & Branch Restrictions**:
   - Never use `git checkout`. Use modern git commands (`git switch`, `git restore`).
   - User Git Aliases: `git s` -> `git switch`, `git b` -> `git branch`.
-  - All development edits must be conducted on a development branch (`develop` or feature branches). Only merge into `main` once code is fully tested and verified to work cleanly.
+  - All development edits must be conducted on the development branch (`develop` or feature branches).
+  - **Main Branch Strict Prohibition**: The assistant must NEVER switch to, merge into, or touch the `main` branch under any circumstances unless explicitly requested by the user in their message.
   - **Explicit Merge Restriction**: Never execute a branch merge (`git merge`) unless the user explicitly instructs to merge in their message.
   - **Explicit Push Restriction**: Never execute a remote push command (`git push`) unless the user explicitly instructs to push in their message. Before pushing, clearly explain what commits, branches, or tags will be pushed and request confirmation.
-- **Version Bumping Policy (Bump Only on Remote Push / Release)**:
+- **User Version Control & Version Bumping Policy**:
+  - **User Defines Versions Exclusively**: The user exclusively determines, authorizes, and defines version numbers (e.g. `v0.1.0-beta.34`) and release triggers. The assistant MAY ONLY suggest version numbers when asked, and MUST NEVER increment or change version numbers independently.
   - Do NOT increment or bump the version number for intermediate local commits or small feature/bugfix edits.
-  - **Bump Trigger**: Version increments (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`) are executed ONLY when preparing to push to GitHub / publish a release, OR when the user explicitly instructs to bump/publish the version.
-  - **No Spurious Push Prompts**: Do NOT prompt the user after small local edits asking to tag or publish a version. Wait for the user to explicitly instruct to push and release.
+  - **Bump Trigger**: Version updates (`Cargo.toml`, `Cargo.lock`, `install.sh`, `AGENTS.md`) are executed ONLY when the user explicitly defines the target version and instructs to bump/publish.
+
