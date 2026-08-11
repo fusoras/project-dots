@@ -119,9 +119,8 @@ pub fn list_categories(
     }
 
     if hidden_count > 0 && !show_hidden {
-        let cat_plural = if hidden_count == 1 { "category" } else { "categories" };
         output.push_str(&format!(
-            "\n{DIM_GRAY}{hidden_count} hidden {cat_plural}. Use '-sh' or '--show-hidden' to view all.{RESET}\n"
+            "\n{DIM_GRAY}{hidden_count} hidden. Use '-sh' or '--show-hidden' to view all.{RESET}\n"
         ));
     }
 
