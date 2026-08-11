@@ -38,4 +38,4 @@
 - [x] **Task 12: GitHub Actions Release CI Pipeline (`.github/workflows/release.yml`)**
 - [x] **Task 13: Self-Uninstall Engine & `--yes` Interactive Confirmation (`src/update.rs`)**
 - [x] **Task 14: Category Config Copy (`copy_files`) & Post-Install Commands Engine (`src/installer.rs`)**
-- [x] **Task 15: `shell-tokyonight` Category & Embedded Assets (`starship.toml`, `font.ttf`)**
+- [x] **Task 15: `zsh-tokyonight` Category & Embedded Assets (`starship.toml`, `font.ttf`)**

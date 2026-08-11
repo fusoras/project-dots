@@ -49,19 +49,19 @@ enum Commands {
 
     /// Shows detailed description, packages, config files, and installation status for a specific category
     Show {
-        /// Category name or alias to inspect (e.g. 'shell-tokyonight', 'shell-tn', 'lazyvim-minimal')
+        /// Category name or alias to inspect (e.g. 'zsh-tokyonight', 'zsh-tn', 'lazyvim-minimal')
         category: String,
     },
 
     /// Searches categories by name, alias, or contained packages for the current platform
     Search {
-        /// Query to match against category names, aliases, or package names (e.g. 'nvim', 'shell-tn')
+        /// Query to match against category names, aliases, or package names (e.g. 'nvim', 'zsh-tn')
         query: String,
     },
 
     /// Adds packages and configurations for a specific category or all categories
     Add {
-        /// Category name to add (e.g. 'shell-tokyonight', 'lazyvim-minimal'), or 'all'
+        /// Category name to add (e.g. 'zsh-tokyonight', 'lazyvim-minimal'), or 'all'
         #[arg(default_value = "all")]
         category: String,
 
@@ -285,15 +285,15 @@ mod tests {
 
     #[test]
     fn add_subcommand_should_parse_as_add_command() {
-        let cli = Cli::try_parse_from(["dotss", "add", "shell-tokyonight"]).expect("failed to parse add");
+        let cli = Cli::try_parse_from(["dotss", "add", "zsh-tokyonight"]).expect("failed to parse add");
         assert!(matches!(cli.command, Some(Commands::Add { .. })));
     }
 
     #[test]
     fn add_subcommand_with_multiple_categories_should_capture_trailing() {
-        let cli = Cli::try_parse_from(["dotss", "add", "shell-tokyonight", "lazyvim-minimal"]).expect("failed to parse multiple add");
+        let cli = Cli::try_parse_from(["dotss", "add", "zsh-tokyonight", "lazyvim-minimal"]).expect("failed to parse multiple add");
         if let Some(Commands::Add { category, trailing_categories, .. }) = cli.command {
-            assert_eq!(category, "shell-tokyonight");
+            assert_eq!(category, "zsh-tokyonight");
             assert_eq!(trailing_categories, vec!["lazyvim-minimal".to_string()]);
         } else {
             panic!("Expected Commands::Add");
@@ -302,7 +302,7 @@ mod tests {
 
     #[test]
     fn install_subcommand_should_parse_as_deprecated_hint() {
-        let cli = Cli::try_parse_from(["dotss", "install", "shell-tokyonight"]).expect("failed to parse install");
+        let cli = Cli::try_parse_from(["dotss", "install", "zsh-tokyonight"]).expect("failed to parse install");
         assert!(matches!(cli.command, Some(Commands::Install { .. })));
     }
 

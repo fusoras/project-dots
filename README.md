@@ -26,7 +26,7 @@ curl -sSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install
 |---|---|---|
 | `dotss list` | Displays available categories and contained packages for current platform | `-sh` / `--show-hidden` to display unsupported categories |
 | `dotss search <query>` | Searches categories by name, alias, or contained packages for current platform | Same single-line format as `list` |
-| `dotss show <category>` | Displays full description, package tracking status, config file actions, and post-install commands | Accepts category name or alias (e.g. `shell-tokyonight`, `shell-tn`) |
+| `dotss show <category>` | Displays full description, package tracking status, config file actions, and post-install commands | Accepts category name or alias (e.g. `zsh-tokyonight`, `zsh-tn`) |
 | `dotss add [category]` | Adds packages and configurations for a specific category (or `all`) | `--dry-run` / `-n` to preview actions without system changes |
 | `dotss remove <category>` | Safely uninstalls packages managed by `dotss` | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
 | `dotss self-update` | Checks GitHub Releases and updates `dotss` binary in-place | `--dry-run` / `-n` to preview update check |

@@ -4,9 +4,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub const EMBEDDED_CONFIG: &str = include_str!("../categories.toml");
-pub const EMBEDDED_STARSHIP: &str = include_str!("../config/shell-tokyonight/starship.toml");
-pub const EMBEDDED_ALIASES: &str = include_str!("../config/shell-tokyonight/aliases.zsh");
-pub const EMBEDDED_FONT: &[u8] = include_bytes!("../config/shell-tokyonight/font.ttf");
+pub const EMBEDDED_STARSHIP: &str = include_str!("../config/zsh-tokyonight/starship.toml");
+pub const EMBEDDED_ALIASES: &str = include_str!("../config/zsh-tokyonight/aliases.zsh");
+pub const EMBEDDED_FONT: &[u8] = include_bytes!("../config/zsh-tokyonight/font.ttf");
 pub const EMBEDDED_I3_CONFIG: &str = include_str!("../config/i3wm/config");
 pub const EMBEDDED_POLYBAR_CONFIG: &str = include_str!("../config/i3wm/config.ini");
 pub const EMBEDDED_POLYBAR_LAUNCH: &str = include_str!("../config/i3wm/launch.sh");
@@ -227,17 +227,17 @@ mod tests {
     }
 
     #[test]
-    fn shell_tokyonight_should_declare_terminal_restart_message() {
+    fn zsh_tokyonight_should_declare_terminal_restart_message() {
         let config: Config = toml::from_str(EMBEDDED_CONFIG).expect("Should parse embedded config");
 
         let cat = config
             .categories
-            .get("shell-tokyonight")
-            .expect("shell-tokyonight category should exist");
+            .get("zsh-tokyonight")
+            .expect("zsh-tokyonight category should exist");
         let msg = cat
             .final_message
             .as_deref()
-            .expect("shell-tokyonight should declare a final_message");
+            .expect("zsh-tokyonight should declare a final_message");
         assert!(msg.to_lowercase().contains("terminal"), "Final message should hint to restart the terminal");
     }
 

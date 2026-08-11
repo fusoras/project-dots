@@ -41,7 +41,7 @@ pub fn output_with_pager(content: &str) {
 }
 
 /// Simplified list of categories and contained packages on a single line per category.
-/// Format: <bold-green-category-name> (aliases) / pkg1, pkg2, pkg3 [apply]
+/// Format: <bold-green-category-name>, alias1, alias2 / pkg1, pkg2, pkg3 [apply]
 ///
 /// When `filter` is `Some(query)`, only categories whose name, aliases, or platform
 /// packages match the query are printed. The `show_hidden` flag keeps its behavior:
@@ -91,7 +91,7 @@ pub fn list_categories(
             if aliases.is_empty() {
                 String::new()
             } else {
-                format!(" ({})", aliases.join(", "))
+                format!(", {}", aliases.join(", "))
             }
         });
 
@@ -524,11 +524,11 @@ fn process_copy_files(
         let content_bytes: Vec<u8> = if Path::new(&action.src).exists() {
             fs::read(&action.src)
                 .map_err(|e| anyhow::anyhow!("Failed to read source file {}: {e}", action.src))?
-        } else if action.src == "config/shell-tokyonight/starship.toml" {
+        } else if action.src == "config/zsh-tokyonight/starship.toml" {
             crate::config::EMBEDDED_STARSHIP.as_bytes().to_vec()
-        } else if action.src == "config/shell-tokyonight/aliases.zsh" {
+        } else if action.src == "config/zsh-tokyonight/aliases.zsh" {
             crate::config::EMBEDDED_ALIASES.as_bytes().to_vec()
-        } else if action.src == "config/shell-tokyonight/font.ttf" || action.src == "config/shell-minimal/font.ttf" {
+        } else if action.src == "config/zsh-tokyonight/font.ttf" || action.src == "config/zsh-minimal/font.ttf" {
             crate::config::EMBEDDED_FONT.to_vec()
         } else if action.src == "config/i3wm/config" {
             crate::config::EMBEDDED_I3_CONFIG.as_bytes().to_vec()
@@ -975,7 +975,7 @@ pub fn remove_category(
             }
         }
 
-        if cat_name == "shell-tokyonight" {
+        if cat_name == "zsh-tokyonight" {
             let plugins_dir = expand_home("~/.config/zsh/plugins");
             let plugins_path = Path::new(&plugins_dir);
             if plugins_path.exists() {
@@ -1088,7 +1088,7 @@ mod tests {
     #[test]
     fn copy_files_should_succeed_in_dry_run_mode() {
         let copy_actions = vec![crate::config::CopyFileAction {
-            src: "config/shell-tokyonight/starship.toml".to_string(),
+            src: "config/zsh-tokyonight/starship.toml".to_string(),
             dest: "~/.config/zsh/starship.toml".to_string(),
             platform: None,
             only_if_not_exists: None,
@@ -1100,7 +1100,7 @@ mod tests {
     #[test]
     fn copy_files_should_filter_by_platform_in_dry_run() {
         let copy_actions = vec![crate::config::CopyFileAction {
-            src: "config/shell-tokyonight/font.ttf".to_string(),
+            src: "config/zsh-tokyonight/font.ttf".to_string(),
             dest: "~/.termux/font.ttf".to_string(),
             platform: Some("termux".to_string()),
             only_if_not_exists: Some(true),
@@ -1192,11 +1192,11 @@ mod tests {
 
         let (shell_name, shell_cat) = config
             .categories
-            .get_key_value("shell-tokyonight")
-            .expect("shell-tokyonight category should exist");
+            .get_key_value("zsh-tokyonight")
+            .expect("zsh-tokyonight category should exist");
         assert!(
             category_matches_query("atuin", shell_name, shell_cat, &platform),
-            "Should match package only present in shell-tokyonight"
+            "Should match package only present in zsh-tokyonight"
         );
     }
 
@@ -1206,8 +1206,8 @@ mod tests {
         let state = State::load();
         let platform = Platform::Debian;
 
-        assert!(show_category("shell-tokyonight", &config, &state, &platform).is_ok());
-        assert!(show_category("shell-tn", &config, &state, &platform).is_ok());
+        assert!(show_category("zsh-tokyonight", &config, &state, &platform).is_ok());
+        assert!(show_category("zsh-tn", &config, &state, &platform).is_ok());
         assert!(show_category("nonexistent", &config, &state, &platform).is_err());
     }
 
@@ -1217,7 +1217,7 @@ mod tests {
         let mut state = State::load();
         let platform = Platform::Debian;
 
-        assert!(remove_category(Some("shell-tokyonight"), &config, &mut state, &platform, true).is_ok());
+        assert!(remove_category(Some("zsh-tokyonight"), &config, &mut state, &platform, true).is_ok());
     }
 
     #[test]

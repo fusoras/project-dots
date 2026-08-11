@@ -8,7 +8,7 @@
 | ------- | ------- | ------- |
 | `dotss list` | Displays available categories and contained packages in a concise single-line format (routed through system `$PAGER` / `less` when on TTY) | `-sh` / `--show-hidden` to display unsupported categories |
 | `dotss search <query>` | Searches categories by name, alias, or contained packages and prints matches in the same format as `list` | Query is matched case-insensitively against category names, aliases, and the current platform's packages |
-| `dotss show <category>` | Displays full detailed description, package tracking status, config files, and post-install commands | Accepts category name or alias (e.g. `shell-tokyonight`, `shell-tn`) |
+| `dotss show <category>` | Displays full detailed description, package tracking status, config files, and post-install commands | Accepts category name or alias (e.g. `zsh-tokyonight`, `zsh-tn`) |
 | `dotss add [category]` | Adds packages and configurations for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
 | `dotss remove <category>` | Safely uninstalls packages for a specific category or all categories | `--all` / `-a` to remove all, `--dry-run` / `-n` to preview |
 | `dotss self-update` | Checks GitHub Releases and updates the application binary in-place | `--dry-run` / `-n` to preview version update without downloading |
@@ -29,8 +29,8 @@ dotss list
 
 **Exact Output**:
 ```text
-lazyvim-minimal (lzv-min) / git, curl, clang, fd-find, lazygit, neovim (custom binary) [apply]
-shell-tokyonight (shell-tn) / zsh, git, eza, zoxide, bat, starship, carapace [apply]
+lazyvim-minimal, lzv-min / git, curl, clang, fd-find, lazygit, neovim (custom binary) [apply]
+zsh-tokyonight, zsh-tn / zsh, git, eza, zoxide, bat, starship, atuin [apply]
 ```
 
 ---
@@ -39,32 +39,32 @@ shell-tokyonight (shell-tn) / zsh, git, eza, zoxide, bat, starship, carapace [ap
 **Command**:
 ```bash
 project-dots search lazygit
-project-dots search shell-tn
+project-dots search zsh-tn
 ```
 **Exact Output** (same format as `list`; matched categories unsupported on the platform keep the `[unsupported]` suffix):
 ```text
-lazyvim-minimal (lzv-min) / git, curl, clang, fd-find, lazygit, neovim (custom binary) [apply]
-shell-tokyonight (shell-tn) / zsh, git, eza, zoxide, bat, starship, atuin [apply]
+lazyvim-minimal, lzv-min / git, curl, clang, fd-find, lazygit, neovim (custom binary) [apply]
+zsh-tokyonight, zsh-tn / zsh, git, eza, zoxide, bat, starship, atuin [apply]
 ```
 The query matches case-insensitively against:
 - the **category name** (e.g. `search lazy` → `lazyvim-minimal`)
 - the **aliases** (e.g. `search lzv` → `lazyvim-minimal`)
-- the **package list** for the current platform, including Debian custom binaries (e.g. `search lazygit` or `search neovim` → `lazyvim-minimal`, `search atuin` → `shell-tokyonight`)
+- the **package list** for the current platform, including Debian custom binaries (e.g. `search lazygit` or `search neovim` → `lazyvim-minimal`, `search atuin` → `zsh-tokyonight`)
 
 ---
 
 ### 3. Show Category Details (`show`)
 **Command**:
 ```bash
-project-dots show shell-tokyonight
+project-dots show zsh-tokyonight
 # Or using an explicit alias:
-project-dots show shell-tn
+project-dots show zsh-tn
 ```
 **Exact Output**:
 ```text
-Category: shell-tokyonight
-Description: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, and carapace
-Aliases: shell-tn
+Category: zsh-tokyonight
+Description: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, and atuin
+Aliases: zsh-tn
 
 Packages (Debian):
   - zsh [Pre-existing (system)]
@@ -73,11 +73,11 @@ Packages (Debian):
   - zoxide [Pre-existing (system)]
   - bat [Pre-existing (system)]
   - starship [Pre-existing (system)]
-  - carapace-bin [Pre-existing (system)]
+  - atuin [Pre-existing (system)]
 
 Config File Actions:
-  - config/shell-tokyonight/starship.toml -> ~/.config/zsh/starship.toml
-  - config/shell-tokyonight/font.ttf -> ~/.termux/font.ttf (Platform: termux) [skip if exists]
+  - config/zsh-tokyonight/starship.toml -> ~/.config/zsh/starship.toml
+  - config/zsh-tokyonight/font.ttf -> ~/.termux/font.ttf (Platform: termux) [skip if exists]
 
 Post-Install Commands:
   - chsh -s $(which zsh) (Platform: debian)

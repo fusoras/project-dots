@@ -6,7 +6,7 @@
    - Never use generic terms like `shell`, `editor`, `terminal`, `config`, or `dotfiles` as canonical category names or folder names in `config/`.
    
 2. **Distinctive & Specific Naming**:
-   - Combine the component/tool type with its specific variant, theme, style, or preset (e.g., `shell-tokyonight`, `lazyvim-minimal`, `tmux-dracula`).
+   - Combine the component/tool type with its specific variant, theme, style, or preset (e.g., `zsh-tokyonight`, `lazyvim-minimal`, `tmux-dracula`).
    - Keep names simple, clear, and hyphenated (`kebab-case`).
 
 3. **Collision Prevention**:

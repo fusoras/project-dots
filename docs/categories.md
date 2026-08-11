@@ -34,62 +34,62 @@ installed_at = "2026-08-07T17:48:05Z"
 ## Category Schema (`categories.toml`)
 
 ```toml
-[categories.shell-tokyonight]
+[categories.zsh-tokyonight]
 description = "Zsh terminal setup with TokyoNight Starship prompt and JetBrains Mono font"
-aliases = ["shell", "zsh", "terminal", "tokyonight-shell"]
+aliases = ["zsh-tn", "zsh", "terminal", "tokyonight-shell"]
 debian_packages = ["zsh", "git", "bat", "zoxide"]
 termux_packages = ["zsh", "git", "bat", "zoxide", "starship", "eza"]
 final_message = "Close and reopen your terminal so Zsh and the Starship prompt take effect."
 
-[[categories.shell-tokyonight.copy_files]]
-src = "config/shell-tokyonight/starship.toml"
+[[categories.zsh-tokyonight.copy_files]]
+src = "config/zsh-tokyonight/starship.toml"
 dest = "~/.config/zsh/starship.toml"
 
-[[categories.shell-tokyonight.copy_files]]
-src = "config/shell-tokyonight/font.ttf"
+[[categories.zsh-tokyonight.copy_files]]
+src = "config/zsh-tokyonight/font.ttf"
 dest = "~/.termux/font.ttf"
 platform = "termux"
 only_if_not_exists = true
 
-[[categories.shell-tokyonight.post_install_commands]]
+[[categories.zsh-tokyonight.post_install_commands]]
 command = "chsh -s $(which zsh)"
 platform = "debian"
 
-[[categories.shell-tokyonight.post_install_commands]]
+[[categories.zsh-tokyonight.post_install_commands]]
 command = "chsh -s zsh"
 platform = "termux"
 
-[[categories.shell-tokyonight.section_injections]]
+[[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(starship init zsh)"'
 description = "Initialize Starship prompt in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
-[[categories.shell-tokyonight.section_injections]]
+[[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(zoxide init zsh)"'
 description = "Initialize zoxide in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
-[[categories.shell-tokyonight.section_injections]]
+[[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
 section = "# Zsh plugins"
 line = 'source ~/.config/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh'
 description = "Enable zsh-autosuggestions plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins'"
 
-[[categories.shell-tokyonight.section_injections]]
+[[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
 section = "# Zsh plugins"
 line = 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh'
 description = "Enable fast-syntax-highlighting plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins'"
 
-[[categories.shell-tokyonight.section_injections]]
+[[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(atuin init zsh)"'
 description = "Initialize Atuin shell history in ~/.config/zsh/.zshrc under section '# Fast init tools'"
 
-[[categories.shell-tokyonight.post_install_commands]]
+[[categories.zsh-tokyonight.post_install_commands]]
 command = "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.config/zsh/plugins/zsh-autosuggestions 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/zsh-autosuggestions/.git"
 
 ## Section Injections (`section_injections`)
@@ -109,13 +109,13 @@ Each category can declare optional short aliases via the `aliases` array propert
 - **Termux Packages**: `neovim`, `git`, `curl`, `clang`, `fd`, `lazygit`
 - **Debian Packages**: `git`, `curl`, `clang`, `fd-find`, `lazygit` + Neovim custom binary tarball (`/opt/nvim` + `~/.local/bin/nvim`).
 
-### 2. `shell-tokyonight` (Zsh & TokyoNight Starship Setup)
+### 2. `zsh-tokyonight` (Zsh & TokyoNight Starship Setup)
 - **Description**: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git.
-- **Aliases**: `tokyonight-shell`, `zsh-tokyonight`, `shell-tokyo`, `terminal`, `shell`, `zsh`
+- **Aliases**: `zsh-tn`, `tokyonight-shell`, `terminal`, `shell`, `zsh`
 - **Packages**: `zsh`, `git`, `eza`, `zoxide`, `bat`, `starship`
 - **Config Copies**:
-  - `config/shell-tokyonight/starship.toml` -> `~/.config/zsh/starship.toml`
-  - `config/shell-tokyonight/font.ttf` -> `~/.termux/font.ttf` (Termux only, skipped if `font.ttf` already exists)
+  - `config/zsh-tokyonight/starship.toml` -> `~/.config/zsh/starship.toml`
+  - `config/zsh-tokyonight/font.ttf` -> `~/.termux/font.ttf` (Termux only, skipped if `font.ttf` already exists)
 - **Post-Install**:
   - Debian: `chsh -s $(which zsh)` (sets Zsh as default shell)
   - Termux: `chsh -s zsh` (sets Zsh as default shell)

@@ -18,7 +18,7 @@ cargo test -- --nocapture
 | --------- | ------ | ----------------------------- |
 | `test_embedded_config_parsing` | `src/config.rs` | Verifies TOML configuration deserialization, embedded fallback loader (`include_str!`), and presence of default categories. |
 | `test_category_alias_resolution` | `src/config.rs` | Verifies resolution of category aliases (e.g., `lzv-min` -> `lazyvim-minimal`). |
-| `test_embedded_final_message` | `src/config.rs` | Verifies the embedded `shell-tokyonight` category declares a `final_message` hinting to restart the terminal. |
+| `test_embedded_final_message` | `src/config.rs` | Verifies the embedded `zsh-tokyonight` category declares a `final_message` hinting to restart the terminal. |
 | `test_category_uniqueness` | `src/config.rs` | Verifies that category names and aliases are strictly unique with no duplicate names or collisions. |
 | `test_track_package_logic` | `src/state.rs` | Verifies package state registration, pre-existence flagging (`was_preexisting = true`), protection against accidental removal, and clean state removal. |
 | `test_expand_home_utility` | `src/installer.rs` | Verifies path expansion from tilde paths (`~/.local/bin/nvim`) to absolute user paths (`/home/user/.local/bin/nvim`). |

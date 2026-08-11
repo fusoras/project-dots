@@ -44,7 +44,7 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
   - Print a clear `[WARNING]` alert when loading external `./categories.toml` configurations before running post-install commands or custom installers.
 - **Category & Configuration Naming Convention**:
   - Category names and configuration subdirectories under `config/` must NEVER be generic (e.g., avoid `shell`, `editor`, `config`).
-  - Names must be simple but distinctive, combining the component/tool type with its specific variant, theme, or style (e.g., `shell-tokyonight`, `lazyvim-minimal`).
+  - Names must be simple but distinctive, combining the component/tool type with its specific variant, theme, or style (e.g., `zsh-tokyonight`, `lazyvim-minimal`).
   - This prevents naming collisions when multiple distinct configurations exist for the same tool or component.
 - **Explicit Alias Governance**:
   - Aliases for categories or commands must ONLY be created when explicitly defined by the user.
