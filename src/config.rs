@@ -143,6 +143,39 @@ impl Config {
         Ok((config, "Embedded default configuration".to_string()))
     }
 
+    /// Extracts all HTTP/HTTPS URLs referenced in category custom installers and post-install commands.
+    pub fn extract_all_urls(&self) -> Vec<String> {
+        let mut urls = Vec::new();
+
+        for cat in self.categories.values() {
+            if let Some(custom_map) = &cat.custom {
+                for custom in custom_map.values() {
+                    if custom.url.starts_with("http://") || custom.url.starts_with("https://") {
+                        urls.push(custom.url.clone());
+                    }
+                }
+            }
+
+            if let Some(post_cmds) = &cat.post_install_commands {
+                for cmd in post_cmds {
+                    for word in cmd.command.split_whitespace() {
+                        let cleaned = word.trim_matches(|c| c == '\'' || c == '"' || c == '(' || c == ')' || c == ';');
+                        if cleaned.starts_with("http://") || cleaned.starts_with("https://") {
+                            let url_str = cleaned.split('|').next().unwrap_or(cleaned);
+                            if !urls.contains(&url_str.to_string()) {
+                                urls.push(url_str.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        urls.sort();
+        urls.dedup();
+        urls
+    }
+
     fn load_directory_into(
         config: &mut Self,
         dir: &Path,
@@ -204,6 +237,39 @@ impl Config {
 /// Helper to resolve the user's home directory from environment.
 pub fn dirs_home_dir() -> Option<PathBuf> {
     std::env::var_os("HOME").map(PathBuf::from)
+}
+
+/// Validates if an HTTP/HTTPS URL is reachable (returns HTTP 2xx or 3xx status).
+pub fn validate_url_reachable(url: &str) -> anyhow::Result<u16> {
+    if url.contains("${") {
+        return Ok(200);
+    }
+
+    let output = std::process::Command::new("curl")
+        .arg("-fsSIL")
+        .arg("--max-time")
+        .arg("5")
+        .arg("-H")
+        .arg("User-Agent: dotss-cli")
+        .arg("-o")
+        .arg("/dev/null")
+        .arg("-w")
+        .arg("%{http_code}")
+        .arg(url)
+        .output()?;
+
+    if !output.status.success() {
+        anyhow::bail!("curl failed to reach URL: {url}");
+    }
+
+    let code_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let status_code: u16 = code_str.parse().unwrap_or(0);
+
+    if (200..400).contains(&status_code) {
+        Ok(status_code)
+    } else {
+        anyhow::bail!("URL '{url}' returned non-success HTTP status code: {status_code}");
+    }
 }
 
 #[cfg(test)]
@@ -321,6 +387,34 @@ debian_packages = ["htop"]
         assert!(config.categories.contains_key("custom-tool"));
 
         let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_configured_urls_reachability_should_pass_for_valid_urls() {
+        let config: Config = toml::from_str(EMBEDDED_CONFIG).unwrap();
+        let urls = config.extract_all_urls();
+        assert!(!urls.is_empty(), "Embedded configuration should contain URLs");
+
+        for url in &urls {
+            let res = validate_url_reachable(url);
+            assert!(
+                res.is_ok(),
+                "Configured URL '{}' should be reachable, got error: {:?}",
+                url,
+                res.err()
+            );
+        }
+    }
+
+    #[test]
+    fn test_fake_url_reachability_should_fail() {
+        let fake_url = "https://raw.githubusercontent.com/fusoras/nonexistent-test-repo-99999/main/invalid.sh";
+        let res = validate_url_reachable(fake_url);
+        assert!(
+            res.is_err(),
+            "Validation for fake/nonexistent URL '{}' MUST fail",
+            fake_url
+        );
     }
 }
 

@@ -17,6 +17,8 @@ cargo test -- --nocapture
 | Test Name | Module | Primary Purpose & Verification |
 | --------- | ------ | ----------------------------- |
 | `test_embedded_config_parsing` | `src/config.rs` | Verifies TOML configuration deserialization, embedded fallback loader (`include_str!`), and presence of default categories. |
+| `test_configured_urls_reachability_should_pass_for_valid_urls` | `src/config.rs` | Scrapes all external HTTP/HTTPS URLs across category definitions (`custom`, `post_install_commands`) and asserts each URL is reachable via HTTP 2xx/3xx response. |
+| `test_fake_url_reachability_should_fail` | `src/config.rs` | Asserts that invalid or non-existent URLs return an explicit error, verifying URL validator failure detection. |
 | `test_category_alias_resolution` | `src/config.rs` | Verifies resolution of category aliases (e.g., `lzv-min` -> `lazyvim-minimal`). |
 | `test_embedded_final_message` | `src/config.rs` | Verifies the embedded `zsh-tokyonight` category declares a `final_message` hinting to restart the terminal. |
 | `test_category_uniqueness` | `src/config.rs` | Verifies that category names and aliases are strictly unique with no duplicate names or collisions. |
