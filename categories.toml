@@ -12,18 +12,19 @@ extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
 
 [[categories.lazyvim-minimal.post_install_commands]]
-description = "Clone LazyVim starter configuration to ~/.config/nvim"
-prompt = "Do you want to clone LazyVim starter configuration to ~/.config/nvim (backups will be created if existing config found)?"
+description = "Clone default config for LazyVim to ~/.config/nvim (creates backups if existing config found)"
+prompt = "Do you want to clone default config for LazyVim to ~/.config/nvim?"
 confirm = true
 command = "if [ ! -d \"$HOME/.config/nvim/.git\" ]; then [ -d \"$HOME/.config/nvim\" ] && mv \"$HOME/.config/nvim\" \"$HOME/.config/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.local/share/nvim\" ] && mv \"$HOME/.local/share/nvim\" \"$HOME/.local/share/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.local/state/nvim\" ] && mv \"$HOME/.local/state/nvim\" \"$HOME/.local/state/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.cache/nvim\" ] && mv \"$HOME/.cache/nvim\" \"$HOME/.cache/nvim.bak.$(date +%Y%m%d%H%M%S)\"; git clone https://github.com/LazyVim/starter \"$HOME/.config/nvim\" && rm -rf \"$HOME/.config/nvim/.git\"; fi"
 
 
 [categories.zsh-tokyonight]
 aliases = ["zsh-tn"]
-description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, and atuin"
-debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin"]
-termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin"]
-final_message = "Close and reopen your terminal so Zsh and the Starship prompt take effect."
+description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, atuin, and zellij"
+debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin", "zellij"]
+termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin", "zellij"]
+final_message = "Restart your terminal or run: exec zsh"
+termux_final_message = "Restart Termux or run: exec zsh"
 
 [[categories.zsh-tokyonight.post_install_commands]]
 description = "Change default user shell to Zsh"
@@ -36,8 +37,8 @@ command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.zsh-tokyonight.post_install_commands]]
-description = "Export ZDOTDIR, XDG_STATE_HOME, and STARSHIP_CONFIG env vars in ~/.zshenv"
-command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZDOTDIR/starship.toml\"' >> \"$HOME/.zshenv\""
+description = "Export ZDOTDIR, XDG_STATE_HOME, STARSHIP_CONFIG, and ZPLUGINSDIR env vars in ~/.zshenv"
+command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZDOTDIR/starship.toml\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
 
 [[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
@@ -90,6 +91,16 @@ line = 'source ~/.config/zsh/plugins/fast-syntax-highlighting/fast-syntax-highli
 description = "Enable fast-syntax-highlighting plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins'"
 
 [[categories.zsh-tokyonight.post_install_commands]]
+description = "Download fzf-tab plugin repository"
+command = "git clone --depth=1 https://github.com/Aloxaf/fzf-tab ~/.config/zsh/plugins/fzf-tab 2>/dev/null || true; rm -rf ~/.config/zsh/plugins/fzf-tab/.git"
+
+[[categories.zsh-tokyonight.section_injections]]
+file = "~/.config/zsh/.zshrc"
+section = "# Zsh plugins"
+line = 'source "$ZPLUGINSDIR/fzf-tab/fzf-tab.plugin.zsh"'
+description = "Enable fzf-tab plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins'"
+
+[[categories.zsh-tokyonight.post_install_commands]]
 description = "Enable Zsh completion system (compinit) in ~/.config/zsh/.zshrc"
 command = "grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
 
@@ -120,10 +131,11 @@ only_if_not_exists = true
 
 [categories.zsh-minimal]
 aliases = ["zsh-min"]
-description = "Minimal Zsh terminal setup with JetBrains Mono font, zoxide, and bat"
-debian_packages = ["zsh", "zoxide", "bat"]
-termux_packages = ["zsh", "zoxide", "bat"]
-final_message = "Close and reopen your terminal so Zsh takes effect."
+description = "Minimal Zsh terminal setup with JetBrains Mono font, zoxide, bat, and zellij"
+debian_packages = ["zsh", "zoxide", "bat", "zellij"]
+termux_packages = ["zsh", "zoxide", "bat", "zellij"]
+final_message = "Restart your terminal or run: exec zsh"
+termux_final_message = "Restart Termux or run: exec zsh"
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Change default user shell to Zsh"
@@ -136,8 +148,12 @@ command = "chsh -s zsh"
 platform = "termux"
 
 [[categories.zsh-minimal.post_install_commands]]
-description = "Export ZDOTDIR and XDG_STATE_HOME env vars in ~/.zshenv"
-command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' >> \"$HOME/.zshenv\""
+description = "Export ZDOTDIR, XDG_STATE_HOME, and ZPLUGINSDIR env vars in ~/.zshenv"
+command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
+
+[[categories.zsh-minimal.post_install_commands]]
+description = "Configure bat cat alias in ~/.config/zsh/.zshrc"
+command = "grep -qF \"alias cat='bat\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' 'if command -v batcat &> /dev/null; then alias bat=\"batcat\"; fi' 'alias cat=\"bat --paging=never --style=plain\"' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-minimal.section_injections]]
 file = "~/.config/zsh/.zshrc"

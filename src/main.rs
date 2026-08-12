@@ -129,7 +129,23 @@ fn main() {
     let cli = Cli::parse();
 
     if cli.version {
-        println!("{}", VERSION);
+        let current_version_tag = if VERSION.starts_with('v') {
+            VERSION.to_string()
+        } else {
+            format!("v{VERSION}")
+        };
+
+        if let Some(latest) = crate::update::check_version_update(VERSION) {
+            let latest_tag = if latest.starts_with('v') {
+                latest
+            } else {
+                format!("v{latest}")
+            };
+            println!("{current_version_tag} -> {BOLD_YELLOW}Update: {latest_tag}{RESET}");
+            println!("    Run 'dotss self-update' to update.");
+        } else {
+            println!("{current_version_tag}");
+        }
         return;
     }
 

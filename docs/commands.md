@@ -76,8 +76,8 @@ Packages (Debian):
   - atuin [Pre-existing (system)]
 
 Config File Actions:
-  - config/zsh-tokyonight/starship.toml -> ~/.config/zsh/starship.toml
-  - config/zsh-tokyonight/font.ttf -> ~/.termux/font.ttf (Platform: termux) [skip if exists]
+  - Add ~/.config/zsh/starship.toml
+  - Add ~/.termux/font.ttf (Platform: termux) [skip if exists]
 
 Post-Install Commands:
   - chsh -s $(which zsh) (Platform: debian)
@@ -91,7 +91,7 @@ Section Injections:
   - Enable fast-syntax-highlighting plugin in ~/.config/zsh/.zshrc under section '# Zsh plugins' -> ~/.config/zsh/.zshrc under section '# Zsh plugins'
   - Initialize Atuin shell history in ~/.config/zsh/.zshrc under section '# Fast init tools' -> ~/.config/zsh/.zshrc under section '# Fast init tools'
 
-Final Message: Close and reopen your terminal so Zsh and the Starship prompt take effect.
+Final Message: Restart your terminal or run: exec zsh
 ```
 
 ---

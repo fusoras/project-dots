@@ -29,6 +29,18 @@ pub struct Category {
     pub post_install_commands: Option<Vec<PostInstallCommand>>,
     pub section_injections: Option<Vec<SectionInjection>>,
     pub final_message: Option<String>,
+    pub debian_final_message: Option<String>,
+    pub termux_final_message: Option<String>,
+}
+
+impl Category {
+    pub fn final_message_for_platform(&self, platform: &crate::platform::Platform) -> Option<&str> {
+        match platform {
+            crate::platform::Platform::Debian => self.debian_final_message.as_deref().or(self.final_message.as_deref()),
+            crate::platform::Platform::Termux => self.termux_final_message.as_deref().or(self.final_message.as_deref()),
+            _ => self.final_message.as_deref(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -234,11 +246,15 @@ mod tests {
             .categories
             .get("zsh-tokyonight")
             .expect("zsh-tokyonight category should exist");
-        let msg = cat
-            .final_message
-            .as_deref()
-            .expect("zsh-tokyonight should declare a final_message");
-        assert!(msg.to_lowercase().contains("terminal"), "Final message should hint to restart the terminal");
+        let msg_debian = cat
+            .final_message_for_platform(&crate::platform::Platform::Debian)
+            .expect("zsh-tokyonight should declare a final_message on Debian");
+        assert!(msg_debian.to_lowercase().contains("terminal"), "Debian final message should hint to restart the terminal");
+
+        let msg_termux = cat
+            .final_message_for_platform(&crate::platform::Platform::Termux)
+            .expect("zsh-tokyonight should declare a final_message on Termux");
+        assert!(msg_termux.to_lowercase().contains("termux"), "Termux final message should hint to restart Termux");
     }
 
     #[test]

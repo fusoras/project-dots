@@ -3,7 +3,7 @@
 Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.36`).
 
 ## Project Facts
-- Binary crate `dotss` v0.1.0-beta.36, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Binary crate `dotss` v0.1.0-beta.37, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
 - **Command Renaming Note**: Executable binary command was officially renamed from `project-dots` to `dotss` in `v0.1.0-beta.20` for CLI user convenience.
 - Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
 - Entrypoint: `src/main.rs`.

@@ -10,7 +10,7 @@ alias tree='eza --tree --icons=always'
 if command -v batcat &> /dev/null; then
   alias bat='batcat'
 fi
-alias cat='bat'
+alias cat='bat --paging=never --style=plain'
 
 if command -v systemctl &> /dev/null; then
   alias service='systemctl'

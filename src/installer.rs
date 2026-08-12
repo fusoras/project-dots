@@ -272,7 +272,7 @@ pub fn show_category(
             } else {
                 ""
             };
-            println!("  - {} -> {}{platform_info}{only_if_info}", action.src, action.dest);
+            println!("  - Add {}{platform_info}{only_if_info}", action.dest);
         }
     }
 
@@ -313,7 +313,7 @@ pub fn show_category(
         }
     }
 
-    if let Some(msg) = &cat.final_message {
+    if let Some(msg) = cat.final_message_for_platform(platform) {
         println!("\n{BOLD_BLUE}Final Message:{RESET} {msg}");
     }
 
@@ -481,7 +481,7 @@ pub fn install_category(
             process_section_injections(injections, platform, dry_run)?;
         }
 
-        if let Some(msg) = &cat.final_message {
+        if let Some(msg) = cat.final_message_for_platform(platform) {
             if dry_run {
                 println!("  [Dry-Run] Would show final message: {msg}");
             } else {
@@ -515,11 +515,11 @@ fn process_copy_files(
         }
 
         if dry_run {
-            println!("  [Dry-Run] Would copy configuration file '{}' -> '{dest_path_str}'", action.src);
+            println!("  [Dry-Run] Would copy configuration file to '{dest_path_str}'");
             continue;
         }
 
-        println!("  [Copying] Configuration file '{}' -> '{dest_path_str}'", action.src);
+        println!("  [Copying] Configuration file to '{dest_path_str}'");
 
         let content_bytes: Vec<u8> = if Path::new(&action.src).exists() {
             fs::read(&action.src)
@@ -1054,12 +1054,18 @@ fn format_command_summary(cmd: &str) -> String {
         } else {
             "Enable fast-syntax-highlighting in ~/.zshrc".to_string()
         }
+    } else if cmd.contains("fzf-tab") {
+        if cmd.contains("git clone") {
+            "Download fzf-tab plugin".to_string()
+        } else {
+            "Enable fzf-tab in ~/.zshrc".to_string()
+        }
     } else if cmd.contains("compinit") {
         "Enable Zsh autocompletion (compinit)".to_string()
     } else if cmd.contains("completion:*") {
         "Configure Zsh completion format style".to_string()
     } else if cmd.contains("LazyVim/starter") {
-        "Clone LazyVim starter configuration".to_string()
+        "Clone default config for LazyVim".to_string()
     } else {
         let first_line = cmd.lines().next().unwrap_or(cmd);
         if first_line.len() > 60 {

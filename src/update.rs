@@ -34,7 +34,7 @@ pub fn check_and_perform_update(
     let api_url = format!("https://api.github.com/repos/{repo}/releases/latest");
 
     // Fetch latest release payload or construct tag query
-    let latest_tag = fetch_latest_release_tag(&api_url).unwrap_or_else(|_| format!("v{current_version}"));
+    let latest_tag = fetch_latest_release_tag(&api_url, 10).unwrap_or_else(|_| format!("v{current_version}"));
     println!("Latest release tag: {latest_tag}");
 
     if !is_newer_version(&latest_tag, current_version) {
@@ -206,10 +206,31 @@ pub fn perform_self_uninstall(
     Ok(())
 }
 
+/// Checks GitHub Releases API for a newer version. Returns Some(latest_tag) if update available, otherwise None.
+pub fn check_version_update(current_version: &str) -> Option<String> {
+    if !command_exists("curl") {
+        return None;
+    }
+
+    let repo = env::var("DOTSS_REPO")
+        .or_else(|_| env::var("PROJECT_DOTS_REPO"))
+        .unwrap_or_else(|_| "fusoras/project-dots".to_string());
+    let api_url = format!("https://api.github.com/repos/{repo}/releases/latest");
+
+    let latest_tag = fetch_latest_release_tag(&api_url, 3).ok()?;
+    if is_newer_version(&latest_tag, current_version) {
+        Some(latest_tag)
+    } else {
+        None
+    }
+}
+
 /// Fetches the tag_name from GitHub Releases API response using curl.
-fn fetch_latest_release_tag(url: &str) -> anyhow::Result<String> {
+fn fetch_latest_release_tag(url: &str, max_time_secs: u32) -> anyhow::Result<String> {
     let output = Command::new("curl")
         .arg("-fsSL")
+        .arg("--max-time")
+        .arg(max_time_secs.to_string())
         .arg("-H")
         .arg("User-Agent: dotss-cli")
         .arg(url)
@@ -280,6 +301,11 @@ mod tests {
         #[test]
         fn newer_version_should_return_false_for_older_version() {
             assert!(!is_newer_version("v0.0.9", "0.1.0-beta.1"));
+        }
+
+        #[test]
+        fn check_version_update_should_return_none_for_matching_or_future_version() {
+            assert_eq!(check_version_update("99.0.0"), None);
         }
     }
 

@@ -39,7 +39,7 @@ description = "Zsh terminal setup with TokyoNight Starship prompt and JetBrains 
 aliases = ["zsh-tn", "zsh", "terminal", "tokyonight-shell"]
 debian_packages = ["zsh", "git", "bat", "zoxide"]
 termux_packages = ["zsh", "git", "bat", "zoxide", "starship", "eza"]
-final_message = "Close and reopen your terminal so Zsh and the Starship prompt take effect."
+final_message = "Restart your terminal or run: exec zsh"
 
 [[categories.zsh-tokyonight.copy_files]]
 src = "config/zsh-tokyonight/starship.toml"
@@ -108,11 +108,12 @@ Each category can declare optional short aliases via the `aliases` array propert
 - **Description**: Minimal required dependencies to run LazyVim.
 - **Termux Packages**: `neovim`, `git`, `curl`, `clang`, `fd`, `lazygit`
 - **Debian Packages**: `git`, `curl`, `clang`, `fd-find`, `lazygit` + Neovim custom binary tarball (`/opt/nvim` + `~/.local/bin/nvim`).
+- **Post-Install**: Clones default LazyVim config to `~/.config/nvim` (automatically creates timestamped backups if existing Neovim config is found).
 
 ### 2. `zsh-tokyonight` (Zsh & TokyoNight Starship Setup)
-- **Description**: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, and git.
-- **Aliases**: `zsh-tn`, `tokyonight-shell`, `terminal`, `shell`, `zsh`
-- **Packages**: `zsh`, `git`, `eza`, `zoxide`, `bat`, `starship`
+- **Description**: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, atuin, and zellij.
+- **Aliases**: `zsh-tn`
+- **Packages**: `zsh`, `git`, `eza`, `zoxide`, `bat`, `starship`, `atuin`, `zellij`
 - **Config Copies**:
   - `config/zsh-tokyonight/starship.toml` -> `~/.config/zsh/starship.toml`
   - `config/zsh-tokyonight/font.ttf` -> `~/.termux/font.ttf` (Termux only, skipped if `font.ttf` already exists)
@@ -120,7 +121,7 @@ Each category can declare optional short aliases via the `aliases` array propert
   - Debian: `chsh -s $(which zsh)` (sets Zsh as default shell)
   - Termux: `chsh -s zsh` (sets Zsh as default shell)
   - All: ensures `~/.zshrc` exists and adds `eval "$(starship init zsh)"` so Starship starts with Zsh
-- **Final Message**: Close and reopen the terminal so Zsh and the Starship prompt take effect.
+- **Final Message**: Restart your terminal or run: exec zsh (or Restart Termux or run: exec zsh on Termux).
 
 ### 3. `nodejs-pnpm` (Node.js & pnpm Setup)
 - **Description**: Node.js environment with NVM (Debian) or Node.js LTS (Termux) and pnpm enabled via Corepack.
