@@ -42,6 +42,10 @@ enum Commands {
         #[arg(short = 's', visible_short_alias = 'h', long = "show-hidden", action = clap::ArgAction::SetTrue, overrides_with = "show_hidden")]
         show_hidden: bool,
 
+        /// Group categories by functional domain (e.g. AI & Agents, Shell & Terminal)
+        #[arg(long = "categories", visible_alias = "ca")]
+        group_by_category: bool,
+
         /// Print help information
         #[arg(long = "help")]
         help: bool,
@@ -120,13 +124,19 @@ enum Commands {
 }
 
 fn main() {
-    let raw_args: Vec<String> = std::env::args().collect();
+    let mut raw_args: Vec<String> = std::env::args().collect();
     if raw_args.iter().any(|arg| arg == "-s" || arg == "--sh") {
         eprintln!("{BOLD_RED}error:{RESET} unexpected argument found for 'list'. Use '-sh' or '--show-hidden'.");
         std::process::exit(1);
     }
 
-    let cli = Cli::parse();
+    for arg in &mut raw_args {
+        if arg == "-ca" {
+            *arg = "--categories".to_string();
+        }
+    }
+
+    let cli = Cli::parse_from(raw_args);
 
     if cli.version {
         let current_version_tag = if VERSION.starts_with('v') {
@@ -146,6 +156,9 @@ fn main() {
         } else {
             println!("{current_version_tag}");
         }
+
+        // Spawn non-blocking detached background check so state.toml is refreshed asynchronously
+        crate::update::spawn_background_version_check(VERSION);
         return;
     }
 
@@ -174,7 +187,7 @@ fn main() {
     let platform = Platform::detect();
 
     match command {
-        Commands::List { show_hidden, help } => {
+        Commands::List { show_hidden, group_by_category, help } => {
             if help {
                 use clap::CommandFactory;
                 let mut cmd = Cli::command();
@@ -184,10 +197,10 @@ fn main() {
                 }
                 return;
             }
-            list_categories(&config, &state, &platform, show_hidden, None);
+            list_categories(&config, &state, &platform, show_hidden, None, group_by_category);
         }
         Commands::Search { query } => {
-            list_categories(&config, &state, &platform, true, Some(&query));
+            list_categories(&config, &state, &platform, true, Some(&query), false);
         }
         Commands::Show { category } => {
             if let Err(e) = show_category(&category, &config, &state, &platform) {

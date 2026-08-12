@@ -6,7 +6,7 @@
 
 | Command | Purpose | Options |
 | ------- | ------- | ------- |
-| `dotss list` | Displays available categories and contained packages in a concise single-line format (routed through system `$PAGER` / `less` when on TTY) | `-sh` / `--show-hidden` to display unsupported categories |
+| `dotss list` | Displays available categories and contained packages in a concise single-line format (routed through system `$PAGER` / `less` when on TTY) | `-sh` / `--show-hidden` to display unsupported categories, `-ca` / `--categories` to group by functional domain |
 | `dotss search <query>` | Searches categories by name, alias, or contained packages and prints matches in the same format as `list` | Query is matched case-insensitively against category names, aliases, and the current platform's packages |
 | `dotss show <category>` | Displays full detailed description, package tracking status, config files, and post-install commands | Accepts category name or alias (e.g. `zsh-tokyonight`, `zsh-tn`) |
 | `dotss add [category]` | Adds packages and configurations for a specific category or all categories | `--dry-run` / `-n` to preview actions without making changes |
@@ -20,17 +20,35 @@
 
 ## Command Specifications & Exact Terminal Outputs
 
-### 1. List Categories (Simplified Single-Line View)
+### 1. List Categories (Simplified Single-Line View & Grouped View)
 **Command**:
 ```bash
 dotss list
+# Grouped by functional categories:
+dotss list --categories
 ```
 *Note: When executed in an interactive terminal (TTY), `dotss list` routes its output through the system `$PAGER` (default `less -FRX`) to allow smooth navigation (`Enter`, `Space`, `q`) without screen clutter.*
 
-**Exact Output**:
+**Exact Output (`dotss list -ca`)**:
 ```text
-lazyvim-minimal, lzv-min / git, curl, clang, fd-find, lazygit, neovim (custom binary) [apply]
-zsh-tokyonight, zsh-tn / zsh, git, eza, zoxide, bat, starship, atuin [apply]
+╭─────────────╮
+│ AI & Agents │
+╰─────────────╯
+  - agent-flow / pack: opencode, agent-tools [apply]
+  - agent-tools (ai-tools) / curl, git, tar, grep [apply]
+  - opencode / curl, git, bash [apply]
+
+╭──────────────────╮
+│ Shell & Terminal │
+╰──────────────────╯
+  - term-flow / zellij, zoxide, atuin
+  - zsh-minimal (zsh-min) / zsh, zoxide, bat [apply]
+  - zsh-tokyonight (zsh-tn) / zsh, git, eza, zoxide, bat, starship, atuin, fzf [apply]
+
+╭─────────────────╮
+│ Packs & Bundles │
+╰─────────────────╯
+  - mydots-termux (dots-termux) / pack: zsh-tokyonight, lazyvim-minimal, term-flow
 ```
 
 ---

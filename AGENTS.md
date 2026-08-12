@@ -49,6 +49,7 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
 - **Explicit Alias Governance**:
   - Aliases for categories or commands must ONLY be created when explicitly defined by the user.
   - Never generate, infer, or automatically append unrequested aliases. Always consult or ask the user before defining aliases.
+  - Aliases exist exclusively to shorten canonical category or command names. An alias must NEVER be longer than the original category or command name.
 - **Git Strategy & Branch Restrictions**:
   - Never use `git checkout`. Use modern git commands (`git switch`, `git restore`).
   - User Git Aliases: `git s` -> `git switch`, `git b` -> `git branch`.

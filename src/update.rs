@@ -206,23 +206,47 @@ pub fn perform_self_uninstall(
     Ok(())
 }
 
-/// Checks GitHub Releases API for a newer version. Returns Some(latest_tag) if update available, otherwise None.
+/// Returns cached latest version tag if a newer version is saved in state.toml. (0ms latency, zero IO delay).
 pub fn check_version_update(current_version: &str) -> Option<String> {
-    if !command_exists("curl") {
-        return None;
+    let state = crate::state::State::load();
+    if let Some(cached) = state.cached_latest_version {
+        if is_newer_version(&cached, current_version) {
+            return Some(cached);
+        }
     }
+    None
+}
 
-    let repo = env::var("DOTSS_REPO")
-        .or_else(|_| env::var("PROJECT_DOTS_REPO"))
-        .unwrap_or_else(|_| "fusoras/project-dots".to_string());
-    let api_url = format!("https://api.github.com/repos/{repo}/releases/latest");
+/// Spawns a detached background thread to check GitHub Releases API and update state.toml asynchronously.
+pub fn spawn_background_version_check(current_version: &str) {
+    let current_ver = current_version.to_string();
+    std::thread::spawn(move || {
+        if !command_exists("curl") {
+            return;
+        }
 
-    let latest_tag = fetch_latest_release_tag(&api_url, 3).ok()?;
-    if is_newer_version(&latest_tag, current_version) {
-        Some(latest_tag)
-    } else {
-        None
-    }
+        let repo = env::var("DOTSS_REPO")
+            .or_else(|_| env::var("PROJECT_DOTS_REPO"))
+            .unwrap_or_else(|_| "fusoras/project-dots".to_string());
+        let api_url = format!("https://api.github.com/repos/{repo}/releases/latest");
+
+        if let Ok(latest_tag) = fetch_latest_release_tag(&api_url, 3) {
+            use std::time::{SystemTime, UNIX_EPOCH};
+            let now_secs = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs();
+
+            let mut state = crate::state::State::load();
+            if is_newer_version(&latest_tag, &current_ver) {
+                state.cached_latest_version = Some(latest_tag);
+            } else {
+                state.cached_latest_version = None;
+            }
+            state.last_update_check_epoch = Some(now_secs);
+            let _ = state.save_atomic();
+        }
+    });
 }
 
 /// Fetches the tag_name from GitHub Releases API response using curl.

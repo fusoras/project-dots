@@ -52,6 +52,7 @@ pub fn list_categories(
     platform: &Platform,
     show_hidden: bool,
     filter: Option<&str>,
+    group_by_category: bool,
 ) {
     if config.categories.is_empty() {
         println!("No categories found in configuration.");
@@ -61,61 +62,142 @@ pub fn list_categories(
     let mut output = String::new();
     let mut hidden_count = 0;
 
-    for (cat_name, cat) in &config.categories {
-        let mut pkgs: Vec<String> = match platform {
-            Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
-            Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
-            Platform::Unsupported(_) => Vec::new(),
-        };
+    if group_by_category {
+        let mut grouped: std::collections::BTreeMap<String, Vec<(&String, &crate::config::Category)>> =
+            std::collections::BTreeMap::new();
 
-        if let Some(query) = filter
-            && !category_matches_query(query, cat_name, cat, platform)
-        {
-            continue;
-        }
-
-        if matches!(platform, Platform::Debian)
-            && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
-        {
-            pkgs.push(format!("{} (custom binary)", custom.name));
-        }
-
-        let is_supported = !pkgs.is_empty();
-
-        if !is_supported && !show_hidden {
-            hidden_count += 1;
-            continue;
-        }
-
-        let alias_part = cat.aliases.as_ref().map_or_else(String::new, |aliases| {
-            if aliases.is_empty() {
-                String::new()
-            } else {
-                format!(", {}", aliases.join(", "))
+        for (cat_name, cat) in &config.categories {
+            if let Some(query) = filter
+                && !category_matches_query(query, cat_name, cat, platform)
+            {
+                continue;
             }
-        });
 
-        let pkgs_str = if pkgs.is_empty() {
-            "none".to_string()
-        } else {
-            pkgs.join(", ")
-        };
+            let grp_name = cat
+                .group
+                .clone()
+                .unwrap_or_else(|| "Other Categories".to_string());
+            grouped.entry(grp_name).or_default().push((cat_name, cat));
+        }
 
-        let apply_suffix = if is_category_applied(cat_name, cat, state, platform) {
-            format!(" {WHITE}[apply]{RESET}")
-        } else {
-            String::new()
-        };
+        for (grp_name, cats) in grouped {
+            let border = "─".repeat(grp_name.chars().count() + 2);
+            output.push_str(&format!("\n{BOLD_CYAN}╭{border}╮\n│ {grp_name} │\n╰{border}╯{RESET}\n"));
 
-        let hidden_suffix = if !is_supported {
-            format!(" {DIM_GRAY}[unsupported]{RESET}")
-        } else {
-            String::new()
-        };
+            for (cat_name, cat) in cats {
+                let is_pack = cat.includes.is_some();
+                let mut pkgs: Vec<String> = match platform {
+                    Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
+                    Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
+                    Platform::Unsupported(_) => Vec::new(),
+                };
 
-        output.push_str(&format!(
-            "{BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{pkgs_str}{RESET}{apply_suffix}{hidden_suffix}\n"
-        ));
+                if matches!(platform, Platform::Debian)
+                    && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+                {
+                    pkgs.push(format!("{} (custom binary)", custom.name));
+                }
+
+                let is_supported = is_pack || !pkgs.is_empty();
+
+                if !is_supported && !show_hidden {
+                    hidden_count += 1;
+                    continue;
+                }
+
+                let alias_part = cat.aliases.as_ref().map_or_else(String::new, |aliases| {
+                    if aliases.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" ({})", aliases.join(", "))
+                    }
+                });
+
+                let detail_str = if let Some(inc_list) = &cat.includes {
+                    format!("pack: {}", inc_list.join(", "))
+                } else if pkgs.is_empty() {
+                    "none".to_string()
+                } else {
+                    pkgs.join(", ")
+                };
+
+                let apply_suffix = if is_category_applied(cat_name, cat, state, platform, config) {
+                    format!(" {WHITE}[apply]{RESET}")
+                } else {
+                    String::new()
+                };
+
+                let hidden_suffix = if !is_supported {
+                    format!(" {DIM_GRAY}[unsupported]{RESET}")
+                } else {
+                    String::new()
+                };
+
+                output.push_str(&format!(
+                    "  - {BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{detail_str}{RESET}{apply_suffix}{hidden_suffix}\n"
+                ));
+            }
+        }
+    } else {
+        for (cat_name, cat) in &config.categories {
+            let is_pack = cat.includes.is_some();
+            let mut pkgs: Vec<String> = match platform {
+                Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
+                Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
+                Platform::Unsupported(_) => Vec::new(),
+            };
+
+            if let Some(query) = filter
+                && !category_matches_query(query, cat_name, cat, platform)
+            {
+                continue;
+            }
+
+            if matches!(platform, Platform::Debian)
+                && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+            {
+                pkgs.push(format!("{} (custom binary)", custom.name));
+            }
+
+            let is_supported = is_pack || !pkgs.is_empty();
+
+            if !is_supported && !show_hidden {
+                hidden_count += 1;
+                continue;
+            }
+
+            let alias_part = cat.aliases.as_ref().map_or_else(String::new, |aliases| {
+                if aliases.is_empty() {
+                    String::new()
+                } else {
+                    format!(", {}", aliases.join(", "))
+                }
+            });
+
+            let pkgs_str = if let Some(inc_list) = &cat.includes {
+                format!("pack: {}", inc_list.join(", "))
+            } else if pkgs.is_empty() {
+                "none".to_string()
+            } else {
+                pkgs.join(", ")
+            };
+
+            let apply_suffix = if is_category_applied(cat_name, cat, state, platform, config) {
+                format!(" {WHITE}[apply]{RESET}")
+            } else {
+                String::new()
+            };
+
+            let hidden_suffix = if !is_supported {
+                format!(" {DIM_GRAY}[unsupported]{RESET}")
+            } else {
+                String::new()
+            };
+
+            output.push_str(&format!(
+                "{BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{pkgs_str}{RESET}{apply_suffix}{hidden_suffix}\n"
+            ));
+        }
     }
 
     if hidden_count > 0 && !show_hidden {
@@ -128,7 +210,7 @@ pub fn list_categories(
 }
 
 /// Case-insensitive substring match of `query` against a category name, its aliases,
-/// and the packages declared for the current platform.
+/// group, included categories, and the packages declared for the current platform.
 fn category_matches_query(
     query: &str,
     cat_name: &str,
@@ -147,6 +229,18 @@ fn category_matches_query(
         .is_some_and(|aliases| aliases.iter().any(|alias| alias.to_lowercase().contains(&q)))
     {
         return true;
+    }
+
+    if let Some(group) = &cat.group {
+        if group.to_lowercase().contains(&q) {
+            return true;
+        }
+    }
+
+    if let Some(inc_list) = &cat.includes {
+        if inc_list.iter().any(|inc| inc.to_lowercase().contains(&q)) {
+            return true;
+        }
     }
 
     let pkgs = match platform {
@@ -169,7 +263,23 @@ fn category_matches_query(
     false
 }
 
-fn is_category_applied(cat_name: &str, cat: &crate::config::Category, state: &State, platform: &Platform) -> bool {
+fn is_category_applied(
+    cat_name: &str,
+    cat: &crate::config::Category,
+    state: &State,
+    platform: &Platform,
+    config: &Config,
+) -> bool {
+    if let Some(inc_list) = &cat.includes {
+        return inc_list.iter().all(|inc_name| {
+            if let Some((resolved_key, sub_cat)) = config.categories.get_key_value(inc_name) {
+                is_category_applied(resolved_key, sub_cat, state, platform, config)
+            } else {
+                false
+            }
+        });
+    }
+
     if state.packages.values().any(|p| p.category == cat_name) {
         return true;
     }
@@ -218,6 +328,22 @@ pub fn show_category(
     println!("\n{BOLD_GREEN}Category:{RESET} {canonical_key}");
     println!("{BOLD_BLUE}Description:{RESET} {}", cat.description);
     println!("{BOLD_BLUE}Aliases:{RESET} {aliases_str}");
+
+    if let Some(inc_list) = &cat.includes {
+        println!("\n{BOLD_BLUE}Included Categories (Pack):{RESET}");
+        for inc_name in inc_list {
+            let status_str = if let Some(sub_cat) = config.categories.get(inc_name) {
+                if is_category_applied(inc_name, sub_cat, state, platform, config) {
+                    "Applied"
+                } else {
+                    "Not applied"
+                }
+            } else {
+                "Unknown"
+            };
+            println!("  - {DIM_GRAY}{inc_name}{RESET} [{status_str}]");
+        }
+    }
 
     let pkgs = match platform {
         Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
@@ -350,6 +476,14 @@ pub fn install_category(
     };
 
     for (cat_name, cat) in target_categories {
+        if let Some(inc_list) = &cat.includes {
+            println!("\n{BOLD_BLUE}--> Installing Pack '{cat_name}' (Includes {} categories)...{RESET}", inc_list.len());
+            for inc_name in inc_list {
+                install_category(Some(inc_name.as_str()), config, state, platform, dry_run)?;
+            }
+            continue;
+        }
+
         println!("\n--> Processing Category: {cat_name}");
 
         // Pre-prompt for any interactive post-install commands before doing packages/downloads
@@ -855,6 +989,14 @@ pub fn remove_category(
     };
 
     for (cat_name, cat) in target_categories {
+        if let Some(inc_list) = &cat.includes {
+            println!("\n{BOLD_YELLOW}--> Removing Pack '{cat_name}' (Includes {} categories)...{RESET}", inc_list.len());
+            for inc_name in inc_list {
+                remove_category(Some(inc_name.as_str()), config, state, platform, dry_run)?;
+            }
+            continue;
+        }
+
         println!("\n--> Processing Removal for Category: {cat_name}");
 
         let pkgs = match platform {
@@ -1066,6 +1208,14 @@ fn format_command_summary(cmd: &str) -> String {
         "Configure Zsh completion format style".to_string()
     } else if cmd.contains("LazyVim/starter") {
         "Clone default config for LazyVim".to_string()
+    } else if cmd.contains("opencode.ai/install") {
+        "Install or update opencode".to_string()
+    } else if cmd.contains("engram") {
+        "Install or update engram".to_string()
+    } else if cmd.contains("herdr.dev/install") {
+        "Install or update herdr".to_string()
+    } else if cmd.contains("codegraph") {
+        "Install or update codegraph".to_string()
     } else {
         let first_line = cmd.lines().next().unwrap_or(cmd);
         if first_line.len() > 60 {
@@ -1168,8 +1318,8 @@ mod tests {
     fn list_categories_should_include_configured_categories() {
         let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
         let state = State::load();
-        list_categories(&config, &state, &Platform::Debian, false, None);
-        list_categories(&config, &state, &Platform::Termux, true, None);
+        list_categories(&config, &state, &Platform::Debian, false, None, false);
+        list_categories(&config, &state, &Platform::Termux, true, None, false);
     }
 
     #[test]

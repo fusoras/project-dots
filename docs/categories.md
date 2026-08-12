@@ -111,9 +111,9 @@ Each category can declare optional short aliases via the `aliases` array propert
 - **Post-Install**: Clones default LazyVim config to `~/.config/nvim` (automatically creates timestamped backups if existing Neovim config is found).
 
 ### 2. `zsh-tokyonight` (Zsh & TokyoNight Starship Setup)
-- **Description**: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, atuin, and zellij.
+- **Description**: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, atuin, and fzf.
 - **Aliases**: `zsh-tn`
-- **Packages**: `zsh`, `git`, `eza`, `zoxide`, `bat`, `starship`, `atuin`, `zellij`
+- **Packages**: `zsh`, `git`, `eza`, `zoxide`, `bat`, `starship`, `atuin`, `fzf`
 - **Config Copies**:
   - `config/zsh-tokyonight/starship.toml` -> `~/.config/zsh/starship.toml`
   - `config/zsh-tokyonight/font.ttf` -> `~/.termux/font.ttf` (Termux only, skipped if `font.ttf` already exists)
@@ -130,6 +130,31 @@ Each category can declare optional short aliases via the `aliases` array propert
 - **Post-Install**:
   - Debian: Installs NVM v0.40.6, installs Node.js v24, enables pnpm via Corepack, prepares `pnpm@latest`, and verifies version (`pnpm -v`).
   - Termux: Enables pnpm via Corepack, prepares `pnpm@latest`, and verifies version (`pnpm -v`).
+
+### 4. `term-flow` (Terminal Navigation & Session Suite)
+- **Description**: Agile terminal navigation and session management suite with zellij, zoxide, and atuin.
+- **Aliases**: `terminal-flow`, `nav-flow`
+- **Packages**: `zellij`, `zoxide`, `atuin`
+
+### 5. `opencode` (OpenCode AI Coding Assistant)
+- **Description**: OpenCode AI coding assistant for Debian.
+- **Aliases**: `open-code`, `opencode-cli`
+- **Debian Packages**: `curl`, `git`, `bash`
+- **Post-Install**: `curl -fsSL https://opencode.ai/install | bash`
+
+### 6. `agent-tools` (Token-Saving Agentic Helper Tools)
+- **Description**: Token-saving agentic helper tools suite for Debian (engram, herdr, codegraph).
+- **Aliases**: `agents-tools`, `ai-tools`, `token-tools`
+- **Debian Packages**: `curl`, `git`, `tar`, `grep`
+- **Post-Install**:
+  - `engram`: Queries latest release tag via GitHub API, downloads `engram_*_linux_amd64.tar.gz`, and places binary at `~/.local/bin/engram`
+  - `herdr`: `curl -fsSL https://herdr.dev/install.sh | sh`
+  - `codegraph`: `curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh`
+
+### 7. `agent-flow` (Complete Agentic AI Suite Pack)
+- **Description**: Complete Agentic AI suite combining opencode and token-saving agent-tools.
+- **Aliases**: `agents-flow`, `agent-stack`, `agents-debian`
+- **Includes**: `opencode`, `agent-tools`
 
 
 

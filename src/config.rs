@@ -31,6 +31,8 @@ pub struct Category {
     pub final_message: Option<String>,
     pub debian_final_message: Option<String>,
     pub termux_final_message: Option<String>,
+    pub includes: Option<Vec<String>>,
+    pub group: Option<String>,
 }
 
 impl Category {

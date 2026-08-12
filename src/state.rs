@@ -7,6 +7,10 @@ use std::path::PathBuf;
 pub struct State {
     #[serde(default)]
     pub packages: BTreeMap<String, TrackedPackage>,
+    #[serde(default)]
+    pub cached_latest_version: Option<String>,
+    #[serde(default)]
+    pub last_update_check_epoch: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
