@@ -22,7 +22,10 @@ impl Platform {
 
         if let Ok(os_release) = std::fs::read_to_string("/etc/os-release") {
             let lower = os_release.to_lowercase();
-            if lower.contains("id=debian") || lower.contains("id=ubuntu") || lower.contains("id_like=debian") {
+            if lower.contains("id=debian")
+                || lower.contains("id=ubuntu")
+                || lower.contains("id_like=debian")
+            {
                 return Platform::Debian;
             }
         }
@@ -80,7 +83,9 @@ pub fn check_apt_lock() -> anyhow::Result<()> {
             .unwrap_or(false);
 
         if is_locked {
-            anyhow::bail!("apt package manager is locked by another process (e.g. background update).");
+            anyhow::bail!(
+                "apt package manager is locked by another process (e.g. background update)."
+            );
         }
     }
     Ok(())
@@ -93,13 +98,20 @@ mod tests {
     #[test]
     fn command_exists_should_find_cargo_in_path() {
         println!("\n🔍 [TEST] System Command Presence Check (PATH Inspection)");
-        println!("   Explanation: Verifies that command_exists checks PATH directories directly without relying on external 'which'.");
+        println!(
+            "   Explanation: Verifies that command_exists checks PATH directories directly without relying on external 'which'."
+        );
 
-        assert!(command_exists("cargo"), "cargo command should exist in test environment");
+        assert!(
+            command_exists("cargo"),
+            "cargo command should exist in test environment"
+        );
         println!("   ✓ Command 'cargo' found in system PATH.");
 
-        assert!(!command_exists("non_existent_binary_xyz_123"), "Non-existent command should return false");
+        assert!(
+            !command_exists("non_existent_binary_xyz_123"),
+            "Non-existent command should return false"
+        );
         println!("   ✓ Non-existent command correctly identified as missing.\n");
     }
 }
-

@@ -126,7 +126,9 @@ enum Commands {
 fn main() {
     let mut raw_args: Vec<String> = std::env::args().collect();
     if raw_args.iter().any(|arg| arg == "-s" || arg == "--sh") {
-        eprintln!("{BOLD_RED}error:{RESET} unexpected argument found for 'list'. Use '-sh' or '--show-hidden'.");
+        eprintln!(
+            "{BOLD_RED}error:{RESET} unexpected argument found for 'list'. Use '-sh' or '--show-hidden'."
+        );
         std::process::exit(1);
     }
 
@@ -179,15 +181,23 @@ fn main() {
     };
 
     if config_source != "Embedded default configuration" {
-        println!("{BOLD_YELLOW}[SECURITY WARNING] Loaded external configuration file: {config_source}{RESET}");
-        println!("{BOLD_YELLOW}[SECURITY WARNING] Verify contents before running custom installers or post-install commands.{RESET}\n");
+        println!(
+            "{BOLD_YELLOW}[SECURITY WARNING] Loaded external configuration file: {config_source}{RESET}"
+        );
+        println!(
+            "{BOLD_YELLOW}[SECURITY WARNING] Verify contents before running custom installers or post-install commands.{RESET}\n"
+        );
     }
 
     let mut state = State::load();
     let platform = Platform::detect();
 
     match command {
-        Commands::List { show_hidden, group_by_category, help } => {
+        Commands::List {
+            show_hidden,
+            group_by_category,
+            help,
+        } => {
             if help {
                 use clap::CommandFactory;
                 let mut cmd = Cli::command();
@@ -197,7 +207,14 @@ fn main() {
                 }
                 return;
             }
-            list_categories(&config, &state, &platform, show_hidden, None, group_by_category);
+            list_categories(
+                &config,
+                &state,
+                &platform,
+                show_hidden,
+                None,
+                group_by_category,
+            );
         }
         Commands::Search { query } => {
             list_categories(&config, &state, &platform, true, Some(&query), false);
@@ -208,7 +225,11 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        Commands::Add { category, trailing_categories, dry_run } => {
+        Commands::Add {
+            category,
+            trailing_categories,
+            dry_run,
+        } => {
             if !trailing_categories.is_empty() {
                 eprintln!(
                     "{BOLD_RED}Error:{RESET} Cannot add multiple categories at the same time ('{}' and '{}'). Please run 'dotss add <category>' for one category at a time, or use 'dotss add all'.",
@@ -218,9 +239,15 @@ fn main() {
                 std::process::exit(1);
             }
             if dry_run {
-                println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No system changes will be made ==={RESET}");
+                println!(
+                    "{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No system changes will be made ==={RESET}"
+                );
             }
-            let cat_arg = if category == "all" { None } else { Some(category.as_str()) };
+            let cat_arg = if category == "all" {
+                None
+            } else {
+                Some(category.as_str())
+            };
             if let Err(e) = install_category(cat_arg, &config, &mut state, &platform, dry_run) {
                 eprintln!("\n{BOLD_RED}Addition error:{RESET} {:?}", e);
                 std::process::exit(1);
@@ -233,9 +260,15 @@ fn main() {
             eprintln!("  {DIM_GRAY}tip: a similar subcommand exists: 'list'{RESET}\n");
             std::process::exit(1);
         }
-        Commands::Remove { category, all, dry_run } => {
+        Commands::Remove {
+            category,
+            all,
+            dry_run,
+        } => {
             let cat_target = if all || category.as_deref() == Some("all") {
-                println!("{BOLD_YELLOW}[WARNING] Removing ALL installed categories and packages managed by dotss!{RESET}");
+                println!(
+                    "{BOLD_YELLOW}[WARNING] Removing ALL installed categories and packages managed by dotss!{RESET}"
+                );
                 None
             } else if let Some(ref cat) = category {
                 Some(cat.as_str())
@@ -247,7 +280,9 @@ fn main() {
             };
 
             if dry_run {
-                println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No system changes will be made ==={RESET}");
+                println!(
+                    "{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No system changes will be made ==={RESET}"
+                );
             }
             if let Err(e) = remove_category(cat_target, &config, &mut state, &platform, dry_run) {
                 eprintln!("\n{BOLD_RED}Removal error:{RESET} {:?}", e);
@@ -257,7 +292,9 @@ fn main() {
         }
         Commands::SelfUpdate { dry_run } => {
             if dry_run {
-                println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No binary changes will be made ==={RESET}");
+                println!(
+                    "{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No binary changes will be made ==={RESET}"
+                );
             }
             if let Err(e) = check_and_perform_update(VERSION, &platform, dry_run) {
                 eprintln!("\n{BOLD_RED}Self-update error:{RESET} {:?}", e);
@@ -267,9 +304,13 @@ fn main() {
         }
         Commands::SelfUninstall { yes, no, dry_run } => {
             if dry_run {
-                println!("{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No files will be deleted ==={RESET}");
+                println!(
+                    "{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: No files will be deleted ==={RESET}"
+                );
             }
-            if let Err(e) = update::perform_self_uninstall(&config, &mut state, &platform, dry_run, yes, no) {
+            if let Err(e) =
+                update::perform_self_uninstall(&config, &mut state, &platform, dry_run, yes, no)
+            {
                 eprintln!("\n{BOLD_RED}Self-uninstall error:{RESET} {:?}", e);
                 std::process::exit(1);
             }
@@ -277,21 +318,22 @@ fn main() {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn list_subcommand_should_parse_show_hidden_flag() {
-        let cli = Cli::try_parse_from(["dotss", "list", "--show-hidden"]).expect("failed to parse list --show-hidden");
+        let cli = Cli::try_parse_from(["dotss", "list", "--show-hidden"])
+            .expect("failed to parse list --show-hidden");
         if let Some(Commands::List { show_hidden, .. }) = cli.command {
             assert!(show_hidden);
         } else {
             panic!("Expected Commands::List");
         }
 
-        let cli_short_alias = Cli::try_parse_from(["dotss", "list", "-sh"]).expect("failed to parse list -sh");
+        let cli_short_alias =
+            Cli::try_parse_from(["dotss", "list", "-sh"]).expect("failed to parse list -sh");
         if let Some(Commands::List { show_hidden, .. }) = cli_short_alias.command {
             assert!(show_hidden);
         } else {
@@ -304,7 +346,8 @@ mod tests {
 
     #[test]
     fn search_subcommand_should_parse_query() {
-        let cli = Cli::try_parse_from(["dotss", "search", "nvim"]).expect("failed to parse search nvim");
+        let cli =
+            Cli::try_parse_from(["dotss", "search", "nvim"]).expect("failed to parse search nvim");
         if let Some(Commands::Search { query }) = cli.command {
             assert_eq!(query, "nvim");
         } else {
@@ -314,14 +357,21 @@ mod tests {
 
     #[test]
     fn add_subcommand_should_parse_as_add_command() {
-        let cli = Cli::try_parse_from(["dotss", "add", "zsh-tokyonight"]).expect("failed to parse add");
+        let cli =
+            Cli::try_parse_from(["dotss", "add", "zsh-tokyonight"]).expect("failed to parse add");
         assert!(matches!(cli.command, Some(Commands::Add { .. })));
     }
 
     #[test]
     fn add_subcommand_with_multiple_categories_should_capture_trailing() {
-        let cli = Cli::try_parse_from(["dotss", "add", "zsh-tokyonight", "lazyvim-minimal"]).expect("failed to parse multiple add");
-        if let Some(Commands::Add { category, trailing_categories, .. }) = cli.command {
+        let cli = Cli::try_parse_from(["dotss", "add", "zsh-tokyonight", "lazyvim-minimal"])
+            .expect("failed to parse multiple add");
+        if let Some(Commands::Add {
+            category,
+            trailing_categories,
+            ..
+        }) = cli.command
+        {
             assert_eq!(category, "zsh-tokyonight");
             assert_eq!(trailing_categories, vec!["lazyvim-minimal".to_string()]);
         } else {
@@ -331,13 +381,15 @@ mod tests {
 
     #[test]
     fn install_subcommand_should_parse_as_deprecated_hint() {
-        let cli = Cli::try_parse_from(["dotss", "install", "zsh-tokyonight"]).expect("failed to parse install");
+        let cli = Cli::try_parse_from(["dotss", "install", "zsh-tokyonight"])
+            .expect("failed to parse install");
         assert!(matches!(cli.command, Some(Commands::Install { .. })));
     }
 
     #[test]
     fn self_uninstall_subcommand_flags_parsing() {
-        let cli = Cli::try_parse_from(["dotss", "self-uninstall", "-n", "-d"]).expect("failed to parse self-uninstall");
+        let cli = Cli::try_parse_from(["dotss", "self-uninstall", "-n", "-d"])
+            .expect("failed to parse self-uninstall");
         if let Some(Commands::SelfUninstall { no, dry_run, yes }) = cli.command {
             assert!(no);
             assert!(dry_run);
@@ -347,5 +399,3 @@ mod tests {
         }
     }
 }
-
-

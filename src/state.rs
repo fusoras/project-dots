@@ -40,12 +40,18 @@ impl State {
                 Ok(content) => match toml::from_str(&content) {
                     Ok(state) => state,
                     Err(e) => {
-                        eprintln!("[WARN] Failed to parse state TOML at {}: {e}", path.display());
+                        eprintln!(
+                            "[WARN] Failed to parse state TOML at {}: {e}",
+                            path.display()
+                        );
                         Self::default()
                     }
                 },
                 Err(e) => {
-                    eprintln!("[WARN] Failed to read state file at {}: {e}", path.display());
+                    eprintln!(
+                        "[WARN] Failed to read state file at {}: {e}",
+                        path.display()
+                    );
                     Self::default()
                 }
             }
@@ -58,8 +64,9 @@ impl State {
     pub fn save_atomic(&self) -> anyhow::Result<()> {
         let path = Self::get_state_path();
         if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| anyhow::anyhow!("Failed to create state directory {}: {e}", parent.display()))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                anyhow::anyhow!("Failed to create state directory {}: {e}", parent.display())
+            })?;
         }
 
         let tmp_path = path.with_extension("toml.tmp");
@@ -125,14 +132,22 @@ mod tests {
     #[test]
     fn track_package_should_flag_preexisting_as_protected() {
         println!("\n🔍 [TEST] Safety Engine & Package State Tracking");
-        println!("   Explanation: Verifies that pre-existing system packages are flagged as protected to prevent accidental removal.");
+        println!(
+            "   Explanation: Verifies that pre-existing system packages are flagged as protected to prevent accidental removal."
+        );
 
         let mut state = State::default();
         state.track_package("git", "lazyvim-minimal", true);
 
-        let tracked = state.packages.get("git").expect("Package 'git' should be present in state tracking");
+        let tracked = state
+            .packages
+            .get("git")
+            .expect("Package 'git' should be present in state tracking");
         println!("   ✓ Package 'git' tracked successfully.");
-        println!("   ✓ State 'was_preexisting': {} (Protected against uninstallation)", tracked.was_preexisting);
+        println!(
+            "   ✓ State 'was_preexisting': {} (Protected against uninstallation)",
+            tracked.was_preexisting
+        );
 
         assert!(tracked.was_preexisting);
         assert!(!tracked.installed_by_dots);
@@ -143,4 +158,3 @@ mod tests {
         println!("   ✓ Package removed from state tracking registry cleanly.\n");
     }
 }
-

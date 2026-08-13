@@ -40,7 +40,7 @@ platform = "termux"
 
 [[categories.zsh-tokyonight.post_install_commands]]
 description = "Export ZDOTDIR, XDG_STATE_HOME, STARSHIP_CONFIG, and ZPLUGINSDIR env vars in ~/.zshenv"
-command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZDOTDIR/starship.toml\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
+command = "mkdir -p \"$HOME/.config/zsh\" \"$HOME/.local/state/zsh\" && grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZDOTDIR/starship.toml\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
 
 [[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
@@ -152,7 +152,7 @@ platform = "termux"
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Export ZDOTDIR, XDG_STATE_HOME, and ZPLUGINSDIR env vars in ~/.zshenv"
-command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
+command = "mkdir -p \"$HOME/.config/zsh\" \"$HOME/.local/state/zsh\" && grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Configure bat cat alias in ~/.config/zsh/.zshrc"
@@ -254,6 +254,7 @@ platform = "termux"
 [categories.opencode]
 description = "OpenCode AI coding assistant for Debian"
 group = "AI & Agents"
+display_packages = ["opencode"]
 debian_packages = ["curl", "git", "bash"]
 
 [[categories.opencode.post_install_commands]]
@@ -268,6 +269,7 @@ command = "curl -fsSL https://opencode.ai/install | bash"
 aliases = ["ai-tools"]
 description = "Token-saving agentic helper tools suite for Debian (engram, herdr, codegraph)"
 group = "AI & Agents"
+display_packages = ["engram", "herdr", "codegraph"]
 debian_packages = ["curl", "git", "tar", "grep"]
 
 [[categories.agent-tools.post_install_commands]]

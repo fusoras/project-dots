@@ -14,4 +14,3 @@ pub const WHITE: &str = "\x1b[37m";
 pub const DIM: &str = "\x1b[2m";
 pub const DIM_GRAY: &str = "\x1b[90m";
 pub const RESET: &str = "\x1b[0m";
-

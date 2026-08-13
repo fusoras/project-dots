@@ -11,7 +11,6 @@ pub const EMBEDDED_I3_CONFIG: &str = include_str!("../config/i3wm/config");
 pub const EMBEDDED_POLYBAR_CONFIG: &str = include_str!("../config/i3wm/config.ini");
 pub const EMBEDDED_POLYBAR_LAUNCH: &str = include_str!("../config/i3wm/launch.sh");
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default)]
@@ -22,6 +21,7 @@ pub struct Config {
 pub struct Category {
     pub description: String,
     pub aliases: Option<Vec<String>>,
+    pub display_packages: Option<Vec<String>>,
     pub debian_packages: Option<Vec<String>>,
     pub termux_packages: Option<Vec<String>>,
     pub custom: Option<BTreeMap<String, CustomInstaller>>,
@@ -38,8 +38,14 @@ pub struct Category {
 impl Category {
     pub fn final_message_for_platform(&self, platform: &crate::platform::Platform) -> Option<&str> {
         match platform {
-            crate::platform::Platform::Debian => self.debian_final_message.as_deref().or(self.final_message.as_deref()),
-            crate::platform::Platform::Termux => self.termux_final_message.as_deref().or(self.final_message.as_deref()),
+            crate::platform::Platform::Debian => self
+                .debian_final_message
+                .as_deref()
+                .or(self.final_message.as_deref()),
+            crate::platform::Platform::Termux => self
+                .termux_final_message
+                .as_deref()
+                .or(self.final_message.as_deref()),
             _ => self.final_message.as_deref(),
         }
     }
@@ -138,8 +144,9 @@ impl Config {
             }
         }
 
-        let config: Self = toml::from_str(EMBEDDED_CONFIG)
-            .map_err(|e| anyhow::anyhow!("Failed to parse embedded default categories.toml: {e}"))?;
+        let config: Self = toml::from_str(EMBEDDED_CONFIG).map_err(|e| {
+            anyhow::anyhow!("Failed to parse embedded default categories.toml: {e}")
+        })?;
         Ok((config, "Embedded default configuration".to_string()))
     }
 
@@ -160,7 +167,9 @@ impl Config {
             if let Some(post_cmds) = &cat.post_install_commands {
                 for cmd in post_cmds {
                     for word in cmd.command.split_whitespace() {
-                        let cleaned = word.trim_matches(|c| c == '\'' || c == '"' || c == '(' || c == ')' || c == ';');
+                        let cleaned = word.trim_matches(|c| {
+                            c == '\'' || c == '"' || c == '(' || c == ')' || c == ';'
+                        });
                         if cleaned.starts_with("http://") || cleaned.starts_with("https://") {
                             let url_str = cleaned.split('|').next().unwrap_or(cleaned);
                             if !urls.contains(&url_str.to_string()) {
@@ -199,10 +208,12 @@ impl Config {
         paths.sort();
 
         for path in paths {
-            let content = fs::read_to_string(&path)
-                .map_err(|e| anyhow::anyhow!("Failed to read modular config {}: {e}", path.display()))?;
-            let sub_config: Self = toml::from_str(&content)
-                .map_err(|e| anyhow::anyhow!("Failed to parse modular config {}: {e}", path.display()))?;
+            let content = fs::read_to_string(&path).map_err(|e| {
+                anyhow::anyhow!("Failed to read modular config {}: {e}", path.display())
+            })?;
+            let sub_config: Self = toml::from_str(&content).map_err(|e| {
+                anyhow::anyhow!("Failed to parse modular config {}: {e}", path.display())
+            })?;
 
             for (cat_name, category) in sub_config.categories {
                 config.categories.insert(cat_name, category);
@@ -226,7 +237,11 @@ impl Config {
         }
 
         for (key, category) in &self.categories {
-            if category.aliases.as_ref().is_some_and(|aliases| aliases.iter().any(|alias| alias.eq_ignore_ascii_case(query))) {
+            if category.aliases.as_ref().is_some_and(|aliases| {
+                aliases
+                    .iter()
+                    .any(|alias| alias.eq_ignore_ascii_case(query))
+            }) {
                 return Some(key);
             }
         }
@@ -281,16 +296,27 @@ mod tests {
     #[test]
     fn embedded_config_should_parse_and_contain_default_categories() {
         println!("\n🔍 [TEST] Embedded Default TOML Configuration Parsing");
-        println!("   Explanation: Verifies that the category catalog parses successfully and contains 'lazyvim-minimal'.");
+        println!(
+            "   Explanation: Verifies that the category catalog parses successfully and contains 'lazyvim-minimal'."
+        );
 
         let config: Result<Config, _> = toml::from_str(EMBEDDED_CONFIG);
         assert!(config.is_ok(), "Embedded TOML should parse without errors");
 
         let cfg = config.unwrap();
-        println!("   ✓ Valid TOML structure. Total categories loaded: {}", cfg.categories.len());
+        println!(
+            "   ✓ Valid TOML structure. Total categories loaded: {}",
+            cfg.categories.len()
+        );
 
-        assert!(cfg.categories.contains_key("lazyvim-minimal"), "Must include 'lazyvim-minimal' category");
-        assert!(cfg.categories.contains_key("nodejs-pnpm"), "Must include 'nodejs-pnpm' category");
+        assert!(
+            cfg.categories.contains_key("lazyvim-minimal"),
+            "Must include 'lazyvim-minimal' category"
+        );
+        assert!(
+            cfg.categories.contains_key("nodejs-pnpm"),
+            "Must include 'nodejs-pnpm' category"
+        );
         println!("   ✓ Category 'lazyvim-minimal' and 'nodejs-pnpm' verified in catalog.\n");
     }
 
@@ -299,10 +325,16 @@ mod tests {
         let config: Config = toml::from_str(EMBEDDED_CONFIG).expect("Should parse embedded config");
 
         // Direct canonical name match
-        assert_eq!(config.resolve_category_key("lazyvim-minimal"), Some(&"lazyvim-minimal".to_string()));
+        assert_eq!(
+            config.resolve_category_key("lazyvim-minimal"),
+            Some(&"lazyvim-minimal".to_string())
+        );
 
         // Alias match
-        assert_eq!(config.resolve_category_key("lzv-min"), Some(&"lazyvim-minimal".to_string()));
+        assert_eq!(
+            config.resolve_category_key("lzv-min"),
+            Some(&"lazyvim-minimal".to_string())
+        );
 
         // Non-matching query
         assert_eq!(config.resolve_category_key("nonexistent"), None);
@@ -319,12 +351,18 @@ mod tests {
         let msg_debian = cat
             .final_message_for_platform(&crate::platform::Platform::Debian)
             .expect("zsh-tokyonight should declare a final_message on Debian");
-        assert!(msg_debian.to_lowercase().contains("terminal"), "Debian final message should hint to restart the terminal");
+        assert!(
+            msg_debian.to_lowercase().contains("terminal"),
+            "Debian final message should hint to restart the terminal"
+        );
 
         let msg_termux = cat
             .final_message_for_platform(&crate::platform::Platform::Termux)
             .expect("zsh-tokyonight should declare a final_message on Termux");
-        assert!(msg_termux.to_lowercase().contains("termux"), "Termux final message should hint to restart Termux");
+        assert!(
+            msg_termux.to_lowercase().contains("termux"),
+            "Termux final message should hint to restart Termux"
+        );
     }
 
     #[test]
@@ -395,7 +433,10 @@ debian_packages = ["htop"]
     fn test_configured_urls_reachability_should_pass_for_valid_urls() {
         let config: Config = toml::from_str(EMBEDDED_CONFIG).unwrap();
         let urls = config.extract_all_urls();
-        assert!(!urls.is_empty(), "Embedded configuration should contain URLs");
+        assert!(
+            !urls.is_empty(),
+            "Embedded configuration should contain URLs"
+        );
 
         for url in &urls {
             let res = validate_url_reachable(url);
@@ -410,7 +451,8 @@ debian_packages = ["htop"]
 
     #[test]
     fn test_fake_url_reachability_should_fail() {
-        let fake_url = "https://raw.githubusercontent.com/fusoras/nonexistent-test-repo-99999/main/invalid.sh";
+        let fake_url =
+            "https://raw.githubusercontent.com/fusoras/nonexistent-test-repo-99999/main/invalid.sh";
         let res = validate_url_reachable(fake_url);
         assert!(
             res.is_err(),
@@ -419,5 +461,3 @@ debian_packages = ["htop"]
         );
     }
 }
-
-

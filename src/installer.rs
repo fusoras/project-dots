@@ -1,6 +1,6 @@
 use crate::colors::*;
 use crate::config::{Config, CustomInstaller};
-use crate::platform::{check_apt_lock, command_exists, Platform};
+use crate::platform::{Platform, check_apt_lock, command_exists};
 use crate::state::State;
 use anyhow::Context;
 use std::env;
@@ -63,8 +63,10 @@ pub fn list_categories(
     let mut hidden_count = 0;
 
     if group_by_category {
-        let mut grouped: std::collections::BTreeMap<String, Vec<(&String, &crate::config::Category)>> =
-            std::collections::BTreeMap::new();
+        let mut grouped: std::collections::BTreeMap<
+            String,
+            Vec<(&String, &crate::config::Category)>,
+        > = std::collections::BTreeMap::new();
 
         for (cat_name, cat) in &config.categories {
             if let Some(query) = filter
@@ -82,23 +84,29 @@ pub fn list_categories(
 
         for (grp_name, cats) in grouped {
             let border = "─".repeat(grp_name.chars().count() + 2);
-            output.push_str(&format!("\n{BOLD_CYAN}╭{border}╮\n│ {grp_name} │\n╰{border}╯{RESET}\n"));
+            output.push_str(&format!(
+                "\n{BOLD_CYAN}╭{border}╮\n│ {grp_name} │\n╰{border}╯{RESET}\n"
+            ));
 
             for (cat_name, cat) in cats {
-                let is_pack = cat.includes.is_some();
-                let mut pkgs: Vec<String> = match platform {
-                    Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
-                    Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
-                    Platform::Unsupported(_) => Vec::new(),
+                let mut pkgs: Vec<String> = if let Some(disp) = &cat.display_packages {
+                    disp.clone()
+                } else {
+                    match platform {
+                        Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
+                        Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
+                        Platform::Unsupported(_) => Vec::new(),
+                    }
                 };
 
                 if matches!(platform, Platform::Debian)
                     && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+                    && cat.display_packages.is_none()
                 {
                     pkgs.push(format!("{} (custom binary)", custom.name));
                 }
 
-                let is_supported = is_pack || !pkgs.is_empty();
+                let is_supported = is_category_supported(cat, platform, config);
 
                 if !is_supported && !show_hidden {
                     hidden_count += 1;
@@ -114,7 +122,18 @@ pub fn list_categories(
                 });
 
                 let detail_str = if let Some(inc_list) = &cat.includes {
-                    format!("pack: {}", inc_list.join(", "))
+                    let expanded: Vec<String> = inc_list
+                        .iter()
+                        .map(|inc| {
+                            if let Some(sub) = config.categories.get(inc)
+                                && let Some(disp) = &sub.display_packages
+                            {
+                                return disp.join(", ");
+                            }
+                            inc.clone()
+                        })
+                        .collect();
+                    format!("pack: {}", expanded.join(", "))
                 } else if pkgs.is_empty() {
                     "none".to_string()
                 } else {
@@ -140,11 +159,14 @@ pub fn list_categories(
         }
     } else {
         for (cat_name, cat) in &config.categories {
-            let is_pack = cat.includes.is_some();
-            let mut pkgs: Vec<String> = match platform {
-                Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
-                Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
-                Platform::Unsupported(_) => Vec::new(),
+            let mut pkgs: Vec<String> = if let Some(disp) = &cat.display_packages {
+                disp.clone()
+            } else {
+                match platform {
+                    Platform::Debian => cat.debian_packages.clone().unwrap_or_default(),
+                    Platform::Termux => cat.termux_packages.clone().unwrap_or_default(),
+                    Platform::Unsupported(_) => Vec::new(),
+                }
             };
 
             if let Some(query) = filter
@@ -155,11 +177,12 @@ pub fn list_categories(
 
             if matches!(platform, Platform::Debian)
                 && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
+                && cat.display_packages.is_none()
             {
                 pkgs.push(format!("{} (custom binary)", custom.name));
             }
 
-            let is_supported = is_pack || !pkgs.is_empty();
+            let is_supported = is_category_supported(cat, platform, config);
 
             if !is_supported && !show_hidden {
                 hidden_count += 1;
@@ -175,7 +198,18 @@ pub fn list_categories(
             });
 
             let pkgs_str = if let Some(inc_list) = &cat.includes {
-                format!("pack: {}", inc_list.join(", "))
+                let expanded: Vec<String> = inc_list
+                    .iter()
+                    .map(|inc| {
+                        if let Some(sub) = config.categories.get(inc)
+                            && let Some(disp) = &sub.display_packages
+                        {
+                            return disp.join(", ");
+                        }
+                        inc.clone()
+                    })
+                    .collect();
+                format!("pack: {}", expanded.join(", "))
             } else if pkgs.is_empty() {
                 "none".to_string()
             } else {
@@ -223,11 +257,11 @@ fn category_matches_query(
         return true;
     }
 
-    if cat
-        .aliases
-        .as_ref()
-        .is_some_and(|aliases| aliases.iter().any(|alias| alias.to_lowercase().contains(&q)))
-    {
+    if cat.aliases.as_ref().is_some_and(|aliases| {
+        aliases
+            .iter()
+            .any(|alias| alias.to_lowercase().contains(&q))
+    }) {
         return true;
     }
 
@@ -239,6 +273,12 @@ fn category_matches_query(
 
     if let Some(inc_list) = &cat.includes
         && inc_list.iter().any(|inc| inc.to_lowercase().contains(&q))
+    {
+        return true;
+    }
+
+    if let Some(disp) = &cat.display_packages
+        && disp.iter().any(|p| p.to_lowercase().contains(&q))
     {
         return true;
     }
@@ -272,6 +312,40 @@ fn is_command_in_path(cmd: &str) -> bool {
             }
         }
     }
+    false
+}
+
+pub fn is_category_supported(
+    cat: &crate::config::Category,
+    platform: &Platform,
+    config: &Config,
+) -> bool {
+    let has_os_packages = match platform {
+        Platform::Debian => cat.debian_packages.as_ref().is_some_and(|p| !p.is_empty()),
+        Platform::Termux => cat.termux_packages.as_ref().is_some_and(|p| !p.is_empty()),
+        Platform::Unsupported(_) => false,
+    };
+
+    let has_custom_binary = matches!(platform, Platform::Debian)
+        && cat
+            .custom
+            .as_ref()
+            .is_some_and(|m| m.contains_key("debian"));
+
+    if has_os_packages || has_custom_binary {
+        return true;
+    }
+
+    if let Some(inc_list) = &cat.includes {
+        return inc_list.iter().any(|inc_name| {
+            if let Some(sub_cat) = config.categories.get(inc_name) {
+                is_category_supported(sub_cat, platform, config)
+            } else {
+                false
+            }
+        });
+    }
+
     false
 }
 
@@ -328,9 +402,9 @@ pub fn show_category(
     state: &State,
     platform: &Platform,
 ) -> anyhow::Result<()> {
-    let canonical_key = config
-        .resolve_category_key(category_query)
-        .ok_or_else(|| anyhow::anyhow!("Category or alias '{category_query}' not found in configuration."))?;
+    let canonical_key = config.resolve_category_key(category_query).ok_or_else(|| {
+        anyhow::anyhow!("Category or alias '{category_query}' not found in configuration.")
+    })?;
 
     let cat = config.categories.get(canonical_key).unwrap();
 
@@ -396,8 +470,14 @@ pub fn show_category(
             "Not installed"
         };
         println!("\n{BOLD_BLUE}Custom Binary Installer (Debian):{RESET}");
-        println!("  - {DIM_GRAY}{}{RESET} ({}) [{custom_status}]", custom.name, custom.url);
-        println!("    Symlink: {bin_path} -> {}/bin/{}", custom.extract_dir, custom.name);
+        println!(
+            "  - {DIM_GRAY}{}{RESET} ({}) [{custom_status}]",
+            custom.name, custom.url
+        );
+        println!(
+            "    Symlink: {bin_path} -> {}/bin/{}",
+            custom.extract_dir, custom.name
+        );
     }
 
     if let Some(copy_files) = &cat.copy_files {
@@ -425,7 +505,7 @@ pub fn show_category(
                 .as_ref()
                 .map(|p| format!(" (Platform: {p})"))
                 .unwrap_or_default();
-            
+
             let display_text = if let Some(ref desc) = cmd.description {
                 desc.clone()
             } else if let Some(ref prompt) = cmd.prompt {
@@ -446,11 +526,11 @@ pub fn show_category(
                 .as_ref()
                 .map(|p| format!(" (Platform: {p})"))
                 .unwrap_or_default();
-            let desc = inj
-                .description
-                .as_deref()
-                .unwrap_or(inj.line.as_str());
-            println!("  - {desc} -> {} under section '{}'{platform_info}", inj.file, inj.section);
+            let desc = inj.description.as_deref().unwrap_or(inj.line.as_str());
+            println!(
+                "  - {desc} -> {} under section '{}'{platform_info}",
+                inj.file, inj.section
+            );
         }
     }
 
@@ -492,7 +572,10 @@ pub fn install_category(
 
     for (cat_name, cat) in target_categories {
         if let Some(inc_list) = &cat.includes {
-            println!("\n{BOLD_BLUE}--> Installing Pack '{cat_name}' (Includes {} categories)...{RESET}", inc_list.len());
+            println!(
+                "\n{BOLD_BLUE}--> Installing Pack '{cat_name}' (Includes {} categories)...{RESET}",
+                inc_list.len()
+            );
             for inc_name in inc_list {
                 install_category(Some(inc_name.as_str()), config, state, platform, dry_run)?;
             }
@@ -502,12 +585,16 @@ pub fn install_category(
         println!("\n--> Processing Category: {cat_name}");
 
         // Pre-prompt for any interactive post-install commands before doing packages/downloads
-        let mut confirmed_commands: std::collections::HashMap<usize, bool> = std::collections::HashMap::new();
+        let mut confirmed_commands: std::collections::HashMap<usize, bool> =
+            std::collections::HashMap::new();
 
         if let Some(post_cmds) = &cat.post_install_commands {
             for (idx, cmd) in post_cmds.iter().enumerate() {
                 if let Some(target_platform) = &cmd.platform {
-                    let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
+                    let matches_platform = matches!(
+                        (target_platform.to_lowercase().as_str(), platform),
+                        ("debian", Platform::Debian) | ("termux", Platform::Termux)
+                    );
                     if !matches_platform {
                         continue;
                     }
@@ -656,7 +743,10 @@ fn process_copy_files(
 ) -> anyhow::Result<()> {
     for action in copy_files {
         if let Some(target_platform) = &action.platform {
-            let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
+            let matches_platform = matches!(
+                (target_platform.to_lowercase().as_str(), platform),
+                ("debian", Platform::Debian) | ("termux", Platform::Termux)
+            );
             if !matches_platform {
                 continue;
             }
@@ -684,7 +774,9 @@ fn process_copy_files(
             crate::config::EMBEDDED_STARSHIP.as_bytes().to_vec()
         } else if action.src == "config/zsh-tokyonight/aliases.zsh" {
             crate::config::EMBEDDED_ALIASES.as_bytes().to_vec()
-        } else if action.src == "config/zsh-tokyonight/font.ttf" || action.src == "config/zsh-minimal/font.ttf" {
+        } else if action.src == "config/zsh-tokyonight/font.ttf"
+            || action.src == "config/zsh-minimal/font.ttf"
+        {
             crate::config::EMBEDDED_FONT.to_vec()
         } else if action.src == "config/i3wm/config" {
             crate::config::EMBEDDED_I3_CONFIG.as_bytes().to_vec()
@@ -697,12 +789,14 @@ fn process_copy_files(
         };
 
         if let Some(parent) = dest_path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| anyhow::anyhow!("Failed to create directory {}: {e}", parent.display()))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                anyhow::anyhow!("Failed to create directory {}: {e}", parent.display())
+            })?;
         }
 
-        fs::write(dest_path, content_bytes)
-            .map_err(|e| anyhow::anyhow!("Failed to write configuration to {dest_path_str}: {e}"))?;
+        fs::write(dest_path, content_bytes).map_err(|e| {
+            anyhow::anyhow!("Failed to write configuration to {dest_path_str}: {e}")
+        })?;
 
         println!("  [Success] Configuration file placed cleanly at '{dest_path_str}'");
     }
@@ -717,7 +811,10 @@ fn process_post_install_commands(
 ) -> anyhow::Result<()> {
     for (idx, cmd) in commands.iter().enumerate() {
         if let Some(target_platform) = &cmd.platform {
-            let matches_platform = matches!((target_platform.to_lowercase().as_str(), platform), ("debian", Platform::Debian) | ("termux", Platform::Termux));
+            let matches_platform = matches!(
+                (target_platform.to_lowercase().as_str(), platform),
+                ("debian", Platform::Debian) | ("termux", Platform::Termux)
+            );
             if !matches_platform {
                 continue;
             }
@@ -735,13 +832,19 @@ fn process_post_install_commands(
         if is_confirm_required {
             let is_confirmed = confirmed_commands.get(&idx).copied().unwrap_or(false);
             if !is_confirmed {
-                println!("  [SKIP] Post-install command '{}' skipped by user choice.", cmd.command);
+                println!(
+                    "  [SKIP] Post-install command '{}' skipped by user choice.",
+                    cmd.command
+                );
                 continue;
             }
         }
 
         if dry_run {
-            println!("  [Dry-Run] Would execute post-install command: {}", cmd.command);
+            println!(
+                "  [Dry-Run] Would execute post-install command: {}",
+                cmd.command
+            );
             continue;
         }
 
@@ -750,13 +853,24 @@ fn process_post_install_commands(
             .arg("-c")
             .arg(&cmd.command)
             .status()
-            .map_err(|e| anyhow::anyhow!("Failed to execute post-install command '{}': {e}", cmd.command))?;
+            .map_err(|e| {
+                anyhow::anyhow!(
+                    "Failed to execute post-install command '{}': {e}",
+                    cmd.command
+                )
+            })?;
 
         if !status.success() {
-            anyhow::bail!("Post-install command '{}' failed with status {status}", cmd.command);
+            anyhow::bail!(
+                "Post-install command '{}' failed with status {status}",
+                cmd.command
+            );
         }
 
-        println!("  [Success] Post-install command completed: {}", cmd.command);
+        println!(
+            "  [Success] Post-install command completed: {}",
+            cmd.command
+        );
     }
     Ok(())
 }
@@ -786,15 +900,24 @@ fn process_section_injections(
             .unwrap_or(injection.line.as_str());
 
         let content = if path.exists() {
-            fs::read_to_string(path)
-                .map_err(|e| anyhow::anyhow!("Failed to read config file '{}': {e}", path.display()))?
+            fs::read_to_string(path).map_err(|e| {
+                anyhow::anyhow!("Failed to read config file '{}': {e}", path.display())
+            })?
         } else {
             String::new()
         };
 
-        let first_line = injection.line.lines().next().unwrap_or(&injection.line).trim();
+        let first_line = injection
+            .line
+            .lines()
+            .next()
+            .unwrap_or(&injection.line)
+            .trim();
         if content.lines().any(|l| l.trim() == first_line) {
-            println!("  [SKIP] Section line '{}' already exists in {}.", first_line, injection.file);
+            println!(
+                "  [SKIP] Section line '{}' already exists in {}.",
+                first_line, injection.file
+            );
             continue;
         }
 
@@ -819,14 +942,22 @@ fn process_section_injections(
         );
 
         if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)
-                .map_err(|e| anyhow::anyhow!("Failed to create directories for '{}': {e}", path.display()))?;
+            fs::create_dir_all(parent).map_err(|e| {
+                anyhow::anyhow!("Failed to create directories for '{}': {e}", path.display())
+            })?;
         }
 
-        fs::write(path, new_content)
-            .map_err(|e| anyhow::anyhow!("Failed to write updated config to '{}': {e}", path.display()))?;
+        fs::write(path, new_content).map_err(|e| {
+            anyhow::anyhow!(
+                "Failed to write updated config to '{}': {e}",
+                path.display()
+            )
+        })?;
 
-        println!("  [Success] Injected line into {} under section '{}': {}", injection.file, injection.section, desc);
+        println!(
+            "  [Success] Injected line into {} under section '{}': {}",
+            injection.file, injection.section, desc
+        );
     }
     Ok(())
 }
@@ -894,14 +1025,20 @@ fn install_custom_debian(
     println!("  --> Custom Binary Installer: {}", custom.name);
 
     if !command_exists("curl") || !command_exists("tar") {
-        anyhow::bail!("Prerequisite binaries 'curl' and 'tar' are required for custom downloads. Please install them first.");
+        anyhow::bail!(
+            "Prerequisite binaries 'curl' and 'tar' are required for custom downloads. Please install them first."
+        );
     }
 
     let bin_path_buf = Path::new(&expand_home(&custom.bin_symlink)).to_path_buf();
     let extract_dir_buf = Path::new(&custom.extract_dir).to_path_buf();
 
     if bin_path_buf.exists() && extract_dir_buf.exists() {
-        println!("  [SKIP] Custom binary '{}' is already installed at {}", custom.name, extract_dir_buf.display());
+        println!(
+            "  [SKIP] Custom binary '{}' is already installed at {}",
+            custom.name,
+            extract_dir_buf.display()
+        );
         if !dry_run {
             state.track_package(&custom.name, cat_name, true);
             state.save_atomic()?;
@@ -910,9 +1047,17 @@ fn install_custom_debian(
     }
 
     if dry_run {
-        println!("  [Dry-Run] Would download release tarball from {}", custom.url);
+        println!(
+            "  [Dry-Run] Would download release tarball from {}",
+            custom.url
+        );
         println!("  [Dry-Run] Would extract to {}", custom.extract_dir);
-        println!("  [Dry-Run] Would create symlink: {} -> {}/bin/{}", bin_path_buf.display(), custom.extract_dir, custom.name);
+        println!(
+            "  [Dry-Run] Would create symlink: {} -> {}/bin/{}",
+            bin_path_buf.display(),
+            custom.extract_dir,
+            custom.name
+        );
         return Ok(());
     }
 
@@ -1001,17 +1146,30 @@ fn install_custom_debian(
         .status();
 
     let symlink_dir = bin_path_buf.parent().unwrap();
-    fs::create_dir_all(symlink_dir)
-        .map_err(|e| anyhow::anyhow!("Failed to create symlink parent directory {}: {e}", symlink_dir.display()))?;
+    fs::create_dir_all(symlink_dir).map_err(|e| {
+        anyhow::anyhow!(
+            "Failed to create symlink parent directory {}: {e}",
+            symlink_dir.display()
+        )
+    })?;
 
     if bin_path_buf.exists() || bin_path_buf.is_symlink() {
         let _ = fs::remove_file(&bin_path_buf);
     }
 
-    symlink(&target_bin, &bin_path_buf)
-        .map_err(|e| anyhow::anyhow!("Failed to create symlink at {}: {e}", bin_path_buf.display()))?;
+    symlink(&target_bin, &bin_path_buf).map_err(|e| {
+        anyhow::anyhow!(
+            "Failed to create symlink at {}: {e}",
+            bin_path_buf.display()
+        )
+    })?;
 
-    println!("  [Success] Installed {} to {} with symlink at {}", custom.name, custom.extract_dir, bin_path_buf.display());
+    println!(
+        "  [Success] Installed {} to {} with symlink at {}",
+        custom.name,
+        custom.extract_dir,
+        bin_path_buf.display()
+    );
     state.track_package(&custom.name, cat_name, false);
     state.save_atomic()?;
 
@@ -1050,7 +1208,10 @@ pub fn remove_category(
 
     for (cat_name, cat) in target_categories {
         if let Some(inc_list) = &cat.includes {
-            println!("\n{BOLD_YELLOW}--> Removing Pack '{cat_name}' (Includes {} categories)...{RESET}", inc_list.len());
+            println!(
+                "\n{BOLD_YELLOW}--> Removing Pack '{cat_name}' (Includes {} categories)...{RESET}",
+                inc_list.len()
+            );
             for inc_name in inc_list {
                 remove_category(Some(inc_name.as_str()), config, state, platform, dry_run)?;
             }
@@ -1068,7 +1229,9 @@ pub fn remove_category(
         for pkg in pkgs {
             if let Some(tracked) = state.packages.get(pkg) {
                 if tracked.was_preexisting {
-                    println!("  [SKIP] Package '{pkg}' was pre-existing on system before dotss. Skipping removal.");
+                    println!(
+                        "  [SKIP] Package '{pkg}' was pre-existing on system before dotss. Skipping removal."
+                    );
                     continue;
                 }
             } else {
@@ -1130,15 +1293,24 @@ pub fn remove_category(
             let bin_path = expand_home(&custom.bin_symlink);
             if dry_run {
                 println!("  [Dry-Run] Would remove symlink: {bin_path}");
-                println!("  [Dry-Run] Would execute: sudo rm -rf {}", custom.extract_dir);
+                println!(
+                    "  [Dry-Run] Would execute: sudo rm -rf {}",
+                    custom.extract_dir
+                );
             } else {
                 println!("  [Removing] Removing custom binary '{}'...", custom.name);
                 if let Err(e) = fs::remove_file(&bin_path) {
                     eprintln!("  [WARN] Failed to remove symlink {bin_path}: {e}");
                 }
-                match Command::new("sudo").args(["rm", "-rf", &custom.extract_dir]).status() {
+                match Command::new("sudo")
+                    .args(["rm", "-rf", &custom.extract_dir])
+                    .status()
+                {
                     Ok(s) if !s.success() => {
-                        eprintln!("  [WARN] sudo rm -rf {} exited with {s}", custom.extract_dir);
+                        eprintln!(
+                            "  [WARN] sudo rm -rf {} exited with {s}",
+                            custom.extract_dir
+                        );
                     }
                     Err(e) => {
                         eprintln!("  [WARN] Failed to run sudo rm: {e}");
@@ -1170,7 +1342,9 @@ pub fn remove_category(
                     } else {
                         println!("  [Removing] Removing configuration file '{dest_path_str}'...");
                         if let Err(e) = fs::remove_file(dest_path) {
-                            eprintln!("  [WARN] Failed to remove configuration file {dest_path_str}: {e}");
+                            eprintln!(
+                                "  [WARN] Failed to remove configuration file {dest_path_str}: {e}"
+                            );
                         }
                     }
                 }
@@ -1186,7 +1360,9 @@ pub fn remove_category(
                 } else {
                     println!("  [Removing] Removing Zsh plugins directory '{plugins_dir}'...");
                     if let Err(e) = fs::remove_dir_all(plugins_path) {
-                        eprintln!("  [WARN] Failed to remove Zsh plugins directory {plugins_dir}: {e}");
+                        eprintln!(
+                            "  [WARN] Failed to remove Zsh plugins directory {plugins_dir}: {e}"
+                        );
                     }
                 }
             }
@@ -1229,7 +1405,9 @@ fn check_path_and_recommend(dir: &Path) {
         let dir_str = dir.to_string_lossy();
         if !path_var.split(':').any(|p| p == dir_str) {
             println!("\n  [TIP] '{dir_str}' is NOT in your current $PATH environment variable!");
-            println!("  To access binaries directly from anywhere, add it to your shell configuration:");
+            println!(
+                "  To access binaries directly from anywhere, add it to your shell configuration:"
+            );
             println!("    - bash: echo 'export PATH=\"{dir_str}:$PATH\"' >> ~/.bashrc");
             println!("    - zsh:  echo 'export PATH=\"{dir_str}:$PATH\"' >> ~/.zshrc");
             println!("    - fish: fish_add_path {dir_str}\n");
@@ -1299,7 +1477,10 @@ mod tests {
     fn expand_home_should_replace_tilde_with_home_dir() {
         let path_with_tilde = "~/.local/bin/nvim";
         let expanded = expand_home(path_with_tilde);
-        assert!(!expanded.starts_with("~/"), "Tilde should be expanded to full path");
+        assert!(
+            !expanded.starts_with("~/"),
+            "Tilde should be expanded to full path"
+        );
         assert!(expanded.ends_with(".local/bin/nvim"));
 
         let absolute_path = "/opt/nvim/bin/nvim";
@@ -1373,9 +1554,11 @@ mod tests {
             },
         ];
         let confirmed = std::collections::HashMap::new();
-        let res_debian = process_post_install_commands(&commands, &Platform::Debian, &confirmed, true);
+        let res_debian =
+            process_post_install_commands(&commands, &Platform::Debian, &confirmed, true);
         assert!(res_debian.is_ok());
-        let res_termux = process_post_install_commands(&commands, &Platform::Termux, &confirmed, true);
+        let res_termux =
+            process_post_install_commands(&commands, &Platform::Termux, &confirmed, true);
         assert!(res_termux.is_ok());
     }
 
@@ -1397,10 +1580,22 @@ mod tests {
             .get_key_value("lazyvim-minimal")
             .expect("lazyvim-minimal category should exist");
 
-        assert!(category_matches_query("lazy", name, cat, &platform), "Should match by category name");
-        assert!(category_matches_query("LAZY", name, cat, &platform), "Should match case-insensitively");
-        assert!(category_matches_query("lzv", name, cat, &platform), "Should match by alias");
-        assert!(category_matches_query("lazygit", name, cat, &platform), "Should match by package name");
+        assert!(
+            category_matches_query("lazy", name, cat, &platform),
+            "Should match by category name"
+        );
+        assert!(
+            category_matches_query("LAZY", name, cat, &platform),
+            "Should match case-insensitively"
+        );
+        assert!(
+            category_matches_query("lzv", name, cat, &platform),
+            "Should match by alias"
+        );
+        assert!(
+            category_matches_query("lazygit", name, cat, &platform),
+            "Should match by package name"
+        );
         assert!(
             category_matches_query("neovim", name, cat, &platform),
             "Should match by Debian custom binary name"
@@ -1409,7 +1604,10 @@ mod tests {
             !category_matches_query("nvim", name, cat, &platform),
             "'nvim' is not a substring of 'neovim', so it must not match"
         );
-        assert!(!category_matches_query("zzz-nonexistent", name, cat, &platform), "Should not match unrelated query");
+        assert!(
+            !category_matches_query("zzz-nonexistent", name, cat, &platform),
+            "Should not match unrelated query"
+        );
 
         let (shell_name, shell_cat) = config
             .categories
@@ -1438,20 +1636,34 @@ mod tests {
         let mut state = State::load();
         let platform = Platform::Debian;
 
-        assert!(remove_category(Some("zsh-tokyonight"), &config, &mut state, &platform, true).is_ok());
+        assert!(
+            remove_category(Some("zsh-tokyonight"), &config, &mut state, &platform, true).is_ok()
+        );
     }
 
     #[test]
     fn inject_line_into_section_should_insert_under_existing_header() {
         let content = "HISTFILE=~/history\n# Fast init tools\neval \"$(starship init zsh)\"\n";
-        let updated = inject_line_into_section(content, "# Fast init tools", "eval \"$(zoxide init zsh)\"", None);
-        assert!(updated.contains("# Fast init tools\neval \"$(zoxide init zsh)\"\neval \"$(starship init zsh)\""));
+        let updated = inject_line_into_section(
+            content,
+            "# Fast init tools",
+            "eval \"$(zoxide init zsh)\"",
+            None,
+        );
+        assert!(updated.contains(
+            "# Fast init tools\neval \"$(zoxide init zsh)\"\neval \"$(starship init zsh)\""
+        ));
     }
 
     #[test]
     fn inject_line_into_section_should_create_header_if_missing() {
         let content = "HISTFILE=~/history\n";
-        let updated = inject_line_into_section(content, "# Fast init tools", "eval \"$(zoxide init zsh)\"", None);
+        let updated = inject_line_into_section(
+            content,
+            "# Fast init tools",
+            "eval \"$(zoxide init zsh)\"",
+            None,
+        );
         assert!(updated.contains("\n# Fast init tools\neval \"$(zoxide init zsh)\"\n"));
     }
 
@@ -1531,4 +1743,3 @@ mod tests {
         );
     }
 }
-
