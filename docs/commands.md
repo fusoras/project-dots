@@ -56,8 +56,8 @@ dotss list --categories
 ### 2. Search Categories (`search`)
 **Command**:
 ```bash
-project-dots search lazygit
-project-dots search zsh-tn
+dotss search lazygit
+dotss search zsh-tn
 ```
 **Exact Output** (same format as `list`; matched categories unsupported on the platform keep the `[unsupported]` suffix):
 ```text
@@ -74,9 +74,9 @@ The query matches case-insensitively against:
 ### 3. Show Category Details (`show`)
 **Command**:
 ```bash
-project-dots show zsh-tokyonight
+dotss show zsh-tokyonight
 # Or using an explicit alias:
-project-dots show zsh-tn
+dotss show zsh-tn
 ```
 **Exact Output**:
 ```text
@@ -117,9 +117,9 @@ Final Message: Restart your terminal or run: exec zsh
 ### 4. Remove Packages (`remove`)
 **Command**:
 ```bash
-project-dots remove lazyvim-minimal --dry-run
+dotss remove lazyvim-minimal --dry-run
 # Or remove all installed categories:
-project-dots remove --all --dry-run
+dotss remove --all --dry-run
 ```
 
 **Exact Terminal Output (Dry-Run Preview)**:
@@ -137,10 +137,10 @@ Removal processing completed successfully.
 ### 5. Self-Update Engine
 **Command**:
 ```bash
-project-dots self-update --dry-run
+dotss self-update --dry-run
 ```
 **Purpose**:
-Queries the GitHub Releases API for `project-dots`, compares the current version against the latest release tag, and previews or performs binary replacement.
+Queries the GitHub Releases API for `dotss`, compares the current version against the latest release tag, and previews or performs binary replacement.
 
 **Exact Terminal Output (Up-to-Date)**:
 ```text
@@ -148,7 +148,7 @@ Checking GitHub Releases for updates...
 Current version: <current-version>
 Latest release tag: v<current-version>
 
-[Up-to-Date] project-dots is already running the latest version.
+[Up-to-Date] dotss is already running the latest version.
 ```
 
 **Exact Terminal Output (Update Available - Dry Run)**:
@@ -158,8 +158,8 @@ Current version: <current-version>
 Latest release tag: v<newer-version>
 
 === DRY-RUN MODE ACTIVE: No binary changes will be made ===
-[Dry-Run] Would download pre-compiled release binary asset: project-dots-x86_64-unknown-linux-gnu.tar.gz
-[Dry-Run] Would extract and replace executable at: /home/user/.local/bin/project-dots
+[Dry-Run] Would download pre-compiled release binary asset: dotss-x86_64-unknown-linux-gnu.tar.gz
+[Dry-Run] Would extract and replace executable at: /home/user/.local/bin/dotss
 ```
 
 ---
@@ -167,24 +167,24 @@ Latest release tag: v<newer-version>
 ### 6. Self-Uninstall Engine
 **Command**:
 ```bash
-project-dots self-uninstall --dry-run
+dotss self-uninstall --dry-run
 # Or non-interactive confirmation:
-project-dots self-uninstall --yes
+dotss self-uninstall --yes
 # Or skip removing config/state directories:
-project-dots self-uninstall --no
+dotss self-uninstall --no
 ```
 
 **Exact Terminal Output (Dry-Run Preview)**:
 ```text
 === DRY-RUN MODE ACTIVE: No files will be deleted ===
-=== project-dots Self-Uninstall Engine ===
-Target Binary Path: /home/user/.local/bin/project-dots
-Target State Directory: /home/user/.local/state/project-dots
-Target Config Directory: /home/user/.config/project-dots
+=== dotss Self-Uninstall Engine ===
+Target Binary Path: /home/user/.local/bin/dotss
+Target State Directory: /home/user/.local/state/dotss
+Target Config Directory: /home/user/.config/dotss
 
 === DRY-RUN MODE ACTIVE: No files will be deleted ===
-[Dry-Run] Would remove executable: /home/user/.local/bin/project-dots
-[Dry-Run] Would remove state directory: /home/user/.local/state/project-dots
+[Dry-Run] Would remove executable: /home/user/.local/bin/dotss
+[Dry-Run] Would remove state directory: /home/user/.local/state/dotss
 ```
 
 ---

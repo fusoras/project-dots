@@ -40,7 +40,7 @@ platform = "termux"
 
 [[categories.zsh-tokyonight.post_install_commands]]
 description = "Export ZDOTDIR, XDG_STATE_HOME, STARSHIP_CONFIG, and ZPLUGINSDIR env vars in ~/.zshenv"
-command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZDOTDIR/starship.toml\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export STARSHIP_CONFIG=\"$ZDOTDIR/starship.toml\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
 
 [[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
@@ -58,7 +58,7 @@ description = "Configure Zsh persistent history options at top of ~/.config/zsh/
 
 [[categories.zsh-tokyonight.post_install_commands]]
 description = "Source Zsh custom aliases ($ZDOTDIR/aliases.zsh) in ~/.config/zsh/.zshrc"
-command = "grep -qF 'source \"$ZDOTDIR/aliases.zsh\"' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'source \"$ZDOTDIR/aliases.zsh\"' >> \"$HOME/.config/zsh/.zshrc\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'source \"$ZDOTDIR/aliases.zsh\"' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'source \"$ZDOTDIR/aliases.zsh\"' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
@@ -104,11 +104,11 @@ description = "Enable fzf-tab plugin in ~/.config/zsh/.zshrc under section '# Zs
 
 [[categories.zsh-tokyonight.post_install_commands]]
 description = "Enable Zsh completion system (compinit) in ~/.config/zsh/.zshrc"
-command = "grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-tokyonight.post_install_commands]]
 description = "Set Zsh completion format styling in ~/.config/zsh/.zshrc"
-command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.config/zsh/.zshrc\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF \"zstyle ':completion:*' format\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-tokyonight.section_injections]]
 file = "~/.config/zsh/.zshrc"
@@ -152,11 +152,11 @@ platform = "termux"
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Export ZDOTDIR, XDG_STATE_HOME, and ZPLUGINSDIR env vars in ~/.zshenv"
-command = "grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'export ZDOTDIR=\"$HOME/.config/zsh\"' \"$HOME/.zshenv\" 2>/dev/null || printf '%s\\n' 'export ZDOTDIR=\"$HOME/.config/zsh\"' 'export XDG_STATE_HOME=\"$HOME/.local/state\"' 'export ZPLUGINSDIR=\"$ZDOTDIR/plugins\"' >> \"$HOME/.zshenv\""
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Configure bat cat alias in ~/.config/zsh/.zshrc"
-command = "grep -qF \"alias cat='bat\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' 'if command -v batcat &> /dev/null; then alias bat=\"batcat\"; fi' 'alias cat=\"bat --paging=never --style=plain\"' >> \"$HOME/.config/zsh/.zshrc\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF \"alias cat='bat\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' 'if command -v batcat &> /dev/null; then alias bat=\"batcat\"; fi' 'alias cat=\"bat --paging=never --style=plain\"' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-minimal.section_injections]]
 file = "~/.config/zsh/.zshrc"
@@ -194,11 +194,11 @@ bin_symlink = "~/.local/bin/zellij"
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Enable Zsh completion system (compinit) in ~/.config/zsh/.zshrc"
-command = "grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Set Zsh completion format styling in ~/.config/zsh/.zshrc"
-command = "grep -qF \"zstyle ':completion:*' format\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.config/zsh/.zshrc\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF \"zstyle ':completion:*' format\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-minimal.copy_files]]
 src = "config/zsh-minimal/font.ttf"
@@ -272,28 +272,22 @@ debian_packages = ["curl", "git", "tar", "grep"]
 
 [[categories.agent-tools.post_install_commands]]
 description = "Install or update engram (latest release)"
-prompt = "Do you want to download and install/update engram to ~/.local/bin/engram?"
-confirm = true
 platform = "debian"
 command = "LATEST_TAG=$(curl -fsSL https://api.github.com/repos/Gentleman-Programming/engram/releases/latest | grep '\"tag_name\":' | sed -E 's/.*\"tag_name\": *\"([^\"]+)\".*/\\1/'); VER=${LATEST_TAG#v}; mkdir -p ~/.local/bin && curl -fsSL \"https://github.com/Gentleman-Programming/engram/releases/download/${LATEST_TAG}/engram_${VER}_linux_amd64.tar.gz\" | tar -xz -C ~/.local/bin engram && chmod +x ~/.local/bin/engram"
 
 [[categories.agent-tools.post_install_commands]]
 description = "Install or update herdr"
-prompt = "Do you want to install/update herdr (via https://herdr.dev/install.sh)?"
-confirm = true
 platform = "debian"
 command = "curl -fsSL https://herdr.dev/install.sh | sh"
 
 [[categories.agent-tools.post_install_commands]]
 description = "Install or update codegraph"
-prompt = "Do you want to install/update codegraph (via install.sh)?"
-confirm = true
 platform = "debian"
 command = "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh"
 
 
 [categories.agent-flow]
-description = "Complete Agentic AI suite combining opencode and token-saving agent-tools"
+description = "Complete Agentic AI suite combining opencode and token-saving agent-tools (engram, herdr, codegraph)"
 group = "AI & Agents"
 includes = ["opencode", "agent-tools"]
 

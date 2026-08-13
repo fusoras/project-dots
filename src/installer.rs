@@ -231,16 +231,16 @@ fn category_matches_query(
         return true;
     }
 
-    if let Some(group) = &cat.group {
-        if group.to_lowercase().contains(&q) {
-            return true;
-        }
+    if let Some(group) = &cat.group
+        && group.to_lowercase().contains(&q)
+    {
+        return true;
     }
 
-    if let Some(inc_list) = &cat.includes {
-        if inc_list.iter().any(|inc| inc.to_lowercase().contains(&q)) {
-            return true;
-        }
+    if let Some(inc_list) = &cat.includes
+        && inc_list.iter().any(|inc| inc.to_lowercase().contains(&q))
+    {
+        return true;
     }
 
     let pkgs = match platform {
@@ -263,6 +263,18 @@ fn category_matches_query(
     false
 }
 
+fn is_command_in_path(cmd: &str) -> bool {
+    if let Ok(path_var) = env::var("PATH") {
+        for dir in env::split_paths(&path_var) {
+            let full_path = dir.join(cmd);
+            if full_path.is_file() {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 fn is_category_applied(
     cat_name: &str,
     cat: &crate::config::Category,
@@ -271,6 +283,9 @@ fn is_category_applied(
     config: &Config,
 ) -> bool {
     if let Some(inc_list) = &cat.includes {
+        if inc_list.is_empty() {
+            return false;
+        }
         return inc_list.iter().all(|inc_name| {
             if let Some((resolved_key, sub_cat)) = config.categories.get_key_value(inc_name) {
                 is_category_applied(resolved_key, sub_cat, state, platform, config)
@@ -280,30 +295,30 @@ fn is_category_applied(
         });
     }
 
-    if state.packages.values().any(|p| p.category == cat_name) {
-        return true;
+    let recorded_in_state = state.is_category_applied(cat_name)
+        || state.packages.values().any(|p| p.category == cat_name);
+
+    if !recorded_in_state {
+        return false;
     }
 
-    let pkgs = match platform {
-        Platform::Debian => cat.debian_packages.as_deref().unwrap_or(&[]),
-        Platform::Termux => cat.termux_packages.as_deref().unwrap_or(&[]),
-        Platform::Unsupported(_) => &[],
-    };
-
-    if !pkgs.is_empty() && pkgs.iter().all(|pkg| platform.is_package_installed(pkg)) {
-        return true;
-    }
-
-    if matches!(platform, Platform::Debian)
+    if let Platform::Debian = platform
         && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("debian"))
     {
         let bin_path = expand_home(&custom.bin_symlink);
-        if Path::new(&bin_path).exists() {
-            return true;
+        if !Path::new(&bin_path).exists() && !is_command_in_path(&custom.name) {
+            return false;
+        }
+    } else if let Platform::Termux = platform
+        && let Some(custom) = cat.custom.as_ref().and_then(|m| m.get("termux"))
+    {
+        let bin_path = expand_home(&custom.bin_symlink);
+        if !Path::new(&bin_path).exists() && !is_command_in_path(&custom.name) {
+            return false;
         }
     }
 
-    false
+    true
 }
 
 /// Shows complete detailed information, description, packages, dotfiles, and installation status for a specific category.
@@ -546,8 +561,10 @@ pub fn install_category(
         for pkg in pkgs {
             if platform.is_package_installed(pkg) {
                 println!("  [SKIP] Package '{pkg}' is already installed on OS.");
-                state.track_package(pkg, cat_name, true);
-                state.save_atomic()?;
+                if !dry_run {
+                    state.track_package(pkg, cat_name, true);
+                    state.save_atomic()?;
+                }
                 continue;
             }
 
@@ -621,6 +638,11 @@ pub fn install_category(
             } else {
                 println!("\n  {BOLD_YELLOW}>>> {msg}{RESET}");
             }
+        }
+
+        if !dry_run {
+            state.mark_category_applied(cat_name);
+            state.save_atomic()?;
         }
     }
 
@@ -731,10 +753,10 @@ fn process_post_install_commands(
             .map_err(|e| anyhow::anyhow!("Failed to execute post-install command '{}': {e}", cmd.command))?;
 
         if !status.success() {
-            println!("  [WARNING] Post-install command '{}' exited with status {status}", cmd.command);
-        } else {
-            println!("  [Success] Post-install command completed: {}", cmd.command);
+            anyhow::bail!("Post-install command '{}' failed with status {status}", cmd.command);
         }
+
+        println!("  [Success] Post-install command completed: {}", cmd.command);
     }
     Ok(())
 }
@@ -880,8 +902,10 @@ fn install_custom_debian(
 
     if bin_path_buf.exists() && extract_dir_buf.exists() {
         println!("  [SKIP] Custom binary '{}' is already installed at {}", custom.name, extract_dir_buf.display());
-        state.track_package(&custom.name, cat_name, true);
-        state.save_atomic()?;
+        if !dry_run {
+            state.track_package(&custom.name, cat_name, true);
+            state.save_atomic()?;
+        }
         return Ok(());
     }
 
@@ -1180,6 +1204,11 @@ pub fn remove_category(
                 }
             }
         }
+
+        if !dry_run {
+            state.unmark_category_applied(cat_name);
+            state.save_atomic()?;
+        }
     }
 
     Ok(())
@@ -1450,6 +1479,56 @@ mod tests {
         }];
         let res = process_section_injections(&injections, &Platform::Debian, true);
         assert!(res.is_ok(), "Section injection dry-run should succeed");
+    }
+
+    #[test]
+    fn is_category_applied_should_not_false_positive_on_generic_packages() {
+        let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+        let state = State::default();
+        let platform = Platform::Debian;
+
+        let (cat_name, cat) = config
+            .categories
+            .get_key_value("opencode")
+            .expect("opencode category should exist");
+
+        if !is_command_in_path("opencode") {
+            assert!(
+                !is_category_applied(cat_name, cat, &state, &platform, &config),
+                "opencode should NOT be marked as applied when opencode binary is missing, even if curl/git/bash are installed"
+            );
+        }
+
+        let mut applied_state = State::default();
+        applied_state.mark_category_applied("opencode");
+        assert!(
+            is_category_applied(cat_name, cat, &applied_state, &platform, &config),
+            "opencode should be marked as applied when recorded in state"
+        );
+    }
+
+    #[test]
+    fn dry_run_mode_must_not_modify_state_or_track_packages() {
+        let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+        let mut state = State::default();
+        let platform = Platform::Debian;
+
+        let initial_packages_count = state.packages.len();
+        let initial_applied_count = state.applied_categories.len();
+
+        let res = install_category(Some("opencode"), &config, &mut state, &platform, true);
+        assert!(res.is_ok(), "install_category in dry_run should succeed");
+
+        assert_eq!(
+            state.packages.len(),
+            initial_packages_count,
+            "dry_run MUST NOT track packages in state"
+        );
+        assert_eq!(
+            state.applied_categories.len(),
+            initial_applied_count,
+            "dry_run MUST NOT mark categories as applied in state"
+        );
     }
 }
 

@@ -144,6 +144,7 @@ impl Config {
     }
 
     /// Extracts all HTTP/HTTPS URLs referenced in category custom installers and post-install commands.
+    #[cfg(test)]
     pub fn extract_all_urls(&self) -> Vec<String> {
         let mut urls = Vec::new();
 
@@ -240,6 +241,7 @@ pub fn dirs_home_dir() -> Option<PathBuf> {
 }
 
 /// Validates if an HTTP/HTTPS URL is reachable (returns HTTP 2xx or 3xx status).
+#[allow(dead_code)]
 pub fn validate_url_reachable(url: &str) -> anyhow::Result<u16> {
     if url.contains("${") {
         return Ok(200);

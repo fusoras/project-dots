@@ -15,21 +15,27 @@
 
 Modular `.toml` files allow breaking down large configurations into clean, domain-specific files (e.g. `editors.toml`, `shell.toml`). Categories declared in `categories.d/*.toml` are merged into the main category catalog.
 
-## State Management (`~/.local/state/project-dots/state.toml`)
+## State Management (`~/.local/state/dotss/state.toml`)
+
+`dotss` tracks applied categories and package installation metadata deterministically in `~/.local/state/dotss/state.toml`:
 
 ```toml
+applied_categories = ["lazyvim-minimal", "zsh-tokyonight"]
+
 [packages.git]
 category = "lazyvim-minimal"
 was_preexisting = true
 installed_by_dots = false
-installed_at = "2026-08-07T17:48:00Z"
+installed_at = "Timestamp(1770925680)"
 
 [packages.fd]
 category = "lazyvim-minimal"
 was_preexisting = false
 installed_by_dots = true
-installed_at = "2026-08-07T17:48:05Z"
+installed_at = "Timestamp(1770925685)"
 ```
+
+Category applied status in `dotss list` is verified strictly against `applied_categories` in `state.toml`. This guarantees zero false-positive status indicators on clean systems that already contain pre-existing system packages (such as `curl` or `git`). Executing commands with `--dry-run` (`-n`) maintains 100% state immutability without modifying `state.toml`.
 
 ## Category Schema (`categories.toml`)
 
@@ -145,16 +151,15 @@ Each category can declare optional short aliases via the `aliases` array propert
 
 ### 6. `agent-tools` (Token-Saving Agentic Helper Tools)
 - **Description**: Token-saving agentic helper tools suite for Debian (engram, herdr, codegraph).
-- **Aliases**: `agents-tools`, `ai-tools`, `token-tools`
+- **Aliases**: `ai-tools`
 - **Debian Packages**: `curl`, `git`, `tar`, `grep`
-- **Post-Install**:
+- **Post-Install**: Executes non-interactively (no confirmation prompts) to install helper utilities:
   - `engram`: Queries latest release tag via GitHub API, downloads `engram_*_linux_amd64.tar.gz`, and places binary at `~/.local/bin/engram`
   - `herdr`: `curl -fsSL https://herdr.dev/install.sh | sh`
   - `codegraph`: `curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh`
 
 ### 7. `agent-flow` (Complete Agentic AI Suite Pack)
-- **Description**: Complete Agentic AI suite combining opencode and token-saving agent-tools.
-- **Aliases**: `agents-flow`, `agent-stack`, `agents-debian`
+- **Description**: Complete Agentic AI suite combining opencode and token-saving agent-tools (engram, herdr, codegraph).
 - **Includes**: `opencode`, `agent-tools`
 
 

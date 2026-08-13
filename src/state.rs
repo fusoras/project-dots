@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::PathBuf;
 
@@ -7,6 +7,8 @@ use std::path::PathBuf;
 pub struct State {
     #[serde(default)]
     pub packages: BTreeMap<String, TrackedPackage>,
+    #[serde(default)]
+    pub applied_categories: BTreeSet<String>,
     #[serde(default)]
     pub cached_latest_version: Option<String>,
     #[serde(default)]
@@ -90,6 +92,21 @@ impl State {
     /// Removes a package from state tracking after uninstallation.
     pub fn remove_package(&mut self, name: &str) {
         self.packages.remove(name);
+    }
+
+    /// Marks a category as explicitly applied by dotss.
+    pub fn mark_category_applied(&mut self, category: &str) {
+        self.applied_categories.insert(category.to_string());
+    }
+
+    /// Unmarks a category from applied state after removal.
+    pub fn unmark_category_applied(&mut self, category: &str) {
+        self.applied_categories.remove(category);
+    }
+
+    /// Checks if a category is explicitly recorded as applied in state.
+    pub fn is_category_applied(&self, category: &str) -> bool {
+        self.applied_categories.contains(category)
     }
 }
 

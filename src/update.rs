@@ -209,10 +209,10 @@ pub fn perform_self_uninstall(
 /// Returns cached latest version tag if a newer version is saved in state.toml. (0ms latency, zero IO delay).
 pub fn check_version_update(current_version: &str) -> Option<String> {
     let state = crate::state::State::load();
-    if let Some(cached) = state.cached_latest_version {
-        if is_newer_version(&cached, current_version) {
-            return Some(cached);
-        }
+    if let Some(cached) = state.cached_latest_version
+        && is_newer_version(&cached, current_version)
+    {
+        return Some(cached);
     }
     None
 }
