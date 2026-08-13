@@ -264,8 +264,12 @@ pub fn validate_url_reachable(url: &str) -> anyhow::Result<u16> {
 
     let output = std::process::Command::new("curl")
         .arg("-sIL")
-        .arg("--max-time")
+        .arg("--connect-timeout")
         .arg("10")
+        .arg("--max-time")
+        .arg("20")
+        .arg("--retry")
+        .arg("2")
         .arg("-H")
         .arg("User-Agent: dotss-cli")
         .arg("-o")

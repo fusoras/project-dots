@@ -121,39 +121,90 @@ pub fn list_categories(
                     }
                 });
 
-                let detail_str = if let Some(inc_list) = &cat.includes {
-                    let expanded: Vec<String> = inc_list
-                        .iter()
-                        .map(|inc| {
-                            if let Some(sub) = config.categories.get(inc)
-                                && let Some(disp) = &sub.display_packages
-                            {
-                                return disp.join(", ");
+                let (full_detail_str, count_str, total_count, is_redundant) =
+                    if let Some(inc_list) = &cat.includes {
+                        let mut expanded: Vec<String> = Vec::new();
+                        if let Some(disp) = &cat.display_packages {
+                            expanded = disp.clone();
+                        } else {
+                            for inc in inc_list {
+                                if let Some(sub) = config.categories.get(inc) {
+                                    if let Some(disp) = &sub.display_packages {
+                                        expanded.extend(disp.clone());
+                                    } else {
+                                        expanded.push(inc.clone());
+                                    }
+                                } else {
+                                    expanded.push(inc.clone());
+                                }
                             }
-                            inc.clone()
-                        })
-                        .collect();
-                    format!("pack: {}", expanded.join(", "))
-                } else if pkgs.is_empty() {
-                    "none".to_string()
-                } else {
-                    pkgs.join(", ")
-                };
+                        }
+                        let mut unique_items = Vec::new();
+                        for item in expanded {
+                            if !unique_items.contains(&item) {
+                                unique_items.push(item);
+                            }
+                        }
+                        let cnt = unique_items.len();
+                        (
+                            format!("pack: {}", format_items_limited(&unique_items, 6)),
+                            format!("pack: {cnt} items"),
+                            cnt,
+                            false,
+                        )
+                    } else if pkgs.is_empty() {
+                        ("none".to_string(), "0 pkgs".to_string(), 0, true)
+                    } else {
+                        let cnt = pkgs.len();
+                        let formatted = format_items_limited(&pkgs, 6);
+                        let redundant = formatted.eq_ignore_ascii_case(cat_name);
+                        let count_label = if cnt == 1 {
+                            "1 pkg".to_string()
+                        } else {
+                            format!("{cnt} pkgs")
+                        };
+                        (formatted, count_label, cnt, redundant)
+                    };
 
                 let apply_suffix = if is_category_applied(cat_name, cat, state, platform, config) {
                     format!(" {WHITE}[apply]{RESET}")
                 } else {
                     String::new()
                 };
+                let apply_suffix_len =
+                    if is_category_applied(cat_name, cat, state, platform, config) {
+                        8
+                    } else {
+                        0
+                    };
 
                 let hidden_suffix = if !is_supported {
                     format!(" {DIM_GRAY}[unsupported]{RESET}")
                 } else {
                     String::new()
                 };
+                let hidden_suffix_len = if !is_supported { 14 } else { 0 };
+
+                let term_width = get_terminal_width();
+                let base_header_len =
+                    4 + cat_name.len() + alias_part.len() + 2 + cat.description.len();
+
+                let pkg_part = if is_redundant || total_count == 0 {
+                    String::new()
+                } else {
+                    let full_candidate_len = 3 + full_detail_str.len();
+                    if base_header_len + full_candidate_len + apply_suffix_len + hidden_suffix_len
+                        <= term_width
+                    {
+                        format!(" {DIM_GRAY}({full_detail_str}){RESET}")
+                    } else {
+                        format!(" {DIM_GRAY}({count_str}){RESET}")
+                    }
+                };
 
                 output.push_str(&format!(
-                    "  - {BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{detail_str}{RESET}{apply_suffix}{hidden_suffix}\n"
+                    "  - {BOLD_GREEN}{cat_name}{RESET}{alias_part}: {}{pkg_part}{apply_suffix}{hidden_suffix}\n",
+                    cat.description
                 ));
             }
         }
@@ -198,22 +249,40 @@ pub fn list_categories(
             });
 
             let pkgs_str = if let Some(inc_list) = &cat.includes {
-                let expanded: Vec<String> = inc_list
-                    .iter()
-                    .map(|inc| {
-                        if let Some(sub) = config.categories.get(inc)
-                            && let Some(disp) = &sub.display_packages
-                        {
-                            return disp.join(", ");
+                if let Some(disp) = &cat.display_packages {
+                    format!("pack: {}", format_items_limited(disp, 6))
+                } else {
+                    let mut expanded: Vec<String> = Vec::new();
+                    for inc in inc_list {
+                        if let Some(sub) = config.categories.get(inc) {
+                            if let Some(disp) = &sub.display_packages {
+                                expanded.extend(disp.clone());
+                            } else {
+                                expanded.push(inc.clone());
+                            }
+                        } else {
+                            expanded.push(inc.clone());
                         }
-                        inc.clone()
-                    })
-                    .collect();
-                format!("pack: {}", expanded.join(", "))
+                    }
+                    let mut unique_items = Vec::new();
+                    for item in expanded {
+                        if !unique_items.contains(&item) {
+                            unique_items.push(item);
+                        }
+                    }
+                    format!("pack: {}", format_items_limited(&unique_items, 6))
+                }
             } else if pkgs.is_empty() {
                 "none".to_string()
             } else {
-                pkgs.join(", ")
+                format_items_limited(&pkgs, 6)
+            };
+
+            let is_redundant = pkgs_str.eq_ignore_ascii_case(cat_name);
+            let detail_part = if is_redundant {
+                String::new()
+            } else {
+                format!(" / {DIM_GRAY}{pkgs_str}{RESET}")
             };
 
             let apply_suffix = if is_category_applied(cat_name, cat, state, platform, config) {
@@ -229,7 +298,7 @@ pub fn list_categories(
             };
 
             output.push_str(&format!(
-                "{BOLD_GREEN}{cat_name}{RESET}{alias_part} / {DIM_GRAY}{pkgs_str}{RESET}{apply_suffix}{hidden_suffix}\n"
+                "{BOLD_GREEN}{cat_name}{RESET}{alias_part}{detail_part}{apply_suffix}{hidden_suffix}\n"
             ));
         }
     }
@@ -347,6 +416,39 @@ pub fn is_category_supported(
     }
 
     false
+}
+
+pub fn format_items_limited(items: &[String], limit: usize) -> String {
+    if items.is_empty() {
+        return "none".to_string();
+    }
+    if items.len() <= limit {
+        items.join(", ")
+    } else {
+        let shown = &items[..limit];
+        let remaining = items.len() - limit;
+        format!("{}, (+{} more)", shown.join(", "), remaining)
+    }
+}
+
+pub fn get_terminal_width() -> usize {
+    if let Ok(cols) = env::var("COLUMNS")
+        && let Ok(w) = cols.parse::<usize>()
+        && w > 20
+    {
+        return w;
+    }
+
+    if let Ok(output) = std::process::Command::new("tput").arg("cols").output()
+        && output.status.success()
+        && let Ok(s) = std::str::from_utf8(&output.stdout)
+        && let Ok(w) = s.trim().parse::<usize>()
+        && w > 20
+    {
+        return w;
+    }
+
+    80
 }
 
 fn is_category_applied(
@@ -1741,5 +1843,25 @@ mod tests {
             initial_applied_count,
             "dry_run MUST NOT mark categories as applied in state"
         );
+    }
+
+    #[test]
+    fn format_items_limited_should_cap_overflowing_items() {
+        let items = vec![
+            "item1".to_string(),
+            "item2".to_string(),
+            "item3".to_string(),
+            "item4".to_string(),
+            "item5".to_string(),
+            "item6".to_string(),
+            "item7".to_string(),
+            "item8".to_string(),
+        ];
+        assert_eq!(
+            format_items_limited(&items, 6),
+            "item1, item2, item3, item4, item5, item6, (+2 more)"
+        );
+        assert_eq!(format_items_limited(&items[..3], 6), "item1, item2, item3");
+        assert_eq!(format_items_limited(&[], 6), "none");
     }
 }

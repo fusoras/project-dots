@@ -34,9 +34,10 @@ dotss list --categories
 ╭─────────────╮
 │ AI & Agents │
 ╰─────────────╯
-  - agent-flow / pack: opencode, agent-tools [apply]
-  - agent-tools (ai-tools) / curl, git, tar, grep [apply]
-  - opencode / curl, git, bash [apply]
+  - agents-flow / pack: opencode, engram, herdr, codegraph [apply]
+  - agents-tools (ai-tools) / engram, herdr, codegraph [apply]
+  - antigravity-cli
+  - opencode [apply]
 
 ╭──────────────────╮
 │ Shell & Terminal │

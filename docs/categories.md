@@ -111,13 +111,13 @@ Each category can declare optional short aliases via the `aliases` array propert
 ## Active Production Categories
 
 ### 1. `lazyvim-minimal` (Minimal LazyVim Setup)
-- **Description**: Minimal required dependencies to run LazyVim.
+- **Description**: Minimal Neovim IDE and editor setup.
 - **Termux Packages**: `neovim`, `git`, `curl`, `clang`, `fd`, `lazygit`
 - **Debian Packages**: `git`, `curl`, `clang`, `fd-find`, `lazygit` + Neovim custom binary tarball (`/opt/nvim` + `~/.local/bin/nvim`).
 - **Post-Install**: Clones default LazyVim config to `~/.config/nvim` (automatically creates timestamped backups if existing Neovim config is found).
 
 ### 2. `zsh-tokyonight` (Zsh & TokyoNight Starship Setup)
-- **Description**: Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, atuin, and fzf.
+- **Description**: Zsh terminal setup with TokyoNight prompt and plugins.
 - **Aliases**: `zsh-tn`
 - **Packages**: `zsh`, `git`, `eza`, `zoxide`, `bat`, `starship`, `atuin`, `fzf`
 - **Config Copies**:
@@ -130,7 +130,7 @@ Each category can declare optional short aliases via the `aliases` array propert
 - **Final Message**: Restart your terminal or run: exec zsh (or Restart Termux or run: exec zsh on Termux).
 
 ### 3. `nodejs-pnpm` (Node.js & pnpm Setup)
-- **Description**: Node.js environment with NVM (Debian) or Node.js LTS (Termux) and pnpm enabled via Corepack.
+- **Description**: Node.js and package manager runtime.
 - **Termux Packages**: `nodejs-lts`
 - **Debian Packages**: `curl`
 - **Post-Install**:
@@ -138,19 +138,23 @@ Each category can declare optional short aliases via the `aliases` array propert
   - Termux: Enables pnpm via Corepack, prepares `pnpm@latest`, and verifies version (`pnpm -v`).
 
 ### 4. `term-flow` (Terminal Navigation & Session Suite)
-- **Description**: Agile terminal navigation and session management suite with zellij, zoxide, and atuin.
+- **Description**: Terminal workspace and navigation suite.
 - **Aliases**: `terminal-flow`, `nav-flow`
 - **Debian Packages**: `zoxide`, `atuin` + `zellij` custom binary installer (`https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz` -> `/opt/zellij` -> `~/.local/bin/zellij`).
 - **Termux Packages**: `zellij`, `zoxide`, `atuin`
 
-### 5. `opencode` (OpenCode AI Coding Assistant)
-- **Description**: OpenCode AI coding assistant for Debian.
-- **Aliases**: `open-code`, `opencode-cli`
+### 5. `antigravity-cli` (Antigravity AI Coding Assistant CLI)
+- **Description**: AI coding assistant CLI.
+- **Debian Packages**: `curl`, `git`, `bash`
+- **Post-Install**: `curl -fsSL https://antigravity.google/cli/install.sh | bash`
+
+### 6. `opencode` (OpenCode AI Coding Assistant)
+- **Description**: AI coding assistant.
 - **Debian Packages**: `curl`, `git`, `bash`
 - **Post-Install**: `curl -fsSL https://opencode.ai/install | bash`
 
-### 6. `agent-tools` (Token-Saving Agentic Helper Tools)
-- **Description**: Token-saving agentic helper tools suite for Debian (engram, herdr, codegraph).
+### 7. `agents-tools` (Token-Saving Agentic Helper Tools)
+- **Description**: Token-saving agentic helper tools.
 - **Aliases**: `ai-tools`
 - **Debian Packages**: `curl`, `git`, `tar`, `grep`
 - **Post-Install**: Executes non-interactively (no confirmation prompts) to install helper utilities:
@@ -158,9 +162,9 @@ Each category can declare optional short aliases via the `aliases` array propert
   - `herdr`: `curl -fsSL https://herdr.dev/install.sh | sh`
   - `codegraph`: `curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh`
 
-### 7. `agent-flow` (Complete Agentic AI Suite Pack)
-- **Description**: Complete Agentic AI suite combining opencode and token-saving agent-tools (engram, herdr, codegraph).
-- **Includes**: `opencode`, `agent-tools`
+### 8. `agents-flow` (Complete Agentic AI Suite Pack)
+- **Description**: Complete Agentic AI suite pack.
+- **Includes**: `opencode`, `agents-tools`
 
 
 

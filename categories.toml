@@ -1,7 +1,8 @@
 [categories.lazyvim-minimal]
 aliases = ["lzv-min"]
-description = "Minimal LazyVim dependencies and editor setup"
+description = "Minimal Neovim IDE and editor setup"
 group = "Editors & IDEs"
+display_packages = ["neovim", "lazyvim", "lazygit", "clang", "fd"]
 debian_packages = ["git", "curl", "clang", "fd-find", "lazygit"]
 termux_packages = ["neovim", "git", "curl", "clang", "fd", "lazygit"]
 
@@ -21,8 +22,9 @@ command = "if [ ! -d \"$HOME/.config/nvim/.git\" ]; then [ -d \"$HOME/.config/nv
 
 [categories.zsh-tokyonight]
 aliases = ["zsh-tn"]
-description = "Zsh terminal setup with TokyoNight Starship prompt, JetBrains Mono font, eza, zoxide, bat, git, atuin, and fzf"
+description = "Zsh terminal setup with TokyoNight prompt and plugins"
 group = "Shell & Terminal"
+display_packages = ["zsh", "starship", "eza", "zoxide", "bat", "atuin", "fzf", "zsh-plugins"]
 debian_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin", "fzf"]
 termux_packages = ["zsh", "git", "eza", "zoxide", "bat", "starship", "atuin", "fzf"]
 final_message = "Restart your terminal or run: exec zsh"
@@ -133,8 +135,9 @@ only_if_not_exists = true
 
 [categories.zsh-minimal]
 aliases = ["zsh-min"]
-description = "Minimal Zsh terminal setup with JetBrains Mono font, zoxide, and bat"
+description = "Minimal Zsh terminal setup"
 group = "Shell & Terminal"
+display_packages = ["zsh", "zoxide", "bat"]
 debian_packages = ["zsh", "zoxide", "bat"]
 termux_packages = ["zsh", "zoxide", "bat"]
 final_message = "Restart your terminal or run: exec zsh"
@@ -180,8 +183,9 @@ description = "Initialize zoxide in ~/.config/zsh/.zshrc under section '# Fast i
 
 
 [categories.term-flow]
-description = "Agile terminal navigation and session management suite with zellij, zoxide, and atuin"
+description = "Terminal workspace and navigation suite"
 group = "Shell & Terminal"
+display_packages = ["zellij", "zoxide", "atuin"]
 debian_packages = ["zoxide", "atuin"]
 termux_packages = ["zellij", "zoxide", "atuin"]
 
@@ -208,8 +212,9 @@ only_if_not_exists = true
 
 
 [categories.i3wm]
-description = "i3 window manager setup with polybar, picom, rofi, dunst, and feh"
+description = "Tiling window manager desktop environment"
 group = "Window Managers & Desktop"
+display_packages = ["i3", "polybar", "picom", "rofi", "dunst", "feh", "lxappearance", "lxterminal"]
 debian_packages = ["i3", "picom", "polybar", "rofi", "feh", "lxappearance", "lxterminal", "dunst", "wget", "gnome-keyring", "libsecret-1-0"]
 final_message = "Remember to place your wallpaper at ~/Wallpaper/wp.jpg (or update the path in ~/.config/i3/config) and set system default applications via xdg-open / update-alternatives."
 
@@ -230,8 +235,9 @@ platform = "debian"
 
 
 [categories.nodejs-pnpm]
-description = "Node.js environment with NVM (Debian) or Node.js LTS (Termux) and pnpm enabled via Corepack"
+description = "Node.js and package manager runtime"
 group = "Runtimes & Languages"
+display_packages = ["node", "pnpm", "nvm"]
 debian_packages = ["curl"]
 termux_packages = ["nodejs-lts"]
 
@@ -251,8 +257,22 @@ command = "corepack enable pnpm && corepack prepare pnpm@latest --activate && pn
 platform = "termux"
 
 
+[categories.antigravity-cli]
+description = "AI coding assistant CLI"
+group = "AI & Agents"
+display_packages = ["antigravity-cli"]
+debian_packages = ["curl", "git", "bash"]
+
+[[categories.antigravity-cli.post_install_commands]]
+description = "Install or update Antigravity CLI"
+prompt = "Do you want to install/update Antigravity CLI (via https://antigravity.google/cli/install.sh)?"
+confirm = true
+platform = "debian"
+command = "curl -fsSL https://antigravity.google/cli/install.sh | bash"
+
+
 [categories.opencode]
-description = "OpenCode AI coding assistant for Debian"
+description = "AI coding assistant"
 group = "AI & Agents"
 display_packages = ["opencode"]
 debian_packages = ["curl", "git", "bash"]
@@ -265,37 +285,39 @@ platform = "debian"
 command = "curl -fsSL https://opencode.ai/install | bash"
 
 
-[categories.agent-tools]
+[categories.agents-tools]
 aliases = ["ai-tools"]
-description = "Token-saving agentic helper tools suite for Debian (engram, herdr, codegraph)"
+description = "Token-saving agentic helper tools"
 group = "AI & Agents"
 display_packages = ["engram", "herdr", "codegraph"]
 debian_packages = ["curl", "git", "tar", "grep"]
 
-[[categories.agent-tools.post_install_commands]]
+[[categories.agents-tools.post_install_commands]]
 description = "Install or update engram (latest release)"
 platform = "debian"
 command = "LATEST_TAG=$(curl -fsSL https://api.github.com/repos/Gentleman-Programming/engram/releases/latest | grep '\"tag_name\":' | sed -E 's/.*\"tag_name\": *\"([^\"]+)\".*/\\1/'); VER=${LATEST_TAG#v}; mkdir -p ~/.local/bin && curl -fsSL \"https://github.com/Gentleman-Programming/engram/releases/download/${LATEST_TAG}/engram_${VER}_linux_amd64.tar.gz\" | tar -xz -C ~/.local/bin engram && chmod +x ~/.local/bin/engram"
 
-[[categories.agent-tools.post_install_commands]]
+[[categories.agents-tools.post_install_commands]]
 description = "Install or update herdr"
 platform = "debian"
 command = "curl -fsSL https://herdr.dev/install.sh | sh"
 
-[[categories.agent-tools.post_install_commands]]
+[[categories.agents-tools.post_install_commands]]
 description = "Install or update codegraph"
 platform = "debian"
 command = "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh"
 
 
-[categories.agent-flow]
-description = "Complete Agentic AI suite combining opencode and token-saving agent-tools (engram, herdr, codegraph)"
+[categories.agents-flow]
+description = "Complete Agentic AI suite pack"
 group = "AI & Agents"
-includes = ["opencode", "agent-tools"]
+display_packages = ["opencode", "engram", "herdr", "codegraph"]
+includes = ["opencode", "agents-tools"]
 
 
 [categories.mydots-termux]
 aliases = ["dots-termux"]
-description = "Complete Termux dotfiles pack combining zsh-tokyonight, lazyvim-minimal, and term-flow"
+description = "Complete dotfiles terminal pack"
 group = "Packs & Bundles"
+display_packages = ["zsh-tokyonight", "lazyvim-minimal", "term-flow"]
 includes = ["zsh-tokyonight", "lazyvim-minimal", "term-flow"]
