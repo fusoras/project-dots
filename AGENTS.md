@@ -1,9 +1,9 @@
 # AGENTS.md — project-dots
 
-Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.38`).
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.39`).
 
 ## Project Facts
-- Binary crate `dotss` v0.1.0-beta.38, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Binary crate `dotss` v0.1.0-beta.39, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
 - **Command Renaming Note**: Executable binary command was officially renamed from `project-dots` to `dotss` in `v0.1.0-beta.20` for CLI user convenience.
 - Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
 - Entrypoint: `src/main.rs`.
@@ -57,6 +57,10 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
   - **Main Branch Strict Prohibition**: The assistant must NEVER switch to, merge into, or touch the `main` branch under any circumstances unless explicitly requested by the user in their message.
   - **Explicit Merge Restriction**: Never execute a branch merge (`git merge`) unless the user explicitly instructs to merge in their message.
   - **Explicit Push Restriction**: Never execute a remote push command (`git push`) unless the user explicitly instructs to push in their message. Before pushing, clearly explain what commits, branches, or tags will be pushed and request confirmation.
+- **Mandatory APT & PKG Package Verification Governance**:
+  - NEVER assume a package exists in Debian (`apt`) or Termux (`pkg`) repositories when defining `debian_packages` or `termux_packages` in `categories.toml`.
+  - ALWAYS check package presence via `apt-cache show <pkg>` / `pkg search <pkg>` before adding it to package lists.
+  - If a package is NOT in standard APT/PKG repositories or if availability is uncertain, the assistant MUST ask the user before proceeding, and configure it using custom installers (`[categories.<name>.custom.debian]`, script, or tarball download) instead of putting it in `debian_packages`.
 - **User Version Control & Version Bumping Policy**:
   - **User Defines Versions Exclusively**: The user exclusively determines, authorizes, and defines version numbers (e.g. `v0.1.0-beta.34`) and release triggers. The assistant MAY ONLY suggest version numbers when asked, and MUST NEVER increment or change version numbers independently.
   - Do NOT increment or bump the version number for intermediate local commits or small feature/bugfix edits.

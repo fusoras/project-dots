@@ -134,7 +134,8 @@ Each category can declare optional short aliases via the `aliases` array propert
 ### 4. `term-flow` (Terminal Navigation & Session Suite)
 - **Description**: Agile terminal navigation and session management suite with zellij, zoxide, and atuin.
 - **Aliases**: `terminal-flow`, `nav-flow`
-- **Packages**: `zellij`, `zoxide`, `atuin`
+- **Debian Packages**: `zoxide`, `atuin` + `zellij` custom binary installer (`https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz` -> `/opt/zellij` -> `~/.local/bin/zellij`).
+- **Termux Packages**: `zellij`, `zoxide`, `atuin`
 
 ### 5. `opencode` (OpenCode AI Coding Assistant)
 - **Description**: OpenCode AI coding assistant for Debian.

@@ -182,8 +182,15 @@ description = "Initialize zoxide in ~/.config/zsh/.zshrc under section '# Fast i
 [categories.term-flow]
 description = "Agile terminal navigation and session management suite with zellij, zoxide, and atuin"
 group = "Shell & Terminal"
-debian_packages = ["zellij", "zoxide", "atuin"]
+debian_packages = ["zoxide", "atuin"]
 termux_packages = ["zellij", "zoxide", "atuin"]
+
+[categories.term-flow.custom.debian]
+name = "zellij"
+type = "github_release_tarball"
+url = "https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz"
+extract_dir = "/opt/zellij"
+bin_symlink = "~/.local/bin/zellij"
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Enable Zsh completion system (compinit) in ~/.config/zsh/.zshrc"

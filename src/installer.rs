@@ -896,7 +896,7 @@ fn install_custom_debian(
     fs::create_dir_all(&tmp_dir).context("Failed to create temp directory")?;
     let tmp_tarball = tmp_dir.join(format!("{}.tar.gz", custom.name));
 
-    println!("  [Downloading] Fetching latest tarball from {}...", custom.url);
+    println!("  [Downloading] Downloading {}...", custom.name);
     let curl_status = Command::new("curl")
         .arg("-fsSL")
         .arg("-o")
@@ -923,21 +923,58 @@ fn install_custom_debian(
         anyhow::bail!("Failed to create directory {}", custom.extract_dir);
     }
 
-    let tar_status = Command::new("sudo")
+    // Extract tarball with --strip-components=1 first (for nested release archives like Neovim)
+    let _ = Command::new("sudo")
         .arg("tar")
         .arg("-xzf")
         .arg(&tmp_tarball)
         .arg("-C")
         .arg(&custom.extract_dir)
         .arg("--strip-components=1")
-        .status()
-        .context("Failed to extract tarball")?;
+        .status();
+
+    let bin_in_subfolder = format!("{}/bin/{}", custom.extract_dir, custom.name);
+    let bin_at_root = format!("{}/{}", custom.extract_dir, custom.name);
+
+    // If neither path exists (e.g. flat tarball like zellij), extract directly without --strip-components=1
+    if !Path::new(&bin_in_subfolder).exists() && !Path::new(&bin_at_root).exists() {
+        let tar_status = Command::new("sudo")
+            .arg("tar")
+            .arg("-xzf")
+            .arg(&tmp_tarball)
+            .arg("-C")
+            .arg(&custom.extract_dir)
+            .status()
+            .context("Failed to extract flat tarball")?;
+
+        if !tar_status.success() {
+            let _ = fs::remove_dir_all(&tmp_dir);
+            anyhow::bail!("Failed to extract tarball to {}", custom.extract_dir);
+        }
+    }
 
     let _ = fs::remove_dir_all(&tmp_dir);
 
-    if !tar_status.success() {
-        anyhow::bail!("Failed to extract tarball to {}", custom.extract_dir);
-    }
+    // Resolve target binary path and verify it exists
+    let target_bin = if Path::new(&bin_in_subfolder).exists() {
+        bin_in_subfolder
+    } else if Path::new(&bin_at_root).exists() {
+        bin_at_root
+    } else {
+        anyhow::bail!(
+            "Extracted binary '{}' was not found in {} or {}/bin",
+            custom.name,
+            custom.extract_dir,
+            custom.extract_dir
+        );
+    };
+
+    // Ensure the binary is executable
+    let _ = Command::new("sudo")
+        .arg("chmod")
+        .arg("+x")
+        .arg(&target_bin)
+        .status();
 
     let symlink_dir = bin_path_buf.parent().unwrap();
     fs::create_dir_all(symlink_dir)
@@ -947,7 +984,6 @@ fn install_custom_debian(
         let _ = fs::remove_file(&bin_path_buf);
     }
 
-    let target_bin = format!("{}/bin/{}", custom.extract_dir, custom.name);
     symlink(&target_bin, &bin_path_buf)
         .map_err(|e| anyhow::anyhow!("Failed to create symlink at {}: {e}", bin_path_buf.display()))?;
 
