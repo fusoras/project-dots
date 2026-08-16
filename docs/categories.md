@@ -125,7 +125,7 @@ Each category can declare optional short aliases via the `aliases` array propert
   - `config/zsh-tokyonight/font.ttf` -> `~/.termux/font.ttf` (Termux only, skipped if `font.ttf` already exists)
 - **Post-Install**:
   - Debian: `chsh -s $(which zsh)` (sets Zsh as default shell)
-  - Termux: `chsh -s zsh` (sets Zsh as default shell)
+  - Termux: `chsh -s zsh` (sets Zsh as default shell) and `termux-reload-settings` (reloads font and terminal settings)
   - All: ensures `~/.zshrc` exists and adds `eval "$(starship init zsh)"` so Starship starts with Zsh
 - **Final Message**: Restart your terminal or run: exec zsh (or Restart Termux or run: exec zsh on Termux).
 
@@ -162,7 +162,13 @@ Each category can declare optional short aliases via the `aliases` array propert
   - `herdr`: `curl -fsSL https://herdr.dev/install.sh | sh`
   - `codegraph`: `curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh`
 
-### 8. `agents-flow` (Complete Agentic AI Suite Pack)
+### 8. `llama-cpp` (llama.cpp LLM Inference Engine)
+- **Description**: LLM inference engine (llama.cpp).
+- **Debian Packages**: `curl`, `git`, `bash`
+- **Post-Install** (Debian only): `curl -LsSf https://llama.app/install.sh | sh`
+- **Group**: AI & Agents
+
+### 9. `agents-flow` (Complete Agentic AI Suite Pack)
 - **Description**: Complete Agentic AI suite pack.
 - **Includes**: `opencode`, `agents-tools`
 

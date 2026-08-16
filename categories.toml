@@ -106,7 +106,7 @@ description = "Enable fzf-tab plugin in ~/.config/zsh/.zshrc under section '# Zs
 
 [[categories.zsh-tokyonight.post_install_commands]]
 description = "Enable Zsh completion system (compinit) in ~/.config/zsh/.zshrc"
-command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit && compinit' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-tokyonight.post_install_commands]]
 description = "Set Zsh completion format styling in ~/.config/zsh/.zshrc"
@@ -117,6 +117,11 @@ file = "~/.config/zsh/.zshrc"
 section = "# Fast init tools"
 line = 'eval "$(atuin init zsh)"'
 description = "Initialize Atuin shell history in ~/.config/zsh/.zshrc under section '# Fast init tools'"
+
+[[categories.zsh-tokyonight.post_install_commands]]
+description = "Reload Termux settings to apply font"
+command = "termux-reload-settings"
+platform = "termux"
 
 [[categories.zsh-tokyonight.copy_files]]
 src = "config/zsh-tokyonight/starship.toml"
@@ -198,11 +203,16 @@ bin_symlink = "~/.local/bin/zellij"
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Enable Zsh completion system (compinit) in ~/.config/zsh/.zshrc"
-command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit' >> \"$HOME/.config/zsh/.zshrc\""
+command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF 'autoload -Uz compinit' \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || echo 'autoload -Uz compinit && compinit' >> \"$HOME/.config/zsh/.zshrc\""
 
 [[categories.zsh-minimal.post_install_commands]]
 description = "Set Zsh completion format styling in ~/.config/zsh/.zshrc"
 command = "mkdir -p \"$HOME/.config/zsh\" && grep -qF \"zstyle ':completion:*' format\" \"$HOME/.config/zsh/.zshrc\" 2>/dev/null || printf '%s\\n' \"zstyle ':completion:*' format '\\u001b[2;37mCompleting %d\\u001b[m'\" >> \"$HOME/.config/zsh/.zshrc\""
+
+[[categories.zsh-minimal.post_install_commands]]
+description = "Reload Termux settings to apply font"
+command = "termux-reload-settings"
+platform = "termux"
 
 [[categories.zsh-minimal.copy_files]]
 src = "config/zsh-minimal/font.ttf"
@@ -283,6 +293,20 @@ prompt = "Do you want to install/update opencode (via https://opencode.ai/instal
 confirm = true
 platform = "debian"
 command = "curl -fsSL https://opencode.ai/install | bash"
+
+
+[categories.llama-cpp]
+description = "LLM inference engine (llama.cpp)"
+group = "AI & Agents"
+display_packages = ["llama.cpp"]
+debian_packages = ["curl", "git", "bash"]
+
+[[categories.llama-cpp.post_install_commands]]
+description = "Install or update llama.cpp"
+prompt = "Do you want to install/update llama.cpp (via https://llama.app/install.sh)?"
+confirm = true
+platform = "debian"
+command = "curl -LsSf https://llama.app/install.sh | sh"
 
 
 [categories.agents-tools]
