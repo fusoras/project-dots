@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# project-dots (v0.1.0-beta.40) System Installer Script
+# project-dots (v0.1.0-beta.41) System Installer Script
 # Usage: curl -fsSL https://raw.githubusercontent.com/fusoras/project-dots/develop/install.sh | sh
 
 # ── Dependency check ──────────────────────────────────────────

@@ -143,7 +143,7 @@ dependencies = [
 
 [[package]]
 name = "dotss"
-version = "0.1.0-beta.40"
+version = "0.1.0-beta.41"
 dependencies = [
  "anyhow",
  "clap",
