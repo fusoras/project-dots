@@ -88,6 +88,7 @@ pub struct CustomInstaller {
     pub url: String,
     pub extract_dir: String,
     pub bin_symlink: String,
+    pub binary_name: Option<String>,
 }
 
 impl Config {

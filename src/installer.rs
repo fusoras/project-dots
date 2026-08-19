@@ -1300,11 +1300,48 @@ fn install_custom_debian(
         .arg("--strip-components=1")
         .status();
 
-    let bin_in_subfolder = format!("{}/bin/{}", custom.extract_dir, custom.name);
-    let bin_at_root = format!("{}/{}", custom.extract_dir, custom.name);
+    let symlink_file_name = bin_path_buf
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or(&custom.name)
+        .to_string();
+
+    let candidate_names: Vec<&str> = [
+        custom.binary_name.as_deref(),
+        Some(symlink_file_name.as_str()),
+        Some(custom.name.as_str()),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+
+    let find_extracted_binary = || -> Option<String> {
+        for name in &candidate_names {
+            let in_bin = format!("{}/bin/{}", custom.extract_dir, name);
+            if Path::new(&in_bin).exists() {
+                return Some(in_bin);
+            }
+            let at_root = format!("{}/{}", custom.extract_dir, name);
+            if Path::new(&at_root).exists() {
+                return Some(at_root);
+            }
+        }
+        let bin_dir = Path::new(&custom.extract_dir).join("bin");
+        if bin_dir.is_dir()
+            && let Ok(entries) = fs::read_dir(&bin_dir)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    return Some(path.to_string_lossy().to_string());
+                }
+            }
+        }
+        None
+    };
 
     // If neither path exists (e.g. flat tarball like zellij), extract directly without --strip-components=1
-    if !Path::new(&bin_in_subfolder).exists() && !Path::new(&bin_at_root).exists() {
+    if find_extracted_binary().is_none() {
         let tar_status = Command::new("sudo")
             .arg("tar")
             .arg("-xzf")
@@ -1323,13 +1360,11 @@ fn install_custom_debian(
     let _ = fs::remove_dir_all(&tmp_dir);
 
     // Resolve target binary path and verify it exists
-    let target_bin = if Path::new(&bin_in_subfolder).exists() {
-        bin_in_subfolder
-    } else if Path::new(&bin_at_root).exists() {
-        bin_at_root
+    let target_bin = if let Some(bin) = find_extracted_binary() {
+        bin
     } else {
         anyhow::bail!(
-            "Extracted binary '{}' was not found in {} or {}/bin",
+            "Extracted binary for '{}' was not found in {} or {}/bin",
             custom.name,
             custom.extract_dir,
             custom.extract_dir

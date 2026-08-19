@@ -12,6 +12,7 @@ type = "github_release_tarball"
 url = "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
 extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
+binary_name = "nvim"
 
 [[categories.lazyvim-minimal.post_install_commands]]
 description = "Clone default config for LazyVim to ~/.config/nvim (creates backups if existing config found)"
@@ -33,6 +34,7 @@ type = "github_release_tarball"
 url = "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
 extract_dir = "/opt/nvim"
 bin_symlink = "~/.local/bin/nvim"
+binary_name = "nvim"
 
 [[categories.nvim-onedarkpro.copy_files]]
 src = "config/nvim-onedarkpro"
