@@ -958,6 +958,32 @@ fn process_copy_files(
             continue;
         }
 
+        if action.src == "config/nvim-onedarkpro" {
+            if dry_run {
+                println!(
+                    "  [Dry-Run] Would copy embedded configuration files to '{dest_path_str}'"
+                );
+                continue;
+            }
+
+            println!(
+                "  [Copying] Configuration files to '{dest_path_str}'"
+            );
+            for (rel_path, content) in crate::config::EMBEDDED_NVIM_ONEDARKPRO {
+                let target_file_path = dest_path.join(rel_path);
+                if let Some(parent) = target_file_path.parent() {
+                    fs::create_dir_all(parent).map_err(|e| {
+                        anyhow::anyhow!("Failed to create directory {}: {e}", parent.display())
+                    })?;
+                }
+                fs::write(&target_file_path, content).map_err(|e| {
+                    anyhow::anyhow!("Failed to write file {}: {e}", target_file_path.display())
+                })?;
+            }
+            println!("  [Success] Configuration files placed cleanly at '{dest_path_str}'");
+            continue;
+        }
+
         if dry_run {
             println!("  [Dry-Run] Would copy configuration file to '{dest_path_str}'");
             continue;

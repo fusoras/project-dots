@@ -10,6 +10,32 @@ pub const EMBEDDED_FONT: &[u8] = include_bytes!("../config/zsh-tokyonight/font.t
 pub const EMBEDDED_I3_CONFIG: &str = include_str!("../config/i3wm/config");
 pub const EMBEDDED_POLYBAR_CONFIG: &str = include_str!("../config/i3wm/config.ini");
 pub const EMBEDDED_POLYBAR_LAUNCH: &str = include_str!("../config/i3wm/launch.sh");
+pub const EMBEDDED_NVIM_ONEDARKPRO: &[(&str, &str)] = &[
+    (".neoconf.json", include_str!("../config/nvim-onedarkpro/.neoconf.json")),
+    ("init.lua", include_str!("../config/nvim-onedarkpro/init.lua")),
+    ("lazy-lock.json", include_str!("../config/nvim-onedarkpro/lazy-lock.json")),
+    ("lazyvim.json", include_str!("../config/nvim-onedarkpro/lazyvim.json")),
+    ("stylua.toml", include_str!("../config/nvim-onedarkpro/stylua.toml")),
+    ("lua/config/autocmds.lua", include_str!("../config/nvim-onedarkpro/lua/config/autocmds.lua")),
+    ("lua/config/color.lua", include_str!("../config/nvim-onedarkpro/lua/config/color.lua")),
+    ("lua/config/keymaps.lua", include_str!("../config/nvim-onedarkpro/lua/config/keymaps.lua")),
+    ("lua/config/lazy.lua", include_str!("../config/nvim-onedarkpro/lua/config/lazy.lua")),
+    ("lua/config/options.lua", include_str!("../config/nvim-onedarkpro/lua/config/options.lua")),
+    ("lua/plugins/colorscheme.lua", include_str!("../config/nvim-onedarkpro/lua/plugins/colorscheme.lua")),
+    ("lua/plugins/goto-preview.lua", include_str!("../config/nvim-onedarkpro/lua/plugins/goto-preview.lua")),
+    ("lua/plugins/oil.lua", include_str!("../config/nvim-onedarkpro/lua/plugins/oil.lua")),
+    ("lua/plugins/stylelint.lua", include_str!("../config/nvim-onedarkpro/lua/plugins/stylelint.lua")),
+    ("snippets/alias-typescript.json", include_str!("../config/nvim-onedarkpro/snippets/alias-typescript.json")),
+    ("snippets/layout-component.json", include_str!("../config/nvim-onedarkpro/snippets/layout-component.json")),
+    ("snippets/layout-full-astro.json", include_str!("../config/nvim-onedarkpro/snippets/layout-full-astro.json")),
+    ("snippets/main-components.json", include_str!("../config/nvim-onedarkpro/snippets/main-components.json")),
+    ("snippets/modal-popover.json", include_str!("../config/nvim-onedarkpro/snippets/modal-popover.json")),
+    ("snippets/nav-basic.json", include_str!("../config/nvim-onedarkpro/snippets/nav-basic.json")),
+    ("snippets/package.json", include_str!("../config/nvim-onedarkpro/snippets/package.json")),
+    ("snippets/seo-head.json", include_str!("../config/nvim-onedarkpro/snippets/seo-head.json")),
+    ("snippets/var-css-base.json", include_str!("../config/nvim-onedarkpro/snippets/var-css-base.json")),
+    ("snippets/web-components-init.json", include_str!("../config/nvim-onedarkpro/snippets/web-components-init.json")),
+];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
