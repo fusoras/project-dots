@@ -1,9 +1,9 @@
 # AGENTS.md — project-dots
 
-Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.39`).
+Companion tool for system provisioning and dotfiles package management by categories on Debian and Termux (temporary name: `project-dots`, version: `0.1.0-beta.40`).
 
 ## Project Facts
-- Binary crate `dotss` v0.1.0-beta.39, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
+- Binary crate `dotss` v0.1.0-beta.40, edition 2024 (`Cargo.toml`). Written in Rust with no heavy external dependencies.
 - **Command Renaming Note**: Executable binary command was officially renamed from `project-dots` to `dotss` in `v0.1.0-beta.20` for CLI user convenience.
 - Target platforms: **Debian** (via `apt`) and **Termux** (via `pkg`).
 - Entrypoint: `src/main.rs`.
@@ -32,6 +32,7 @@ For detailed architecture, roadmap, CLI reference, unit testing, and release spe
 - Unit Testing Guide: @.agents/docs/testing.md
 - Versioning & Release Guide: @.agents/docs/versioning.md
 - Environment Variables & Token Security: @.agents/docs/environment.md
+- Project Versioning Skill: @.agents/skills/project-versioning/SKILL.md (Triggers: `bump version`, `release`, `actualizar version`, `subir version`, `crear tag`, `hacer release`)
 
 ## Rules and Conventions
 - Keep the codebase lightweight and modular in Rust.
