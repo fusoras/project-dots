@@ -1,0 +1,22 @@
+{
+	"Web components init": {
+		"scope": "javascript,typescript,astro",
+		"prefix": "web-components-init",
+		"body": [
+			"class ${1:name} extends HTMLElement {",
+			"	connectedCallback() {",
+			"		this.render();",
+			"	}",
+			"",
+			"	render() {",
+			"		this.setHTMLUnsafe(/*html*/ `",
+			"	  `);",
+			"	}",
+			"}",
+			"",
+			"customElements.define(\"$2\", ${1:name});"
+		],		
+		"include": ["**/*.js", "**/*.astro"],
+		"description": "Estructura de un Web component"
+	}
+}

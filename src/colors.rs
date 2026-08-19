@@ -10,6 +10,7 @@ pub const BOLD_BLUE: &str = "\x1b[1;34m";
 pub const BOLD_CYAN: &str = "\x1b[1;36m";
 pub const BOLD_YELLOW: &str = "\x1b[1;33m";
 pub const BOLD_RED: &str = "\x1b[1;31m";
+pub const BOLD: &str = "\x1b[1m";
 pub const WHITE: &str = "\x1b[37m";
 pub const DIM: &str = "\x1b[2m";
 pub const DIM_GRAY: &str = "\x1b[90m";

@@ -83,12 +83,29 @@ pub fn list_categories(
         }
 
         for (grp_name, cats) in grouped {
+            let visible_cats: Vec<_> = cats
+                .into_iter()
+                .filter(|(_, cat)| {
+                    let is_supported = is_category_supported(cat, platform, config);
+                    if !is_supported && !show_hidden {
+                        hidden_count += 1;
+                        false
+                    } else {
+                        true
+                    }
+                })
+                .collect();
+
+            if visible_cats.is_empty() {
+                continue;
+            }
+
             let border = "─".repeat(grp_name.chars().count() + 2);
             output.push_str(&format!(
                 "\n{BOLD_CYAN}╭{border}╮\n│ {grp_name} │\n╰{border}╯{RESET}\n"
             ));
 
-            for (cat_name, cat) in cats {
+            for (cat_name, cat) in visible_cats {
                 let mut pkgs: Vec<String> = if let Some(disp) = &cat.display_packages {
                     disp.clone()
                 } else {
@@ -108,10 +125,11 @@ pub fn list_categories(
 
                 let is_supported = is_category_supported(cat, platform, config);
 
-                if !is_supported && !show_hidden {
-                    hidden_count += 1;
-                    continue;
-                }
+                let pack_label = if cat.includes.is_some() {
+                    " (Pack)"
+                } else {
+                    ""
+                };
 
                 let alias_part = cat.aliases.as_ref().map_or_else(String::new, |aliases| {
                     if aliases.is_empty() {
@@ -187,7 +205,7 @@ pub fn list_categories(
 
                 let term_width = get_terminal_width();
                 let base_header_len =
-                    4 + cat_name.len() + alias_part.len() + 2 + cat.description.len();
+                    4 + cat_name.len() + pack_label.len() + alias_part.len() + 2 + cat.description.len();
 
                 let pkg_part = if is_redundant || total_count == 0 {
                     String::new()
@@ -203,7 +221,7 @@ pub fn list_categories(
                 };
 
                 output.push_str(&format!(
-                    "  - {BOLD_GREEN}{cat_name}{RESET}{alias_part}: {}{pkg_part}{apply_suffix}{hidden_suffix}\n",
+                    "  - {BOLD_GREEN}{cat_name}{RESET}{pack_label}{alias_part}: {}{pkg_part}{apply_suffix}{hidden_suffix}\n",
                     cat.description
                 ));
             }
@@ -239,6 +257,12 @@ pub fn list_categories(
                 hidden_count += 1;
                 continue;
             }
+
+            let pack_label = if cat.includes.is_some() {
+                " (Pack)"
+            } else {
+                ""
+            };
 
             let alias_part = cat.aliases.as_ref().map_or_else(String::new, |aliases| {
                 if aliases.is_empty() {
@@ -298,7 +322,7 @@ pub fn list_categories(
             };
 
             output.push_str(&format!(
-                "{BOLD_GREEN}{cat_name}{RESET}{alias_part}{detail_part}{apply_suffix}{hidden_suffix}\n"
+                "{BOLD_GREEN}{cat_name}{RESET}{pack_label}{alias_part}{detail_part}{apply_suffix}{hidden_suffix}\n"
             ));
         }
     }
@@ -389,6 +413,16 @@ pub fn is_category_supported(
     platform: &Platform,
     config: &Config,
 ) -> bool {
+    if let Some(target_platform) = &cat.platform {
+        let matches_platform = matches!(
+            (target_platform.to_lowercase().as_str(), platform),
+            ("debian", Platform::Debian) | ("termux", Platform::Termux)
+        );
+        if !matches_platform {
+            return false;
+        }
+    }
+
     let has_os_packages = match platform {
         Platform::Debian => cat.debian_packages.as_ref().is_some_and(|p| !p.is_empty()),
         Platform::Termux => cat.termux_packages.as_ref().is_some_and(|p| !p.is_empty()),
@@ -451,7 +485,7 @@ pub fn get_terminal_width() -> usize {
     80
 }
 
-fn is_category_applied(
+pub fn is_category_applied(
     cat_name: &str,
     cat: &crate::config::Category,
     state: &State,
@@ -838,6 +872,22 @@ pub fn install_category(
     Ok(())
 }
 
+fn copy_dir_all(src: &Path, dst: &Path) -> io::Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let from = entry.path();
+        let to = dst.join(entry.file_name());
+        if ty.is_dir() {
+            copy_dir_all(&from, &to)?;
+        } else {
+            fs::copy(&from, &to)?;
+        }
+    }
+    Ok(())
+}
+
 fn process_copy_files(
     copy_files: &[crate::config::CopyFileAction],
     platform: &Platform,
@@ -856,9 +906,55 @@ fn process_copy_files(
 
         let dest_path_str = expand_home(&action.dest);
         let dest_path = Path::new(&dest_path_str);
+        let src_path = Path::new(&action.src);
 
         if action.only_if_not_exists.unwrap_or(false) && dest_path.exists() {
-            println!("  [SKIP] Destination file '{dest_path_str}' already exists.");
+            println!("  [SKIP] Destination '{dest_path_str}' already exists.");
+            continue;
+        }
+
+        if action.backup.unwrap_or(false) && dest_path.exists() {
+            let backup_path_str = if !Path::new(&format!("{dest_path_str}.bak")).exists() {
+                format!("{dest_path_str}.bak")
+            } else {
+                let timestamp = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs();
+                format!("{dest_path_str}.bak.{timestamp}")
+            };
+
+            if dry_run {
+                println!(
+                    "  [Dry-Run] Would back up existing '{dest_path_str}' to '{backup_path_str}'"
+                );
+            } else {
+                println!(
+                    "  [Backup] Backing up existing '{dest_path_str}' -> '{backup_path_str}'"
+                );
+                fs::rename(dest_path, &backup_path_str).map_err(|e| {
+                    anyhow::anyhow!("Failed to back up {dest_path_str} to {backup_path_str}: {e}")
+                })?;
+            }
+        }
+
+        if src_path.is_dir() {
+            if dry_run {
+                println!(
+                    "  [Dry-Run] Would copy directory '{}' to '{dest_path_str}'",
+                    action.src
+                );
+                continue;
+            }
+
+            println!(
+                "  [Copying] Directory '{}' to '{dest_path_str}'",
+                action.src
+            );
+            copy_dir_all(src_path, dest_path).map_err(|e| {
+                anyhow::anyhow!("Failed to copy directory {} to {dest_path_str}: {e}", action.src)
+            })?;
+            println!("  [Success] Directory placed cleanly at '{dest_path_str}'");
             continue;
         }
 
@@ -869,7 +965,7 @@ fn process_copy_files(
 
         println!("  [Copying] Configuration file to '{dest_path_str}'");
 
-        let content_bytes: Vec<u8> = if Path::new(&action.src).exists() {
+        let content_bytes: Vec<u8> = if src_path.exists() {
             fs::read(&action.src)
                 .map_err(|e| anyhow::anyhow!("Failed to read source file {}: {e}", action.src))?
         } else if action.src == "config/zsh-tokyonight/starship.toml" {
@@ -1438,15 +1534,28 @@ pub fn remove_category(
 
                 let dest_path_str = expand_home(&action.dest);
                 let dest_path = Path::new(&dest_path_str);
-                if dest_path.exists() && dest_path.is_file() {
-                    if dry_run {
-                        println!("  [Dry-Run] Would remove configuration file: '{dest_path_str}'");
-                    } else {
-                        println!("  [Removing] Removing configuration file '{dest_path_str}'...");
-                        if let Err(e) = fs::remove_file(dest_path) {
-                            eprintln!(
-                                "  [WARN] Failed to remove configuration file {dest_path_str}: {e}"
-                            );
+                if dest_path.exists() {
+                    if dest_path.is_dir() {
+                        if dry_run {
+                            println!("  [Dry-Run] Would remove configuration directory: '{dest_path_str}'");
+                        } else {
+                            println!("  [Removing] Removing configuration directory '{dest_path_str}'...");
+                            if let Err(e) = fs::remove_dir_all(dest_path) {
+                                eprintln!(
+                                    "  [WARN] Failed to remove configuration directory {dest_path_str}: {e}"
+                                );
+                            }
+                        }
+                    } else if dest_path.is_file() {
+                        if dry_run {
+                            println!("  [Dry-Run] Would remove configuration file: '{dest_path_str}'");
+                        } else {
+                            println!("  [Removing] Removing configuration file '{dest_path_str}'...");
+                            if let Err(e) = fs::remove_file(dest_path) {
+                                eprintln!(
+                                    "  [WARN] Failed to remove configuration file {dest_path_str}: {e}"
+                                );
+                            }
                         }
                     }
                 }
@@ -1571,6 +1680,97 @@ fn format_command_summary(cmd: &str) -> String {
     }
 }
 
+/// Runs the interactive setup wizard for selecting presets or custom categories.
+pub fn run_interactive_setup(
+    config: &Config,
+    state: &mut State,
+    platform: &Platform,
+    dry_run: bool,
+) -> anyhow::Result<()> {
+    if let Platform::Unsupported(reason) = platform {
+        anyhow::bail!("Unsupported platform: {reason}");
+    }
+
+    if let Platform::Debian = platform {
+        check_apt_lock()?;
+    }
+
+    if !std::io::stdout().is_terminal() {
+        anyhow::bail!("Interactive setup requires an interactive terminal (TTY).");
+    }
+
+    let preset_choice = crate::prompt::select_preset()?;
+    let categories_to_install: Vec<String> = match preset_choice {
+        Some(crate::prompt::PresetOption::FullConfig) => {
+            crate::prompt::FULL_CONFIG_CATEGORIES
+                .iter()
+                .filter(|cat_name| {
+                    if let Some(cat) = config.categories.get(**cat_name) {
+                        is_category_supported(cat, platform, config)
+                    } else {
+                        false
+                    }
+                })
+                .map(|s| s.to_string())
+                .collect()
+        }
+        Some(crate::prompt::PresetOption::Custom) => {
+            match crate::prompt::select_custom_categories(config, platform, state)? {
+                Some(selected) => selected,
+                None => {
+                    println!("\n{DIM_GRAY}Setup cancelled.{RESET}");
+                    return Ok(());
+                }
+            }
+        }
+        None => {
+            println!("\n{DIM_GRAY}Setup cancelled.{RESET}");
+            return Ok(());
+        }
+    };
+
+    if categories_to_install.is_empty() {
+        println!("\n{DIM_GRAY}No categories selected for installation.{RESET}");
+        return Ok(());
+    }
+
+    println!("\n{BOLD_CYAN}Selected categories to install:{RESET}");
+    for cat_name in &categories_to_install {
+        let is_pack = config
+            .categories
+            .get(cat_name)
+            .and_then(|c| c.includes.as_ref())
+            .is_some();
+        let pack_suffix = if is_pack { " (Pack)" } else { "" };
+        println!("  {BOLD_GREEN}•{RESET} {cat_name}{pack_suffix}");
+    }
+
+    if dry_run {
+        println!(
+            "\n{BOLD_YELLOW}=== DRY-RUN MODE ACTIVE: Simulating installation ==={RESET}"
+        );
+    } else {
+        use std::io::{self, Write};
+        print!("\n{BOLD_YELLOW}? Proceed with installation? [Y/n]: {RESET}");
+        let _ = io::stdout().flush();
+        let mut input = String::new();
+        if io::stdin().read_line(&mut input).is_ok() {
+            let trimmed = input.trim().to_lowercase();
+            if !trimmed.is_empty() && trimmed != "y" && trimmed != "yes" {
+                println!("\n{DIM_GRAY}Installation cancelled.{RESET}");
+                return Ok(());
+            }
+        }
+    }
+
+    for cat_name in &categories_to_install {
+        install_category(Some(cat_name), config, state, platform, dry_run)?;
+    }
+
+    println!("\n{BOLD_GREEN}Interactive setup completed successfully!{RESET}");
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1596,6 +1796,7 @@ mod tests {
             dest: "~/.config/zsh/starship.toml".to_string(),
             platform: None,
             only_if_not_exists: None,
+            backup: None,
         }];
         let res = process_copy_files(&copy_actions, &Platform::Debian, true);
         assert!(res.is_ok(), "Copy files dry-run should succeed");
@@ -1608,12 +1809,26 @@ mod tests {
             dest: "~/.termux/font.ttf".to_string(),
             platform: Some("termux".to_string()),
             only_if_not_exists: Some(true),
+            backup: None,
         }];
         let res_debian = process_copy_files(&copy_actions, &Platform::Debian, true);
         assert!(res_debian.is_ok());
 
         let res_termux = process_copy_files(&copy_actions, &Platform::Termux, true);
         assert!(res_termux.is_ok());
+    }
+
+    #[test]
+    fn copy_files_with_backup_and_directory_should_succeed_in_dry_run() {
+        let copy_actions = vec![crate::config::CopyFileAction {
+            src: "config/nvim-onedarkpro".to_string(),
+            dest: "~/.config/nvim".to_string(),
+            platform: None,
+            only_if_not_exists: None,
+            backup: Some(true),
+        }];
+        let res = process_copy_files(&copy_actions, &Platform::Debian, true);
+        assert!(res.is_ok(), "Directory copy with backup dry-run should succeed");
     }
 
     #[test]
@@ -1863,5 +2078,29 @@ mod tests {
         );
         assert_eq!(format_items_limited(&items[..3], 6), "item1, item2, item3");
         assert_eq!(format_items_limited(&[], 6), "none");
+    }
+
+    #[test]
+    fn pack_categories_should_be_identifiable_with_includes() {
+        let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+        let agents_flow = config.categories.get("agents-flow").unwrap();
+        assert!(agents_flow.includes.is_some(), "agents-flow must be a pack");
+
+        let mydots_termux = config.categories.get("mydots-termux").unwrap();
+        assert!(mydots_termux.includes.is_some(), "mydots-termux must be a pack");
+
+        let zsh_tn = config.categories.get("zsh-tokyonight").unwrap();
+        assert!(zsh_tn.includes.is_none(), "zsh-tokyonight is an individual category");
+    }
+
+    #[test]
+    fn full_config_preset_categories_must_exist_in_config() {
+        let config: Config = toml::from_str(crate::config::EMBEDDED_CONFIG).unwrap();
+        for cat_name in crate::prompt::FULL_CONFIG_CATEGORIES {
+            assert!(
+                config.categories.contains_key(*cat_name),
+                "Category '{cat_name}' in FULL_CONFIG_CATEGORIES must exist in categories.toml"
+            );
+        }
     }
 }

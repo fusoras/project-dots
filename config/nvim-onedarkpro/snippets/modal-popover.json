@@ -1,0 +1,39 @@
+{
+	"Popover modal": {
+	"prefix": "modal-popover",
+	"body": [
+		"<button",
+		"    popovertarget=\"${1:modal-name}\"",
+		"    popovertargetaction=\"toggle\"",
+		"    type=\"button\"",
+		">",
+		"    ${2}",
+		"</button>",
+		"",
+		"<div",
+		"    id=\"${1:modal-name}\"",
+		"    class=\"${3:modal-class}\"",
+		"    popover",
+		"    role=\"dialog\"",
+		"    aria-modal=\"true\"",
+		"    aria-labelledby=\"modal-title\"",
+		"    aria-describedby=\"modal-desc\"",
+		">",
+		"    <h2 id=\"modal-title\">Alerta</h2>",
+		"    <p id=\"modal-desc\">",
+		"        Has recibido un correo de <strong>Afordin</strong>",
+		"    </p>",
+		"    <button",
+		"        popovertarget=\"${1:modal-name}\"",
+		"        popovertargetaction=\"hide\"",
+		"        type=\"button\"",
+		"        aria-label=\"Cerrar\"",
+		"    >",
+		"        ✕",
+		"    </button>",
+		"</div>"
+	],
+	"include": ["**/*.astro", "*.html"],
+	"description": "Popover modal"
+	}
+}

@@ -1,0 +1,15 @@
+{
+	"Alias TypeScript": {
+		"scope": "json",
+		"prefix": "alias-ts",
+		"body": [
+			"\"compilerOptions\": {",
+			"  \"paths\": {",
+			"    \"@/*\": [\"./src/*\"]",
+			"  }",
+			"}"
+		],
+		"include": ["tsconfig.json"],
+		"description": "@ como alias"
+	}
+}

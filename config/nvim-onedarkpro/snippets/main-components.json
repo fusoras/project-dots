@@ -1,0 +1,13 @@
+{
+	"nav, header, main, footer": {
+	"prefix": "main-components",
+	"body": [
+		"<Navbar />",
+		"<Header />",
+		"<Main />",
+		"<Footer />"
+	],
+	"description": "nav, header, main, footer"
+	}
+
+}

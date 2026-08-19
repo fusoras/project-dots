@@ -1,0 +1,21 @@
+{
+	"Var CSS": {
+		"scope": "astro,css",
+		"prefix": "css-base-var",
+		"body": [
+			"--accent-color: ;",
+			"--accent-light: ;",
+			"--accent-lightest: ;",
+			"--accent-medium: ;",
+			"--accent-dark: ;",
+			"--accent-darkest: ;",
+			"--accent-overlay: ;",
+			"--accent-transparent: ;",
+			"--accent-grandient: ;",
+			"--color-text-primary: ;",
+			"--color-base-background: ;"
+		],
+		"include": ["**/*.astro", "*.css"],
+		"description": "Var CSS"
+	}
+}

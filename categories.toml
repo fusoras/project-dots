@@ -20,6 +20,26 @@ confirm = true
 command = "if [ ! -d \"$HOME/.config/nvim/.git\" ]; then [ -d \"$HOME/.config/nvim\" ] && mv \"$HOME/.config/nvim\" \"$HOME/.config/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.local/share/nvim\" ] && mv \"$HOME/.local/share/nvim\" \"$HOME/.local/share/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.local/state/nvim\" ] && mv \"$HOME/.local/state/nvim\" \"$HOME/.local/state/nvim.bak.$(date +%Y%m%d%H%M%S)\"; [ -d \"$HOME/.cache/nvim\" ] && mv \"$HOME/.cache/nvim\" \"$HOME/.cache/nvim.bak.$(date +%Y%m%d%H%M%S)\"; git clone https://github.com/LazyVim/starter \"$HOME/.config/nvim\" && rm -rf \"$HOME/.config/nvim/.git\"; fi"
 
 
+[categories.nvim-onedarkpro]
+description = "Custom Neovim IDE and editor setup with OneDarkPro theme"
+group = "Editors & IDEs"
+display_packages = ["neovim", "lazyvim", "lazygit", "clang", "fd"]
+debian_packages = ["git", "curl", "clang", "fd-find", "lazygit"]
+termux_packages = ["neovim", "git", "curl", "clang", "fd", "lazygit"]
+
+[categories.nvim-onedarkpro.custom.debian]
+name = "neovim"
+type = "github_release_tarball"
+url = "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz"
+extract_dir = "/opt/nvim"
+bin_symlink = "~/.local/bin/nvim"
+
+[[categories.nvim-onedarkpro.copy_files]]
+src = "config/nvim-onedarkpro"
+dest = "~/.config/nvim"
+backup = true
+
+
 [categories.zsh-tokyonight]
 aliases = ["zsh-tn"]
 description = "Zsh terminal setup with TokyoNight prompt and plugins"
@@ -343,5 +363,6 @@ includes = ["opencode", "agents-tools"]
 aliases = ["dots-termux"]
 description = "Complete dotfiles terminal pack"
 group = "Packs & Bundles"
+platform = "termux"
 display_packages = ["zsh-tokyonight", "lazyvim-minimal", "term-flow"]
 includes = ["zsh-tokyonight", "lazyvim-minimal", "term-flow"]

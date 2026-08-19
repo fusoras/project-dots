@@ -2,13 +2,14 @@ mod colors;
 mod config;
 mod installer;
 mod platform;
+mod prompt;
 mod state;
 mod update;
 
 use crate::colors::*;
 use clap::{CommandFactory, Parser, Subcommand};
 use config::Config;
-use installer::{install_category, list_categories, remove_category, show_category};
+use installer::{install_category, list_categories, remove_category, run_interactive_setup, show_category};
 use platform::Platform;
 use state::State;
 use update::check_and_perform_update;
@@ -35,6 +36,13 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Interactive setup wizard to select and install configuration presets or custom categories
+    Setup {
+        /// Preview actions without running system package commands
+        #[arg(short = 'n', long = "dry-run")]
+        dry_run: bool,
+    },
+
     /// Lists categories and contained packages for current platform
     #[command(disable_help_flag = true)]
     List {
@@ -193,6 +201,12 @@ fn main() {
     let platform = Platform::detect();
 
     match command {
+        Commands::Setup { dry_run } => {
+            if let Err(e) = run_interactive_setup(&config, &mut state, &platform, dry_run) {
+                eprintln!("\n{BOLD_RED}Setup error:{RESET} {:?}", e);
+                std::process::exit(1);
+            }
+        }
         Commands::List {
             show_hidden,
             group_by_category,
@@ -396,6 +410,23 @@ mod tests {
             assert!(!yes);
         } else {
             panic!("Expected Commands::SelfUninstall");
+        }
+    }
+
+    #[test]
+    fn setup_subcommand_flags_parsing() {
+        let cli = Cli::try_parse_from(["dotss", "setup"]).expect("failed to parse setup");
+        if let Some(Commands::Setup { dry_run }) = cli.command {
+            assert!(!dry_run);
+        } else {
+            panic!("Expected Commands::Setup");
+        }
+
+        let cli_dry = Cli::try_parse_from(["dotss", "setup", "-n"]).expect("failed to parse setup -n");
+        if let Some(Commands::Setup { dry_run }) = cli_dry.command {
+            assert!(dry_run);
+        } else {
+            panic!("Expected Commands::Setup");
         }
     }
 }

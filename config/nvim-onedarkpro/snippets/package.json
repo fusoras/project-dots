@@ -1,0 +1,61 @@
+{
+  "name": "my-custom-snippets",
+  "contributes": {
+    "snippets": [
+      {
+        "language": [
+          "javascript",
+          "astro"
+        ],
+        "path": "./web-components-init.json"
+      },
+      {
+        "language": [
+          "json",
+          "jsonc"
+        ],
+        "path": "./alias-typescript.json"
+      },
+      {
+        "language": "astro",
+        "path": "./layout-full-astro.json"
+      },
+      {
+        "language": "astro",
+        "path": "./layout-component.json"
+      },
+      {
+        "language": "astro",
+        "path": "./main-components.json"
+      },
+      {
+        "language": [
+          "html",
+          "astro"
+        ],
+        "path": "./modal-popover.json"
+      },
+      {
+        "language": [
+          "html",
+          "astro"
+        ],
+        "path": "./nav-basic.json"
+      },
+      {
+        "language": [
+          "html",
+          "astro"
+        ],
+        "path": "./seo-head.json"
+      },
+      {
+        "language": [
+          "css",
+          "astro"
+        ],
+        "path": "./var-css-base.json"
+      }
+    ]
+  }
+}

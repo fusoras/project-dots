@@ -33,6 +33,7 @@ pub struct Category {
     pub termux_final_message: Option<String>,
     pub includes: Option<Vec<String>>,
     pub group: Option<String>,
+    pub platform: Option<String>,
 }
 
 impl Category {
@@ -57,6 +58,7 @@ pub struct CopyFileAction {
     pub dest: String,
     pub platform: Option<String>,
     pub only_if_not_exists: Option<bool>,
+    pub backup: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

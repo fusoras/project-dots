@@ -6,6 +6,7 @@
 
 | Command | Purpose | Options |
 | ------- | ------- | ------- |
+| `dotss setup` | Interactive setup wizard with keyboard navigation (`↑`/`↓`, `Space`, `Enter`) to select presets or custom categories | `--dry-run` / `-n` to preview actions without making changes |
 | `dotss list` | Displays available categories and contained packages in a concise single-line format (routed through system `$PAGER` / `less` when on TTY) | `-sh` / `--show-hidden` to display unsupported categories, `-ca` / `--categories` to group by functional domain |
 | `dotss search <query>` | Searches categories by name, alias, or contained packages and prints matches in the same format as `list` | Query is matched case-insensitively against category names, aliases, and the current platform's packages |
 | `dotss show <category>` | Displays full detailed description, package tracking status, config files, and post-install commands | Accepts category name or alias (e.g. `zsh-tokyonight`, `zsh-tn`) |
@@ -19,6 +20,27 @@
 ---
 
 ## Command Specifications & Exact Terminal Outputs
+
+### 0. Interactive Setup Wizard (`dotss setup`)
+**Command**:
+```bash
+dotss setup
+# Preview actions without executing system package commands:
+dotss setup --dry-run
+```
+
+**Features & Keyboard Controls**:
+1. **Preset Selection Screen**:
+   - `Full Config`: Curated complementary suite (`nvim-onedarkpro`, `zsh-tokyonight`, `term-flow`, `nodejs-pnpm`, `agents-flow`).
+   - `Custom`: Step-by-step custom configuration.
+   - Controls: `[↑/↓]` or `[j/k]` to navigate, `[Enter]` to confirm, `[q/Esc]` to cancel.
+
+2. **Custom Step-by-Step Domain Wizard**:
+   - Prompts category by domain section (e.g. `[1/5] Shell & Terminal`, `[2/5] Editors & IDEs`, `[3/5] AI & Agents`, `[4/5] Runtimes & Languages`, `[5/5] Window Managers & Desktop`).
+   - `[ ]` / `[x]` Checkboxes with category names, `(Pack)` indicator for pack bundles, and group descriptions.
+   - Controls: `[↑/↓]` navigate, `[Space]` toggle item, `[a]` toggle select/deselect all, `[Enter]` next step / confirm, `[q/Esc]` cancel.
+
+---
 
 ### 1. List Categories (Simplified Single-Line View & Grouped View)
 **Command**:
